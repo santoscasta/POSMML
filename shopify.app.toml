@@ -1,0 +1,14 @@
+client_id = "6884802cf006ac64bcbf5ed8b0334309"
+name = "POS MML"
+application_url = "http://localhost:3001"
+embedded = false
+
+[access_scopes]
+scopes = "read_products,write_products,read_orders,write_orders,read_draft_orders,write_draft_orders,read_customers,write_customers,read_inventory,read_gift_cards,write_gift_cards,write_gift_card_transactions,read_locations,read_fulfillments,write_fulfillments,read_assigned_fulfillment_orders,write_assigned_fulfillment_orders,read_merchant_managed_fulfillment_orders,write_merchant_managed_fulfillment_orders,read_metaobject_definitions,write_metaobject_definitions,read_metaobjects,write_metaobjects"
+use_legacy_install_flow = false
+
+[auth]
+redirect_urls = ["http://localhost:3001/auth/callback"]
+
+[webhooks]
+api_version = "2025-04"
