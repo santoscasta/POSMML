@@ -12,21 +12,21 @@ import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
 import { Home, ShoppingCart, ClipboardList, Wallet, Ticket, CircleDot } from 'lucide-react';
 
+const navItems = [
+  { path: '/dashboard', label: es.nav.dashboard || 'Inicio', icon: Home },
+  { path: '/', label: es.nav.pos, icon: ShoppingCart },
+  { path: '/orders', label: es.nav.orders, icon: ClipboardList },
+  { path: '/caja', label: es.nav.cashRegister, icon: Wallet },
+  { path: '/vales', label: es.nav.vouchers, icon: Ticket },
+];
+
 function Sidebar() {
   const location = useLocation();
   const navigate = useNavigate();
   const { isOpen } = useSession();
 
-  const navItems = [
-    { path: '/dashboard', label: es.nav.dashboard || 'Inicio', icon: Home },
-    { path: '/', label: es.nav.pos, icon: ShoppingCart },
-    { path: '/orders', label: es.nav.orders, icon: ClipboardList },
-    { path: '/caja', label: es.nav.cashRegister, icon: Wallet },
-    { path: '/vales', label: es.nav.vouchers, icon: Ticket },
-  ];
-
   return (
-    <aside className="flex w-60 flex-col border-r bg-white">
+    <aside className="hidden md:flex md:w-60 flex-col border-r bg-white">
       <div
         className="cursor-pointer px-4 pt-4 pb-2"
         onClick={() => navigate('/dashboard')}
@@ -83,12 +83,50 @@ function Sidebar() {
   );
 }
 
+function BottomNav() {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const { isOpen } = useSession();
+
+  return (
+    <nav className="fixed bottom-0 left-0 right-0 z-50 flex border-t bg-white md:hidden">
+      {navItems.map((item) => {
+        const active = item.path === '/'
+          ? location.pathname === '/'
+          : location.pathname.startsWith(item.path);
+        const Icon = item.icon;
+        return (
+          <button
+            key={item.path}
+            onClick={() => navigate(item.path)}
+            className={cn(
+              'flex flex-1 flex-col items-center gap-0.5 py-2 text-[10px] font-medium transition-colors',
+              active ? 'text-primary' : 'text-muted-foreground'
+            )}
+          >
+            <div className="relative">
+              <Icon className="size-5" />
+              {item.path === '/caja' && (
+                <span className={cn(
+                  'absolute -right-1 -top-1 size-2 rounded-full',
+                  isOpen ? 'bg-success' : 'bg-destructive'
+                )} />
+              )}
+            </div>
+            {item.label}
+          </button>
+        );
+      })}
+    </nav>
+  );
+}
+
 function AppContent() {
   const navigate = useNavigate();
   return (
     <div className="flex h-screen w-full">
       <Sidebar />
-      <main className="flex-1 overflow-y-auto bg-background">
+      <main className="flex-1 overflow-y-auto bg-background pb-16 md:pb-0">
         <Routes>
           <Route path="/dashboard" element={<DashboardPage onNavigate={(path) => navigate(path)} />} />
           <Route path="/" element={<PosPage />} />
@@ -98,6 +136,7 @@ function AppContent() {
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Routes>
       </main>
+      <BottomNav />
     </div>
   );
 }

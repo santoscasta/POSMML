@@ -41,9 +41,9 @@ export function OrdersPage() {
   };
 
   return (
-    <div className="p-6">
+    <div className="p-3 sm:p-6">
       {/* Header */}
-      <div className="mb-6 flex items-center justify-between">
+      <div className="mb-4 flex items-center justify-between gap-2 sm:mb-6">
         <h1 className="text-xl font-semibold">{es.orders.title}</h1>
         <Button variant="outline" onClick={refresh} disabled={loading}>
           <RefreshCw className={cn('size-4', loading && 'animate-spin')} />

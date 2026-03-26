@@ -72,8 +72,8 @@ export function SessionsPage() {
   }
 
   return (
-    <div className="p-6">
-      <h1 className="mb-6 text-xl font-semibold">{es.nav.cashRegister}</h1>
+    <div className="p-3 sm:p-6">
+      <h1 className="mb-4 text-xl font-semibold sm:mb-6">{es.nav.cashRegister}</h1>
 
       {isOpen && session ? (
         <Card className="mb-6">
@@ -160,6 +160,7 @@ export function SessionsPage() {
       ) : history.length === 0 ? (
         <p className="text-sm text-muted-foreground">No hay sesiones anteriores</p>
       ) : (
+        <div className="overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow>
@@ -202,6 +203,7 @@ export function SessionsPage() {
             ))}
           </TableBody>
         </Table>
+        </div>
       )}
 
       <OpenSessionModal

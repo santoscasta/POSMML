@@ -104,18 +104,19 @@ export function VouchersPage() {
   ];
 
   return (
-    <div className="p-6">
-      <div className="mb-6 flex items-center justify-between">
+    <div className="p-3 sm:p-6">
+      <div className="mb-4 flex items-center justify-between gap-2 sm:mb-6">
         <h1 className="text-xl font-semibold">Vales</h1>
         <Button onClick={() => setIssueOpen(true)}>
           <Plus className="size-4" />
-          Emitir Vale
+          <span className="hidden sm:inline">Emitir Vale</span>
+          <span className="sm:hidden">Emitir</span>
         </Button>
       </div>
 
       {/* Stats bar */}
       {stats && (
-        <div className="mb-5 grid grid-cols-5 gap-3">
+        <div className="mb-4 grid grid-cols-2 gap-3 sm:mb-5 sm:grid-cols-3 lg:grid-cols-5">
           {[
             { label: 'Total emitidos', value: stats.total.toString(), color: 'text-foreground' },
             { label: 'Activos', value: stats.active.toString(), color: 'text-success' },
@@ -159,7 +160,7 @@ export function VouchersPage() {
           )}
         </div>
 
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           {filterChips.map((chip) => (
             <Button
               key={chip.value}
@@ -191,6 +192,7 @@ export function VouchersPage() {
           <span>No hay vales registrados</span>
         </div>
       ) : (
+        <div className="overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow>
@@ -240,6 +242,7 @@ export function VouchersPage() {
             ))}
           </TableBody>
         </Table>
+        </div>
       )}
 
       {/* Modals */}

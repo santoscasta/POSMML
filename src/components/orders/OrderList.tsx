@@ -77,6 +77,7 @@ export function OrderList({ orders, loading, hasNextPage, onLoadMore, onSelectOr
 
   return (
     <div>
+      <div className="overflow-x-auto">
       <Table>
         <TableHeader>
           <TableRow>
@@ -130,6 +131,7 @@ export function OrderList({ orders, loading, hasNextPage, onLoadMore, onSelectOr
           ))}
         </TableBody>
       </Table>
+      </div>
       {hasNextPage && (
         <div className="flex justify-center py-4">
           <Button variant="outline" onClick={onLoadMore} disabled={loading}>
