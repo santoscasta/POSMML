@@ -1,0 +1,717 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Manual de Usuario — POS My mini Leo</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@300;400;500;600;700&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Source Sans 3', sans-serif;
+    color: #333;
+    line-height: 1.6;
+    background: #fff;
+  }
+
+  @media print {
+    body { font-size: 11pt; }
+    .page-break { page-break-before: always; }
+    .no-print { display: none; }
+    .screen { border: 1px solid #ddd !important; }
+  }
+
+  .cover {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
+  }
+  .cover img { height: 80px; margin-bottom: 12px; }
+  .cover h1 { font-size: 36px; font-weight: 300; color: #434B4F; margin-bottom: 8px; }
+  .cover h1 strong { font-weight: 700; }
+  .cover .subtitle { font-size: 18px; color: #91A1BB; font-weight: 500; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 40px; }
+  .cover .version { font-size: 14px; color: #999; }
+
+  .container { max-width: 800px; margin: 0 auto; padding: 40px 32px; }
+
+  h2 {
+    font-size: 28px;
+    font-weight: 600;
+    color: #434B4F;
+    margin: 40px 0 16px;
+    padding-bottom: 8px;
+    border-bottom: 3px solid #91A1BB;
+  }
+  h3 {
+    font-size: 20px;
+    font-weight: 600;
+    color: #333;
+    margin: 28px 0 12px;
+  }
+  h4 {
+    font-size: 16px;
+    font-weight: 600;
+    color: #91A1BB;
+    margin: 20px 0 8px;
+  }
+  p { margin-bottom: 12px; }
+  ul, ol { margin: 8px 0 16px 24px; }
+  li { margin-bottom: 6px; }
+
+  .screen {
+    background: #f7fafc;
+    border: 2px solid #edf2f7;
+    border-radius: 8px;
+    padding: 20px;
+    margin: 16px 0 24px;
+    font-size: 13px;
+  }
+  .screen-title {
+    font-size: 11px;
+    font-weight: 600;
+    color: #91A1BB;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 12px;
+  }
+
+  .sidebar-mock {
+    display: flex;
+    gap: 20px;
+  }
+  .sidebar-nav {
+    width: 180px;
+    background: #fff;
+    border-right: 1px solid #edf2f7;
+    padding: 12px;
+    border-radius: 6px;
+    flex-shrink: 0;
+  }
+  .sidebar-nav .brand { font-size: 14px; color: #91A1BB; font-weight: 300; margin-bottom: 4px; }
+  .sidebar-nav .brand strong { font-weight: 600; }
+  .sidebar-nav .tag { font-size: 8px; color: #999; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; }
+  .nav-item { display: flex; align-items: center; gap: 6px; padding: 6px 8px; border-radius: 4px; font-size: 12px; color: #666; margin-bottom: 2px; }
+  .nav-item.active { background: #f0f4f8; color: #91A1BB; font-weight: 600; }
+  .sidebar-content { flex: 1; }
+
+  .card-mock {
+    background: #fff;
+    border: 1px solid #edf2f7;
+    border-radius: 6px;
+    padding: 12px;
+    margin-bottom: 8px;
+  }
+  .card-mock .label { font-size: 10px; color: #999; text-transform: uppercase; letter-spacing: 0.5px; }
+  .card-mock .value { font-size: 20px; font-weight: 700; color: #434B4F; }
+  .card-mock .sub { font-size: 11px; color: #999; }
+
+  .btn-mock {
+    display: inline-block;
+    padding: 6px 14px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 600;
+    margin: 2px;
+  }
+  .btn-primary { background: #434B4F; color: #fff; }
+  .btn-outline { background: #fff; border: 1px solid #ddd; color: #434B4F; }
+  .btn-success { background: #25D366; color: #fff; }
+  .btn-danger { background: #D32F2F; color: #fff; }
+  .btn-accent { background: #91A1BB; color: #fff; }
+
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: 600; }
+  .badge-green { background: #e8f5e9; color: #2e7d32; }
+  .badge-orange { background: #fff3e0; color: #e65100; }
+  .badge-red { background: #ffebee; color: #c62828; }
+  .badge-blue { background: #e3f2fd; color: #1565c0; }
+  .badge-gray { background: #f5f5f5; color: #666; }
+
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+  .grid-5 { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
+
+  .product-mock {
+    background: #fff;
+    border: 1px solid #edf2f7;
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .product-mock .img { height: 60px; background: #f0f0f0; display: flex; align-items: center; justify-content: center; color: #ccc; font-size: 20px; }
+  .product-mock .info { padding: 8px; }
+  .product-mock .name { font-size: 11px; font-weight: 600; }
+  .product-mock .price { font-size: 12px; color: #434B4F; font-weight: 600; }
+
+  .table-mock { width: 100%; border-collapse: collapse; font-size: 11px; }
+  .table-mock th { text-align: left; padding: 6px 8px; font-size: 10px; color: #999; text-transform: uppercase; border-bottom: 2px solid #edf2f7; }
+  .table-mock td { padding: 8px; border-bottom: 1px solid #f5f5f5; }
+
+  .flow-step {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 16px;
+    align-items: flex-start;
+  }
+  .flow-num {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: #91A1BB;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 14px;
+    flex-shrink: 0;
+  }
+  .flow-text { flex: 1; padding-top: 3px; }
+
+  .tip {
+    background: #f0f4f8;
+    border-left: 4px solid #91A1BB;
+    padding: 12px 16px;
+    margin: 16px 0;
+    font-size: 13px;
+  }
+  .tip strong { color: #91A1BB; }
+
+  .warning {
+    background: #fff3e0;
+    border-left: 4px solid #e65100;
+    padding: 12px 16px;
+    margin: 16px 0;
+    font-size: 13px;
+  }
+
+  .toc { margin: 20px 0; }
+  .toc a { text-decoration: none; color: #434B4F; display: block; padding: 6px 0; border-bottom: 1px solid #f5f5f5; }
+  .toc a:hover { color: #91A1BB; }
+  .toc .num { color: #91A1BB; font-weight: 600; margin-right: 8px; }
+
+  .ticket-mock {
+    font-family: 'Courier New', monospace;
+    width: 240px;
+    margin: 12px auto;
+    padding: 16px;
+    border: 1px dashed #ccc;
+    font-size: 10px;
+    text-align: center;
+    background: #fafafa;
+  }
+  .ticket-mock .t-brand { font-size: 14px; margin-bottom: 2px; }
+  .ticket-mock .t-line { border-top: 1px dashed #999; margin: 6px 0; }
+  .ticket-mock .t-row { display: flex; justify-content: space-between; text-align: left; }
+  .ticket-mock .t-total { font-weight: bold; font-size: 12px; }
+</style>
+</head>
+<body>
+
+<!-- COVER -->
+<div class="cover">
+  <img src="/logo-myminileo.jpg" alt="My mini Leo">
+  <h1>Manual de <strong>Usuario</strong></h1>
+  <div class="subtitle">Sistema Punto de Venta</div>
+  <div class="version">Versión 1.0 — Marzo 2026</div>
+</div>
+
+<!-- TOC -->
+<div class="container page-break">
+  <h2>Índice</h2>
+  <div class="toc">
+    <a href="#inicio"><span class="num">1.</span> Panel de Inicio (Dashboard)</a>
+    <a href="#caja"><span class="num">2.</span> Gestión de Caja</a>
+    <a href="#pos"><span class="num">3.</span> Punto de Venta (POS)</a>
+    <a href="#checkout"><span class="num">4.</span> Proceso de Cobro</a>
+    <a href="#ticket"><span class="num">5.</span> Ticket e Impresión</a>
+    <a href="#pedidos"><span class="num">6.</span> Gestión de Pedidos</a>
+    <a href="#reembolsos"><span class="num">7.</span> Reembolsos y Devoluciones</a>
+    <a href="#vales"><span class="num">8.</span> Vales (Gift Cards)</a>
+    <a href="#flujo"><span class="num">9.</span> Flujo de Trabajo Diario</a>
+    <a href="#problemas"><span class="num">10.</span> Resolución de Problemas</a>
+  </div>
+</div>
+
+<!-- 1. DASHBOARD -->
+<div class="container page-break" id="inicio">
+  <h2>1. Panel de Inicio</h2>
+  <p>La pantalla principal muestra el estado general del sistema de un vistazo.</p>
+
+  <div class="screen">
+    <div class="screen-title">Panel de Inicio</div>
+    <div class="grid-3">
+      <div class="card-mock">
+        <div class="label">Conexión Shopify</div>
+        <div style="display:flex;align-items:center;gap:6px;margin-top:4px">
+          <span style="width:10px;height:10px;border-radius:50%;background:#25D366;display:inline-block"></span>
+          <span style="font-weight:600">Conectado</span>
+        </div>
+      </div>
+      <div class="card-mock">
+        <div class="label">Sesión de Caja</div>
+        <div style="display:flex;align-items:center;gap:6px;margin-top:4px">
+          <span style="width:10px;height:10px;border-radius:50%;background:#25D366;display:inline-block"></span>
+          <span style="font-weight:600">Abierta</span>
+        </div>
+      </div>
+      <div class="card-mock">
+        <div class="label">Ventas de Hoy</div>
+        <div class="value">1.250,00 €</div>
+        <div class="sub">8 pedidos</div>
+      </div>
+    </div>
+    <div style="margin-top:12px">
+      <div class="label" style="font-size:10px;color:#999;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px">Acciones Rápidas</div>
+      <span class="btn-mock btn-outline">💰 Abrir Caja</span>
+      <span class="btn-mock btn-outline">🛒 Ir al POS</span>
+      <span class="btn-mock btn-outline">📋 Ver Pedidos</span>
+      <span class="btn-mock btn-outline">🎫 Emitir Vale</span>
+    </div>
+  </div>
+
+  <h4>Elementos del Dashboard</h4>
+  <ul>
+    <li><strong>Conexión Shopify</strong> — Indicador verde (conectado) o rojo (desconectado)</li>
+    <li><strong>Sesión de Caja</strong> — Estado actual: abierta o cerrada</li>
+    <li><strong>Ventas del día</strong> — Importe total y número de pedidos</li>
+    <li><strong>Desglose de pagos</strong> — Efectivo, Tarjeta y Bizum con barras de progreso</li>
+    <li><strong>Vales activos</strong> — Cantidad y saldo pendiente total</li>
+    <li><strong>Acciones rápidas</strong> — Acceso directo a las funciones principales</li>
+  </ul>
+</div>
+
+<!-- 2. CAJA -->
+<div class="container page-break" id="caja">
+  <h2>2. Gestión de Caja</h2>
+
+  <div class="warning">
+    <strong>⚠️ Importante:</strong> Es obligatorio abrir una sesión de caja antes de poder procesar cualquier cobro.
+  </div>
+
+  <h3>Abrir Sesión</h3>
+  <div class="flow-step">
+    <div class="flow-num">1</div>
+    <div class="flow-text">Ve a <strong>Caja</strong> en el menú lateral</div>
+  </div>
+  <div class="flow-step">
+    <div class="flow-num">2</div>
+    <div class="flow-text">Pulsa <span class="btn-mock btn-primary">Abrir sesión de caja</span></div>
+  </div>
+  <div class="flow-step">
+    <div class="flow-num">3</div>
+    <div class="flow-text">Introduce el <strong>monto de apertura</strong> (fondo de caja en efectivo) y el <strong>nombre del cajero</strong></div>
+  </div>
+  <div class="flow-step">
+    <div class="flow-num">4</div>
+    <div class="flow-text">Pulsa <span class="btn-mock btn-primary">Abrir sesión</span></div>
+  </div>
+
+  <h3>Durante la Sesión</h3>
+  <div class="screen">
+    <div class="screen-title">Sesión Actual</div>
+    <div class="grid-2" style="gap:16px">
+      <div>
+        <div style="font-size:11px;color:#999">Cajero: <strong style="color:#333">Celia</strong></div>
+        <div style="font-size:11px;color:#999">Apertura: <strong style="color:#333">150,00 €</strong></div>
+      </div>
+      <div>
+        <div style="font-size:11px;color:#999">Pedidos: <strong style="color:#333">5</strong></div>
+        <div style="font-size:11px;color:#999">Ventas brutas: <strong style="color:#333">890,50 €</strong></div>
+      </div>
+    </div>
+    <div class="grid-3" style="margin-top:12px">
+      <div class="card-mock"><div class="label">Efectivo</div><div class="value" style="font-size:16px">540,50 €</div></div>
+      <div class="card-mock"><div class="label">Tarjeta</div><div class="value" style="font-size:16px">250,00 €</div></div>
+      <div class="card-mock"><div class="label">Bizum</div><div class="value" style="font-size:16px">100,00 €</div></div>
+    </div>
+    <div style="margin-top:8px;font-size:12px;color:#666">Efectivo esperado: <strong>690,50 €</strong> (apertura + ventas efectivo)</div>
+  </div>
+
+  <h3>Cerrar Sesión (Arqueo)</h3>
+  <div class="flow-step">
+    <div class="flow-num">1</div>
+    <div class="flow-text">Pulsa <span class="btn-mock btn-danger">Cerrar sesión de caja</span></div>
+  </div>
+  <div class="flow-step">
+    <div class="flow-num">2</div>
+    <div class="flow-text">Cuenta el efectivo físico e introduce el <strong>monto contado</strong></div>
+  </div>
+  <div class="flow-step">
+    <div class="flow-num">3</div>
+    <div class="flow-text">El sistema calcula: <strong>Esperado</strong> vs <strong>Contado</strong> = <strong>Diferencia</strong> (sobrante o faltante)</div>
+  </div>
+  <div class="flow-step">
+    <div class="flow-num">4</div>
+    <div class="flow-text">Pulsa <span class="btn-mock btn-primary">Cerrar sesión</span></div>
+  </div>
+
+  <div class="tip">
+    <strong>💡 Fórmula:</strong> Efectivo esperado = Apertura + Ventas en efectivo − Devoluciones en efectivo
+  </div>
+</div>
+
+<!-- 3. POS -->
+<div class="container page-break" id="pos">
+  <h2>3. Punto de Venta (POS)</h2>
+  <p>La pantalla principal de cobro se divide en dos zonas: productos (izquierda) y carrito (derecha).</p>
+
+  <div class="screen">
+    <div class="screen-title">Pantalla POS</div>
+    <div class="sidebar-mock">
+      <div class="sidebar-content">
+        <div style="background:#f2f2f2;padding:8px 12px;border-radius:4px;font-size:12px;color:#999;margin-bottom:8px">🔍 Buscar productos...</div>
+        <div style="margin-bottom:8px">
+          <span class="btn-mock btn-primary" style="font-size:10px">Todas las categorías</span>
+          <span class="btn-mock btn-outline" style="font-size:10px">Bodies</span>
+          <span class="btn-mock btn-outline" style="font-size:10px">Pijamas</span>
+          <span class="btn-mock btn-outline" style="font-size:10px">Accesorios</span>
+        </div>
+        <div class="grid-3">
+          <div class="product-mock"><div class="img">📦</div><div class="info"><div class="name">Body Estrellitas</div><div class="price">12,95 €</div><span class="badge badge-green" style="font-size:8px">15 uds</span></div></div>
+          <div class="product-mock"><div class="img">📦</div><div class="info"><div class="name">Pijama Osito</div><div class="price">24,50 €</div><span class="badge badge-green" style="font-size:8px">8 uds</span></div></div>
+          <div class="product-mock" style="opacity:0.5"><div class="img">📦</div><div class="info"><div class="name">Gorro Lana</div><div class="price">9,95 €</div><span class="badge badge-red" style="font-size:8px">Agotado</span></div></div>
+        </div>
+      </div>
+      <div style="width:200px;background:#fff;border:1px solid #edf2f7;border-radius:6px;padding:12px;flex-shrink:0">
+        <div style="font-size:13px;font-weight:600;margin-bottom:8px">🛒 Carrito <span class="badge badge-gray">2</span></div>
+        <div style="font-size:11px;border-bottom:1px solid #f5f5f5;padding:4px 0">Body Estrellitas ×2 <span style="float:right">25,90 €</span></div>
+        <div style="font-size:11px;border-bottom:1px solid #f5f5f5;padding:4px 0">Pijama Osito ×1 <span style="float:right">24,50 €</span></div>
+        <div style="margin-top:8px;font-size:11px;color:#999">Subtotal: 50,40 €</div>
+        <div style="font-size:11px;color:#999">IVA incl.: 8,74 €</div>
+        <div style="font-size:14px;font-weight:700;margin-top:4px">Total: 50,40 €</div>
+        <div class="btn-mock btn-primary" style="width:100%;text-align:center;margin-top:8px">Crear Pedido — 50,40 €</div>
+      </div>
+    </div>
+  </div>
+
+  <h3>Buscar Productos</h3>
+  <ul>
+    <li><strong>Barra de búsqueda</strong> — Busca por nombre o SKU</li>
+    <li><strong>Chips de categoría</strong> — Filtra por tipo de producto</li>
+    <li><strong>Lector de código de barras</strong> — Compatible con escáner tipo wedge USB. Escanea y se añade automáticamente</li>
+  </ul>
+
+  <h3>Gestionar Carrito</h3>
+  <ul>
+    <li><strong>+ / −</strong> para ajustar cantidades</li>
+    <li><strong>🗑️ Papelera</strong> para eliminar un artículo</li>
+    <li><strong>Buscar cliente</strong> — Escribe nombre o email para asociar cliente</li>
+    <li><strong>Descuento</strong> — Aplica porcentaje (%) o importe fijo (€)</li>
+  </ul>
+
+  <div class="tip">
+    <strong>💡 Productos agotados</strong> aparecen deshabilitados y no se pueden añadir al carrito.
+  </div>
+</div>
+
+<!-- 4. CHECKOUT -->
+<div class="container page-break" id="checkout">
+  <h2>4. Proceso de Cobro</h2>
+  <p>Al pulsar <strong>"Crear Pedido"</strong> se abre el modal de cobro.</p>
+
+  <h3>Métodos de Pago</h3>
+  <div class="screen">
+    <div class="screen-title">Seleccionar Método de Pago</div>
+    <div class="grid-5" style="gap:6px">
+      <div class="card-mock" style="text-align:center;padding:10px"><div style="font-size:18px">💵</div><div style="font-size:10px;font-weight:600">Efectivo</div></div>
+      <div class="card-mock" style="text-align:center;padding:10px"><div style="font-size:18px">💳</div><div style="font-size:10px;font-weight:600">Tarjeta</div></div>
+      <div class="card-mock" style="text-align:center;padding:10px"><div style="font-size:18px">📱</div><div style="font-size:10px;font-weight:600">Bizum</div></div>
+      <div class="card-mock" style="text-align:center;padding:10px"><div style="font-size:18px">🎫</div><div style="font-size:10px;font-weight:600">Vale</div></div>
+      <div class="card-mock" style="text-align:center;padding:10px"><div style="font-size:18px">🔀</div><div style="font-size:10px;font-weight:600">Mixto</div></div>
+    </div>
+  </div>
+
+  <h4>Efectivo</h4>
+  <p>Introduce el importe recibido. El sistema calcula automáticamente el <strong>cambio a devolver</strong>.</p>
+
+  <h4>Tarjeta / Bizum</h4>
+  <p>Cobro directo. Solo confirmar.</p>
+
+  <h4>Vale (Gift Card)</h4>
+  <ol>
+    <li>Introduce los <strong>últimos caracteres</strong> del código del vale</li>
+    <li>Pulsa buscar — se verifica el saldo en Shopify</li>
+    <li>Si el vale <strong>cubre el total</strong>: se cobra íntegro</li>
+    <li>Si <strong>no cubre</strong>: se muestra cuánto falta y el resto se cobra en efectivo</li>
+  </ol>
+
+  <h4>Mixto</h4>
+  <p>Combina dos o más métodos. Selecciona método + importe para cada parte. La suma debe igualar el total.</p>
+
+  <div class="tip">
+    <strong>💡 Todos los pedidos</strong> se crean en Shopify con el tag <span class="badge badge-blue">POS MML</span> para identificarlos.
+  </div>
+</div>
+
+<!-- 5. TICKET -->
+<div class="container page-break" id="ticket">
+  <h2>5. Ticket e Impresión</h2>
+  <p>Tras completar el cobro, aparece la pantalla de confirmación con opciones de ticket.</p>
+
+  <div class="screen">
+    <div class="screen-title">Pedido Completado</div>
+    <div style="text-align:center;margin-bottom:12px">
+      <div style="font-size:32px">✅</div>
+      <div style="font-size:16px;font-weight:600">Pedido #1035</div>
+      <span class="badge badge-green">Completado</span>
+    </div>
+    <div class="card-mock" style="font-size:11px">
+      <div style="display:flex;justify-content:space-between"><span>Total</span><strong>50,40 €</strong></div>
+      <div style="display:flex;justify-content:space-between"><span>Método</span><span>Efectivo</span></div>
+      <div style="display:flex;justify-content:space-between"><span>Artículos</span><span>3</span></div>
+    </div>
+    <div style="margin-top:8px">
+      <div class="btn-mock btn-outline" style="width:100%;text-align:center;margin-bottom:4px">🖨️ Imprimir ticket</div>
+      <div style="display:flex;gap:4px;margin-bottom:4px">
+        <div style="flex:1;background:#f2f2f2;padding:6px 8px;border-radius:4px;font-size:11px;color:#999">Email del cliente</div>
+        <span class="btn-mock btn-outline">📧</span>
+      </div>
+      <div class="btn-mock btn-primary" style="width:100%;text-align:center">✕ Cerrar y siguiente venta</div>
+    </div>
+  </div>
+
+  <h3>Ejemplo de Ticket Impreso</h3>
+  <div class="ticket-mock">
+    <div class="t-brand">My mini Leo</div>
+    <div style="font-size:8px;color:#999">Clothes for your baby</div>
+    <div class="t-line"></div>
+    <div class="t-row"><span>Ticket:</span><strong>#1035</strong></div>
+    <div class="t-row"><span>Fecha:</span><span>24 mar 2026, 18:30</span></div>
+    <div class="t-row"><span>Método:</span><span>Efectivo</span></div>
+    <div class="t-line"></div>
+    <div class="t-row"><span>2x Body Estrellitas</span></div>
+    <div class="t-row"><span></span><span>25,90 €</span></div>
+    <div class="t-row"><span>1x Pijama Osito</span></div>
+    <div class="t-row"><span></span><span>24,50 €</span></div>
+    <div class="t-line"></div>
+    <div class="t-row"><span>Subtotal</span><span>50,40 €</span></div>
+    <div class="t-row"><span>IVA (21% incl.)</span><span>8,74 €</span></div>
+    <div class="t-line"></div>
+    <div class="t-row t-total"><span>TOTAL</span><span>50,40 €</span></div>
+    <div class="t-row"><span>Recibido</span><span>60,00 €</span></div>
+    <div class="t-row" style="font-weight:bold"><span>Cambio</span><span>9,60 €</span></div>
+    <div class="t-line"></div>
+    <div style="font-size:8px;color:#999;margin-top:4px">Gracias por su compra<br>myminileo.com</div>
+  </div>
+</div>
+
+<!-- 6. PEDIDOS -->
+<div class="container page-break" id="pedidos">
+  <h2>6. Gestión de Pedidos</h2>
+  <p>Consulta, busca y gestiona todos los pedidos desde la sección <strong>Pedidos</strong>.</p>
+
+  <div class="screen">
+    <div class="screen-title">Lista de Pedidos</div>
+    <div style="display:flex;gap:8px;margin-bottom:8px">
+      <div style="flex:1;background:#f2f2f2;padding:6px 8px;border-radius:4px;font-size:11px;color:#999">🔍 Buscar pedido...</div>
+      <span class="btn-mock btn-primary" style="font-size:10px">Todos</span>
+      <span class="btn-mock btn-outline" style="font-size:10px">Solo POS</span>
+    </div>
+    <table class="table-mock">
+      <thead><tr><th>Pedido</th><th>Fecha</th><th>Cliente</th><th>Total</th><th>Estado</th><th>Envío</th></tr></thead>
+      <tbody>
+        <tr><td><strong>#1035</strong></td><td>24 mar 2026</td><td>María García</td><td>50,40 €</td><td><span class="badge badge-green">Pagado</span></td><td><span class="badge badge-orange">Pendiente</span></td></tr>
+        <tr><td><strong>#1034</strong></td><td>24 mar 2026</td><td>—</td><td>785,95 €</td><td><span class="badge badge-red">Reembolsado</span></td><td><span class="badge badge-gray">—</span></td></tr>
+        <tr><td><strong>#1033</strong></td><td>23 mar 2026</td><td>Ana López</td><td>89,90 €</td><td><span class="badge badge-green">Pagado</span></td><td><span class="badge badge-green">Enviado</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Filtros</h3>
+  <ul>
+    <li><strong>Buscador</strong> — Por número de pedido (#1035) o nombre de cliente</li>
+    <li><strong>Todos</strong> — Muestra todos los pedidos de la tienda</li>
+    <li><strong>Solo POS</strong> — Filtra pedidos creados desde este POS (tag <span class="badge badge-blue">POS MML</span>)</li>
+  </ul>
+
+  <h3>Detalle del Pedido</h3>
+  <p>Haz clic en cualquier pedido para ver el detalle completo:</p>
+  <ul>
+    <li>Información del cliente</li>
+    <li>Líneas del pedido (producto, variante, cantidad, precio)</li>
+    <li>Desglose: subtotal, descuentos, impuestos, total</li>
+    <li>Historial de reembolsos (con código del vale si aplica)</li>
+  </ul>
+
+  <h3>Acciones Disponibles</h3>
+  <table class="table-mock">
+    <thead><tr><th>Acción</th><th>Cuándo aparece</th><th>Qué hace</th></tr></thead>
+    <tbody>
+      <tr><td><span class="btn-mock btn-outline" style="font-size:10px">Marcar como pagado</span></td><td>Pedido pendiente</td><td>Marca como pagado en Shopify</td></tr>
+      <tr><td><span class="btn-mock btn-outline" style="font-size:10px">Marcar como enviado</span></td><td>Pedido sin enviar</td><td>Crea fulfillment en Shopify</td></tr>
+      <tr><td><span class="btn-mock btn-accent" style="font-size:10px">Reembolsar</span></td><td>Pedido pagado</td><td>Abre modal de reembolso</td></tr>
+      <tr><td><span class="btn-mock btn-danger" style="font-size:10px">Cancelar pedido</span></td><td>Pedido no cancelado</td><td>Cancela con reembolso y restock</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- 7. REEMBOLSOS -->
+<div class="container page-break" id="reembolsos">
+  <h2>7. Reembolsos y Devoluciones</h2>
+
+  <h3>Tipos de Reembolso</h3>
+  <div class="grid-2" style="margin-bottom:16px">
+    <div class="card-mock">
+      <div style="font-weight:600;margin-bottom:4px">Reembolso Total</div>
+      <div style="font-size:12px;color:#666">Devuelve el pedido completo. Todos los artículos se incluyen automáticamente.</div>
+    </div>
+    <div class="card-mock">
+      <div style="font-weight:600;margin-bottom:4px">Reembolso Parcial</div>
+      <div style="font-size:12px;color:#666">Selecciona artículos y cantidades específicas a devolver.</div>
+    </div>
+  </div>
+
+  <h3>Métodos de Reembolso</h3>
+  <div class="screen">
+    <div class="screen-title">Método de Reembolso</div>
+    <div class="grid-3" style="gap:6px">
+      <div class="card-mock" style="text-align:center;padding:10px"><div style="font-size:18px">💵</div><div style="font-size:10px;font-weight:600">Efectivo</div><div style="font-size:9px;color:#999">Devolver en mano</div></div>
+      <div class="card-mock" style="text-align:center;padding:10px"><div style="font-size:18px">💳</div><div style="font-size:10px;font-weight:600">Tarjeta</div><div style="font-size:9px;color:#999">Devolución original</div></div>
+      <div class="card-mock" style="text-align:center;padding:10px;border-color:#91A1BB"><div style="font-size:18px">🎫</div><div style="font-size:10px;font-weight:600">Vale</div><div style="font-size:9px;color:#999">Crea gift card</div></div>
+    </div>
+  </div>
+
+  <h4>Reembolso a Vale</h4>
+  <p>Cuando se selecciona <strong>"Vale"</strong> como método:</p>
+  <ol>
+    <li>Se crea un <strong>Gift Card en Shopify</strong> por el importe del reembolso</li>
+    <li>El código del vale aparece en pantalla</li>
+    <li>Se puede <strong>imprimir</strong> el vale para entregarlo al cliente</li>
+    <li>Se puede <strong>enviar por email</strong> al cliente</li>
+    <li>El código queda registrado en la nota del reembolso del pedido</li>
+  </ol>
+
+  <div class="screen">
+    <div class="screen-title">Vale de Devolución Generado</div>
+    <div style="text-align:center">
+      <div style="font-size:24px">🎫</div>
+      <div style="font-size:12px;font-weight:500;margin:4px 0">Reembolso procesado. Vale creado:</div>
+      <div style="background:#f2f2f2;display:inline-block;padding:8px 20px;border-radius:6px;font-family:monospace;font-size:18px;font-weight:700;color:#91A1BB;letter-spacing:2px;margin:8px 0">9g3a755gfda4ca55</div>
+      <div style="font-size:16px;font-weight:600;margin:4px 0">785,95 €</div>
+      <div style="margin-top:8px">
+        <span class="btn-mock btn-outline">🖨️ Imprimir vale</span>
+        <span class="btn-mock btn-outline">📧 Enviar email</span>
+      </div>
+    </div>
+  </div>
+
+  <h3>Reposición de Inventario</h3>
+  <p>Al activar <strong>"Reponer artículos al inventario"</strong>, selecciona la <strong>ubicación</strong> donde devolver el stock (ej: "Shop location").</p>
+</div>
+
+<!-- 8. VALES -->
+<div class="container page-break" id="vales">
+  <h2>8. Vales (Gift Cards)</h2>
+  <p>Los vales son <strong>Gift Cards de Shopify</strong>. Todo se almacena en Shopify, no en local.</p>
+
+  <div class="screen">
+    <div class="screen-title">Gestión de Vales</div>
+    <div class="grid-5" style="gap:6px;margin-bottom:12px">
+      <div class="card-mock" style="text-align:center;padding:8px"><div class="label">Total</div><div class="value" style="font-size:16px">9</div></div>
+      <div class="card-mock" style="text-align:center;padding:8px"><div class="label">Activos</div><div class="value" style="font-size:16px;color:#25D366">6</div></div>
+      <div class="card-mock" style="text-align:center;padding:8px"><div class="label">Agotados</div><div class="value" style="font-size:16px">1</div></div>
+      <div class="card-mock" style="text-align:center;padding:8px"><div class="label">Cancelados</div><div class="value" style="font-size:16px;color:#D32F2F">2</div></div>
+      <div class="card-mock" style="text-align:center;padding:8px"><div class="label">Saldo</div><div class="value" style="font-size:16px;color:#91A1BB">1.115 €</div></div>
+    </div>
+    <table class="table-mock">
+      <thead><tr><th>Código</th><th>Monto</th><th>Saldo</th><th>Cliente</th><th>Estado</th></tr></thead>
+      <tbody>
+        <tr><td style="font-family:monospace;font-weight:600">•••• •••• •••• d6h3</td><td>749,95 €</td><td style="color:#25D366;font-weight:600">749,95 €</td><td>Cliente QA</td><td><span class="badge badge-green">Activo</span></td></tr>
+        <tr><td style="font-family:monospace;font-weight:600">•••• •••• •••• 0001</td><td>100,00 €</td><td style="color:#999">0,00 €</td><td>Ayumu Hirano</td><td><span class="badge badge-gray">Agotado</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Emitir Vale</h3>
+  <ol>
+    <li>Pulsa <span class="btn-mock btn-primary">Emitir Vale</span></li>
+    <li>Introduce el <strong>importe</strong></li>
+    <li>Opcionalmente: nombre del cliente, notas</li>
+    <li>Pulsa <strong>Emitir</strong></li>
+    <li>Se muestra el <strong>código completo</strong> — apúntalo o imprímelo para el cliente</li>
+  </ol>
+
+  <h3>Detalle del Vale</h3>
+  <p>Haz clic en un vale para ver su detalle con el <strong>historial de transacciones</strong>:</p>
+  <ul>
+    <li><span style="color:#25D366">●</span> <strong>Abono</strong> — Emisión o crédito añadido</li>
+    <li><span style="color:#e65100">●</span> <strong>Cargo</strong> — Uso del vale como pago (muestra el nº de pedido)</li>
+  </ul>
+
+  <h3>Cancelar Vale</h3>
+  <p>En el detalle, pulsa <span class="btn-mock btn-danger">Cancelar Vale</span> y confirma. Se desactiva en Shopify.</p>
+</div>
+
+<!-- 9. FLUJO DIARIO -->
+<div class="container page-break" id="flujo">
+  <h2>9. Flujo de Trabajo Diario</h2>
+
+  <h3>🌅 Apertura (mañana)</h3>
+  <div class="flow-step"><div class="flow-num">1</div><div class="flow-text">Abrir navegador → <code>pos.myminileo.com</code></div></div>
+  <div class="flow-step"><div class="flow-num">2</div><div class="flow-text">Dashboard → verificar que Shopify está conectado</div></div>
+  <div class="flow-step"><div class="flow-num">3</div><div class="flow-text">Ir a <strong>Caja</strong> → <strong>Abrir sesión</strong> con el fondo de caja (ej: 150 €)</div></div>
+
+  <h3>☀️ Durante el día</h3>
+  <div class="flow-step"><div class="flow-num">4</div><div class="flow-text"><strong>Venta:</strong> POS → buscar/escanear producto → añadir al carrito → cobrar</div></div>
+  <div class="flow-step"><div class="flow-num">5</div><div class="flow-text"><strong>Devolución:</strong> Pedidos → buscar pedido → Reembolsar (efectivo/tarjeta/vale)</div></div>
+  <div class="flow-step"><div class="flow-num">6</div><div class="flow-text"><strong>Vale:</strong> Vales → Emitir Vale o verificar saldo</div></div>
+
+  <h3>🌙 Cierre (noche)</h3>
+  <div class="flow-step"><div class="flow-num">7</div><div class="flow-text">Ir a <strong>Caja</strong> → revisar KPIs del día</div></div>
+  <div class="flow-step"><div class="flow-num">8</div><div class="flow-text">Pulsar <strong>Cerrar sesión</strong> → contar efectivo → introducir monto</div></div>
+  <div class="flow-step"><div class="flow-num">9</div><div class="flow-text">Verificar diferencia → <strong>Cerrar</strong></div></div>
+</div>
+
+<!-- 10. PROBLEMAS -->
+<div class="container page-break" id="problemas">
+  <h2>10. Resolución de Problemas</h2>
+
+  <table class="table-mock">
+    <thead><tr><th style="width:40%">Problema</th><th>Solución</th></tr></thead>
+    <tbody>
+      <tr><td>"Abre una sesión de caja antes de cobrar"</td><td>Ve a <strong>Caja</strong> → Abrir sesión</td></tr>
+      <tr><td>Pantalla en blanco</td><td>Refresca el navegador (Ctrl+R / Cmd+R)</td></tr>
+      <tr><td>Producto no aparece</td><td>Verifica en Shopify que esté publicado y con stock</td></tr>
+      <tr><td>"Quantity cannot refund more"</td><td>El pedido ya fue reembolsado total o parcialmente</td></tr>
+      <tr><td>Vale no encontrado</td><td>Verifica los últimos 4 caracteres del código</td></tr>
+      <tr><td>"No access token"</td><td>Reinicia el servidor backend</td></tr>
+      <tr><td>Error al pagar con vale</td><td>Verifica que el vale esté activo y tenga saldo suficiente</td></tr>
+      <tr><td>Caja dice "ya abierta" pero POS dice "cerrada"</td><td>Refresca la página del POS</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Datos del Sistema</h3>
+  <table class="table-mock">
+    <thead><tr><th>Concepto</th><th>Detalle</th></tr></thead>
+    <tbody>
+      <tr><td>IVA</td><td>21% incluido en precios</td></tr>
+      <tr><td>Moneda</td><td>EUR (€)</td></tr>
+      <tr><td>Tag de pedidos POS</td><td><span class="badge badge-blue">POS MML</span></td></tr>
+      <tr><td>Vales</td><td>Gift Cards de Shopify</td></tr>
+      <tr><td>Sesiones de caja</td><td>Metaobjects de Shopify</td></tr>
+      <tr><td>Pagos</td><td>Metafields en pedidos de Shopify</td></tr>
+      <tr><td>Lector de barras</td><td>Compatible con wedge USB</td></tr>
+      <tr><td>Almacenamiento local</td><td>Ninguno — todo en Shopify</td></tr>
+    </tbody>
+  </table>
+
+  <div style="margin-top:40px;text-align:center;color:#999;font-size:12px">
+    <p>POS My mini Leo v1.0 — Marzo 2026</p>
+    <p>myminileo.com</p>
+  </div>
+</div>
+
+<!-- PRINT BUTTON -->
+<div class="no-print" style="position:fixed;bottom:20px;right:20px;z-index:100">
+  <button onclick="window.print()" style="background:#434B4F;color:#fff;border:none;padding:12px 24px;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;box-shadow:0 4px 12px rgba(0,0,0,0.2)">
+    🖨️ Guardar como PDF
+  </button>
+</div>
+
+</body>
+</html>
