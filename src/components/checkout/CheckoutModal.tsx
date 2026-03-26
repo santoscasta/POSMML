@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { formatCurrency } from '../../utils/currency';
 import { apiGet } from '../../utils/apiClient';
-import { es } from '../../i18n/es';
 import type { PaymentMethod, MixedPaymentSplit } from '../../types/payment';
 import {
   Dialog,

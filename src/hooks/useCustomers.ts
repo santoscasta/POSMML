@@ -12,7 +12,7 @@ interface CustomersResponse {
 export function useCustomers() {
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [loading, setLoading] = useState(false);
-  const debounceRef = useRef<ReturnType<typeof setTimeout>>();
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   const searchCustomers = useCallback((query: string) => {
     if (debounceRef.current) clearTimeout(debounceRef.current);

@@ -32,7 +32,7 @@ export function CartPanel() {
     itemCount,
   } = useCart();
   const { isOpen: sessionOpen } = useSession();
-  const { checkout, loading: checkingOut, error: checkoutError } = useCheckout();
+  const { checkout, error: checkoutError } = useCheckout();
   const [showCheckout, setShowCheckout] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 

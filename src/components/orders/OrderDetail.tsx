@@ -23,11 +23,9 @@ import {
   TableCell,
 } from '@/components/ui/table';
 import {
-  Package,
   CreditCard,
   Truck,
   Ban,
-  Check,
   Undo2,
   Ticket,
 } from 'lucide-react';

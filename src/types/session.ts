@@ -28,9 +28,11 @@ export interface OpenSessionInput {
   openingAmount: number;
   cashierName?: string;
   notes?: string;
+  force?: boolean;
 }
 
 export interface CloseSessionInput {
   closingAmount: number;
   notes?: string;
+  force?: boolean;
 }

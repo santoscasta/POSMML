@@ -91,7 +91,7 @@ export function CloseSessionModal({ open, onClose }: CloseSessionModalProps) {
     const now = new Date();
     const dateStr = now.toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
     const openedAt = data.openedAt ? new Date(data.openedAt).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '—';
-    const rExpected = rKpis ? (data.openingAmount || 0) + (rKpis.cashSales || 0) - (rKpis.refundsCash || rKpis.refunds || 0) : data.openingAmount || 0;
+    const rExpected = rKpis ? (data.openingAmount || 0) + (rKpis.cashSales || 0) - (rKpis.refunds || 0) : data.openingAmount || 0;
     const rDifference = (data.closingAmount || 0) - rExpected;
 
     const w = window.open('', '_blank', 'width=420,height=800');

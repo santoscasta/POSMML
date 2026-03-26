@@ -31,7 +31,7 @@ export function useProducts() {
   const [categories, setCategories] = useState<string[]>([]);
   const [hasNextPage, setHasNextPage] = useState(false);
   const [endCursor, setEndCursor] = useState<string | null>(null);
-  const debounceRef = useRef<ReturnType<typeof setTimeout>>();
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   const fetchProducts = useCallback(
     async (query: string, after?: string | null, category?: string | null) => {

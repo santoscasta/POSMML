@@ -21,8 +21,8 @@ function Sidebar() {
     { path: '/dashboard', label: es.nav.dashboard || 'Inicio', icon: Home },
     { path: '/', label: es.nav.pos, icon: ShoppingCart },
     { path: '/orders', label: es.nav.orders, icon: ClipboardList },
-    { path: '/caja', label: es.nav.caja || 'Caja', icon: Wallet },
-    { path: '/vales', label: es.nav.vales || 'Vales', icon: Ticket },
+    { path: '/caja', label: es.nav.cashRegister, icon: Wallet },
+    { path: '/vales', label: es.nav.vouchers, icon: Ticket },
   ];
 
   return (

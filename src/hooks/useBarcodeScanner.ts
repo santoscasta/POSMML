@@ -8,7 +8,7 @@ import { useEffect, useRef, useCallback } from 'react';
 export function useBarcodeScanner(onScan: (barcode: string) => void) {
   const buffer = useRef('');
   const lastKeyTime = useRef(0);
-  const timeout = useRef<ReturnType<typeof setTimeout>>();
+  const timeout = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {

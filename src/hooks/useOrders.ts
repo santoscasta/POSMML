@@ -37,7 +37,7 @@ export function useOrders() {
   const [endCursor, setEndCursor] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [posOnly, setPosOnly] = useState(false);
-  const debounceRef = useRef<ReturnType<typeof setTimeout>>();
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   const fetchOrders = useCallback(
     async (search: string, posFilter: boolean, after?: string | null) => {
