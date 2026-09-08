@@ -3,6 +3,7 @@ export type PaymentMethod = 'CASH' | 'CARD' | 'BIZUM' | 'MIXED' | 'VOUCHER';
 export interface MixedPaymentSplit {
   method: Exclude<PaymentMethod, 'MIXED'>;
   amount: number;
+  voucherCode?: string;
 }
 
 export interface PosPayment {
@@ -18,6 +19,7 @@ export interface PosPayment {
   notes?: string;
   createdAt: string;
   mixedPayments?: MixedPaymentSplit[];
+  voucherCode?: string;
 }
 
 export interface PaymentInput {

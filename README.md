@@ -1,4 +1,8 @@
-# React + TypeScript + Vite
+# POS MML
+
+Consulta [configuración, despliegue y recuperación de operaciones](OPERACION_POS.md) antes de arrancar esta versión. Se requieren credenciales de acceso y un volumen persistente en producción; `.env.example` enumera las variables. Ejecuta `npm test` para las pruebas locales sin Shopify real.
+
+## React + TypeScript + Vite
 
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 

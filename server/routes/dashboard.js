@@ -1,6 +1,8 @@
 import { Router } from 'express';
 import { getAccessToken, SHOPIFY_STORE } from '../lib/shopify.js';
 import shopifyGQL from '../lib/shopifyGQL.js';
+import { getStore } from '../lib/operationStore.js';
+import { getPayments, computeKPIs } from '../lib/accounting.js';
 
 const router = Router();
 
@@ -25,39 +27,11 @@ router.get('/dashboard', async (req, res) => {
     // Today's orders tagged POS MML with their payment metafields
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    const todayISO = today.toISOString().split('T')[0];
 
-    const ordersData = await shopifyGQL(
-      `{
-        orders(first: 100, query: "tag:'POS MML' created_at:>='${todayISO}'") {
-          edges {
-            node {
-              id
-              totalPriceSet { shopMoney { amount } }
-              metafields(first: 10, namespace: "pos_mml") {
-                edges { node { key value } }
-              }
-            }
-          }
-        }
-      }`,
-    );
-
-    // Parse orders with payment info
-    const todayOrders = ordersData.orders.edges
-      .map(e => {
-        const o = e.node;
-        const mfMap = {};
-        for (const mf of o.metafields.edges) mfMap[mf.node.key] = mf.node.value;
-        return {
-          amount: parseFloat(o.totalPriceSet.shopMoney.amount) || 0,
-          method: mfMap.payment_method || null,
-          type: mfMap.payment_type || 'sale',
-        };
-      })
-      .filter(o => o.method && o.type === 'sale');
-
-    const todaySales = todayOrders.reduce((s, p) => s + p.amount, 0);
+    const payments = await getPayments(shopifyGQL, getStore());
+    const todayOrders = payments.filter(p => p.createdAt >= today.toISOString() && p.type === 'sale');
+    const kpis = computeKPIs(todayOrders);
+    const todaySales = kpis.grossSales;
 
     // Voucher stats from gift cards
     let activeVouchers = 0;
@@ -91,9 +65,9 @@ router.get('/dashboard', async (req, res) => {
       activeVouchers,
       voucherBalance,
       paymentBreakdown: {
-        cash: todayOrders.filter(p => p.method === 'CASH').reduce((s, p) => s + p.amount, 0),
-        card: todayOrders.filter(p => p.method === 'CARD').reduce((s, p) => s + p.amount, 0),
-        bizum: todayOrders.filter(p => p.method === 'BIZUM').reduce((s, p) => s + p.amount, 0),
+        cash: kpis.cashSales,
+        card: kpis.cardSales,
+        bizum: kpis.bizumSales,
         mixed: todayOrders.filter(p => p.method === 'MIXED').reduce((s, p) => s + p.amount, 0),
       },
     });

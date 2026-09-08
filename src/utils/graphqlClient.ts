@@ -1,3 +1,4 @@
+import { authHeaders, clearCredentials } from './auth';
 const API_URL = import.meta.env.VITE_API_URL ? `${import.meta.env.VITE_API_URL}/graphql` : '/api/graphql';
 
 interface GraphQLResponse<T> {
@@ -21,11 +22,12 @@ export async function shopifyGraphQL<T>(
 ): Promise<T> {
   const response = await fetch(API_URL, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...authHeaders() },
     body: JSON.stringify({ query, variables }),
   });
 
   if (!response.ok) {
+    if (response.status === 401) clearCredentials();
     throw new Error(`API error: ${response.status} ${response.statusText}`);
   }
 

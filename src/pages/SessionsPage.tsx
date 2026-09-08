@@ -44,7 +44,8 @@ export function SessionsPage() {
 
   const kpis = session?.kpis;
 
-  const formatDate = (dateStr: string) => {
+  const formatDate = (dateStr: string | null) => {
+    if (!dateStr) return 'No registrada';
     return new Date(dateStr).toLocaleDateString('es-ES', {
       day: '2-digit',
       month: '2-digit',
@@ -54,7 +55,8 @@ export function SessionsPage() {
     });
   };
 
-  const formatDuration = (start: string, end?: string) => {
+  const formatDuration = (start: string | null, end?: string) => {
+    if (!start) return '—';
     const startDate = new Date(start);
     const endDate = end ? new Date(end) : new Date();
     const diffMs = endDate.getTime() - startDate.getTime();
@@ -86,6 +88,7 @@ export function SessionsPage() {
             </div>
           </CardHeader>
           <CardContent>
+            {session.accountingError && <p role="alert" className="mb-4 rounded border border-amber-400 bg-amber-50 p-3 text-sm">{session.accountingError}</p>}
             <div className="mb-4 space-y-2 text-sm">
               <div className="flex justify-between">
                 <span className="text-muted-foreground">{es.sessions.cashierName}</span>
@@ -175,13 +178,14 @@ export function SessionsPage() {
               <TableRow key={s.id}>
                 <TableCell className="font-medium">
                   {formatDate(s.openedAt)}
+                  {s.accountingError && <p className="max-w-xs text-xs text-destructive">{s.accountingError}</p>}
                 </TableCell>
                 <TableCell>
                   {formatDuration(s.openedAt, s.closedAt)}
                 </TableCell>
                 <TableCell>
-                  {s.expectedAmount != null
-                    ? formatCurrency(s.expectedAmount - s.openingAmount)
+                  {s.kpis
+                    ? formatCurrency(s.kpis.grossSales)
                     : '—'}
                 </TableCell>
                 <TableCell>

@@ -42,9 +42,7 @@ export function CloseSessionModal({ open, onClose }: CloseSessionModalProps) {
   if (!session && !closeResult) return null;
 
   const kpis = session?.kpis;
-  const expectedCash = kpis
-    ? (session?.openingAmount ?? 0) + kpis.cashSales - kpis.refunds
-    : (session?.openingAmount ?? 0);
+  const expectedCash = kpis?.expectedCash ?? (session?.openingAmount ?? 0);
   const closingNum = parseFloat(closingAmount) || 0;
   const difference = closingNum - expectedCash;
 
@@ -91,7 +89,7 @@ export function CloseSessionModal({ open, onClose }: CloseSessionModalProps) {
     const now = new Date();
     const dateStr = now.toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
     const openedAt = data.openedAt ? new Date(data.openedAt).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '—';
-    const rExpected = rKpis ? (data.openingAmount || 0) + (rKpis.cashSales || 0) - (rKpis.refunds || 0) : data.openingAmount || 0;
+    const rExpected = data.expectedAmount ?? rKpis?.expectedCash ?? data.openingAmount ?? 0;
     const rDifference = (data.closingAmount || 0) - rExpected;
 
     const w = window.open('', '_blank', 'width=420,height=800');
@@ -276,6 +274,7 @@ export function CloseSessionModal({ open, onClose }: CloseSessionModalProps) {
             <DialogHeader>
               <DialogTitle>{es.sessions.closeSession}</DialogTitle>
             </DialogHeader>
+            {session?.accountingError && <p role="alert" className="text-sm text-destructive">{session.accountingError}</p>}
 
             <div className="space-y-4">
               {/* Session summary */}
@@ -311,7 +310,7 @@ export function CloseSessionModal({ open, onClose }: CloseSessionModalProps) {
                 <Separator />
                 <div className="flex justify-between font-semibold">
                   <span>{es.sessions.expectedCash}</span>
-                  <span>{formatCurrency(expectedCash)}</span>
+                  <span>{session?.accountingError ? 'Pendiente de conciliación' : formatCurrency(expectedCash)}</span>
                 </div>
               </div>
 
@@ -404,7 +403,7 @@ export function CloseSessionModal({ open, onClose }: CloseSessionModalProps) {
               <Button variant="outline" onClick={handleClose} disabled={loading}>
                 {es.checkout.cancel}
               </Button>
-              <Button onClick={handleConfirm} disabled={loading}>
+              <Button onClick={handleConfirm} disabled={loading || !!session?.accountingError}>
                 {loading ? es.pos.loading : es.sessions.closeSession}
               </Button>
             </DialogFooter>

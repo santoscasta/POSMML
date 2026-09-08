@@ -48,6 +48,9 @@ interface CheckoutModalProps {
     voucherCode?: string,
   ) => Promise<string | null>;
   onClose: () => void;
+  pending?: boolean;
+  checkoutError?: string | null;
+  onResume?: () => Promise<string | null>;
 }
 
 export function CheckoutModal({
@@ -61,11 +64,14 @@ export function CheckoutModal({
   customerEmail,
   onConfirm,
   onClose,
+  pending,
+  checkoutError,
+  onResume,
 }: CheckoutModalProps) {
   const [method, setMethod] = useState<PaymentMethod | null>(null);
   const [cashReceived, setCashReceived] = useState<string>('');
   const [mixedSplits, setMixedSplits] = useState<
-    { method: MixedMethod; amount: string }[]
+    { method: MixedMethod; amount: string; voucherCode?: string }[]
   >([
     { method: 'CASH', amount: '' },
     { method: 'CARD', amount: '' },
@@ -93,12 +99,13 @@ export function CheckoutModal({
     (sum, s) => sum + (parseFloat(s.amount) || 0),
     0,
   );
-  const mixedValid = Math.abs(mixedTotal - total) < 0.01;
+  const mixedValid = Math.round(mixedTotal * 100) === Math.round(total * 100)
+    && mixedSplits.every(s => Number(s.amount) > 0 && (s.method !== 'VOUCHER' || !!s.voucherCode?.trim()));
 
   const voucherCoversTotal = voucherInfo ? voucherInfo.currentBalance >= total : false;
 
   const canConfirm = (() => {
-    if (!method || loading) return false;
+    if (!method || loading || pending) return false;
     if (method === 'CASH') return cashReceivedNum >= total;
     if (method === 'MIXED') return mixedValid;
     if (method === 'VOUCHER') return voucherInfo !== null && voucherInfo.status === 'ACTIVE' && voucherInfo.currentBalance > 0;
@@ -127,7 +134,7 @@ export function CheckoutModal({
   };
 
   const handleConfirm = async () => {
-    if (!method) return;
+    if (!method || loading || pending) return;
     setLoading(true);
     setError(null);
 
@@ -136,6 +143,7 @@ export function CheckoutModal({
       splits = mixedSplits.map((s) => ({
         method: s.method,
         amount: parseFloat(s.amount) || 0,
+        ...(s.method === 'VOUCHER' ? { voucherCode: s.voucherCode?.trim() } : {}),
       }));
     }
 
@@ -171,6 +179,7 @@ export function CheckoutModal({
   };
 
   const handleClose = () => {
+    if (loading) return;
     setMethod(null);
     setCashReceived('');
     setMixedSplits([{ method: 'CASH', amount: '' }, { method: 'CARD', amount: '' }]);
@@ -182,7 +191,7 @@ export function CheckoutModal({
     onClose();
   };
 
-  const updateMixedSplit = (index: number, field: 'method' | 'amount', value: string) => {
+  const updateMixedSplit = (index: number, field: 'method' | 'amount' | 'voucherCode', value: string) => {
     setMixedSplits((prev) =>
       prev.map((s, i) =>
         i === index ? { ...s, [field]: field === 'method' ? (value as MixedMethod) : value } : s,
@@ -208,6 +217,17 @@ export function CheckoutModal({
   return (
     <Dialog open onOpenChange={(openState) => { if (!openState) handleClose(); }}>
       <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
+        {checkoutError && <p role="alert" className="text-sm text-destructive">{checkoutError}</p>}
+        {pending && !successOrder && <div className="space-y-2 rounded border p-3">
+          <p className="text-sm">Hay un cobro pendiente. Reanúdalo con sus datos originales.</p>
+          <Button disabled={loading} onClick={async () => {
+            if (!onResume) return;
+            setLoading(true);
+            const name = await onResume();
+            if (name) { setSuccessOrder(name); setError(null); }
+            setLoading(false);
+          }}>Reanudar cobro pendiente</Button>
+        </div>}
         {successOrder ? (
           <div className="space-y-4 py-2">
             <div className="flex flex-col items-center gap-2">
@@ -378,7 +398,7 @@ export function CheckoutModal({
               <DialogTitle>Resumen de pago</DialogTitle>
             </DialogHeader>
 
-            <div className="space-y-4">
+            <fieldset disabled={loading || pending} className="space-y-4">
               {/* Order summary */}
               <div className="space-y-1.5">
                 <div className="flex justify-between text-sm text-muted-foreground">
@@ -526,6 +546,12 @@ export function CheckoutModal({
                         value={split.amount}
                         onChange={(e) => updateMixedSplit(index, 'amount', e.target.value)}
                       />
+                      {split.method === 'VOUCHER' && <Input
+                        aria-label={`Código del vale ${index + 1}`}
+                        placeholder="Código del vale"
+                        value={split.voucherCode || ''}
+                        onChange={e => updateMixedSplit(index, 'voucherCode', e.target.value)}
+                      />}
                     </div>
                   ))}
                   <div className="flex items-center justify-between text-sm">
@@ -555,7 +581,7 @@ export function CheckoutModal({
                   {error}
                 </div>
               )}
-            </div>
+            </fieldset>
 
             <DialogFooter>
               <Button variant="outline" onClick={handleClose} disabled={loading}>

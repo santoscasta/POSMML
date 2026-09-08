@@ -1,5 +1,5 @@
-import { useState, useMemo, useEffect } from 'react';
-import { apiGet, apiPost } from '../../utils/apiClient';
+import { useState, useMemo, useEffect, useRef } from 'react';
+import { apiGet, apiPost, ApiError } from '../../utils/apiClient';
 import { formatCurrency } from '../../utils/currency';
 import {
   Dialog,
@@ -14,8 +14,16 @@ import { cn } from '@/lib/utils';
 import { Minus, Plus, Banknote, CreditCard, Ticket, MapPin, Printer, Mail, Loader2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import type { OrderDetail, OrderLineItem } from '../../types/order';
+import { useSession } from '../../context/SessionContext';
 
 type RefundMethod = 'CASH' | 'CARD' | 'VOUCHER';
+interface PendingRefund {
+  operationId: string;
+  orderId: string;
+  amount: number;
+  method: RefundMethod;
+  [key: string]: unknown;
+}
 
 interface ShopifyLocation {
   id: string;
@@ -41,6 +49,13 @@ interface LineItemSelection {
 }
 
 export function RefundModal({ order, open, onClose, onRefunded }: RefundModalProps) {
+  const { refresh } = useSession();
+  const storageKey = `pos.pending-refund.v1:${order.id}`;
+  const [pending, setPending] = useState<PendingRefund | null>(() => {
+    const value = localStorage.getItem(storageKey);
+    return value ? JSON.parse(value) : null;
+  });
+  const inFlight = useRef(false);
   const lineItems: OrderLineItem[] = order.lineItems.edges.map((e) => e.node);
 
   // Calculate already-refunded quantities per line item
@@ -50,9 +65,8 @@ export function RefundModal({ order, open, onClose, onRefunded }: RefundModalPro
       for (const refund of order.refunds) {
         if (refund.refundLineItems?.edges) {
           for (const edge of refund.refundLineItems.edges) {
-            const title = edge.node.lineItem.title;
-            // Match by title since refundLineItems reference differs
-            map[title] = (map[title] || 0) + edge.node.quantity;
+            const id = edge.node.lineItem.id;
+            map[id] = (map[id] || 0) + edge.node.quantity;
           }
         }
       }
@@ -67,6 +81,7 @@ export function RefundModal({ order, open, onClose, onRefunded }: RefundModalPro
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [voucherCode, setVoucherCode] = useState<string | null>(null);
+  const [issuedAmount, setIssuedAmount] = useState<number | null>(null);
   const [voucherEmail, setVoucherEmail] = useState(order.customer?.email || '');
   const [voucherEmailSent, setVoucherEmailSent] = useState(false);
   const [voucherEmailSending, setVoucherEmailSending] = useState(false);
@@ -85,7 +100,7 @@ export function RefundModal({ order, open, onClose, onRefunded }: RefundModalPro
   const [lineSelections, setLineSelections] = useState<LineItemSelection[]>(() =>
     lineItems.map((item) => {
       const unitPrice = parseFloat(item.originalUnitPriceSet.shopMoney.amount);
-      const alreadyRefunded = refundedQtyMap[item.title] || 0;
+      const alreadyRefunded = refundedQtyMap[item.id] || 0;
       const remaining = Math.max(0, item.quantity - alreadyRefunded);
       return {
         selected: false,
@@ -113,7 +128,7 @@ export function RefundModal({ order, open, onClose, onRefunded }: RefundModalPro
     }, 0);
   }, [lineSelections]);
 
-  const refundAmount = isTotal ? maxRefundable : partialRefundAmount;
+  const refundAmount = (voucherCode ? issuedAmount : null) ?? pending?.amount ?? (isTotal ? maxRefundable : partialRefundAmount);
 
   const toggleLineItem = (index: number) => {
     setLineSelections((prev) =>
@@ -134,12 +149,14 @@ export function RefundModal({ order, open, onClose, onRefunded }: RefundModalPro
   };
 
   const handleSubmit = async () => {
-    if (refundAmount <= 0) {
+    if (inFlight.current) return;
+    if (!pending && refundAmount <= 0) {
       setError('Selecciona al menos un articulo para reembolsar');
       return;
     }
 
     try {
+      inFlight.current = true;
       setSubmitting(true);
       setError(null);
 
@@ -155,7 +172,8 @@ export function RefundModal({ order, open, onClose, onRefunded }: RefundModalPro
               quantity: item.quantity,
             }));
 
-      const payload = {
+      const payload: PendingRefund = pending || {
+        operationId: crypto.randomUUID(),
         orderId: order.id,
         refundLineItems,
         restock,
@@ -169,17 +187,25 @@ export function RefundModal({ order, open, onClose, onRefunded }: RefundModalPro
           : undefined,
       };
 
+      localStorage.setItem(storageKey, JSON.stringify(payload));
+      setPending(payload);
       const result = await apiPost<{ success: boolean; voucherCode?: string }>('/refunds', payload);
+      await refresh();
+      localStorage.removeItem(storageKey);
+      setPending(null);
       if (result.voucherCode) {
+        setIssuedAmount(payload.amount);
         setVoucherCode(result.voucherCode);
       } else {
         onRefunded();
       }
     } catch (err) {
+      if (err instanceof ApiError && err.safeToRestart) { localStorage.removeItem(storageKey); setPending(null); }
       setError(
         err instanceof Error ? err.message : 'Error al procesar el reembolso',
       );
     } finally {
+      inFlight.current = false;
       setSubmitting(false);
     }
   };
@@ -188,7 +214,7 @@ export function RefundModal({ order, open, onClose, onRefunded }: RefundModalPro
     <Dialog
       open={open}
       onOpenChange={(isOpen) => {
-        if (!isOpen) onClose();
+        if (!isOpen && !submitting) onClose();
       }}
     >
       <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
@@ -302,8 +328,10 @@ export function RefundModal({ order, open, onClose, onRefunded }: RefundModalPro
           </div>
         )}
 
+        {pending && <p role="status" className="rounded border border-amber-400 bg-amber-50 p-3 text-sm">Devolución pendiente de {formatCurrency(pending.amount, currencyCode)} ({pending.method}). Reanudar conserva sus datos y continúa desde el último paso confirmado.</p>}
         {/* Refund form */}
         {!voucherCode && (<>
+        <fieldset disabled={!!pending || submitting} className="space-y-4">
         <div className="flex gap-2">
           <Button
             variant={isTotal ? 'default' : 'outline'}
@@ -491,9 +519,10 @@ export function RefundModal({ order, open, onClose, onRefunded }: RefundModalPro
           </span>
         </div>
 
+        </fieldset>
         {/* Confirm button */}
         <DialogFooter>
-          <Button variant="outline" onClick={onClose}>
+          <Button variant="outline" disabled={submitting} onClick={onClose}>
             Cancelar
           </Button>
           <Button
@@ -501,7 +530,7 @@ export function RefundModal({ order, open, onClose, onRefunded }: RefundModalPro
             onClick={handleSubmit}
             disabled={submitting || refundAmount <= 0}
           >
-            {submitting ? 'Procesando...' : 'Confirmar reembolso'}
+            {submitting ? 'Procesando...' : pending ? 'Reanudar devolución' : 'Confirmar reembolso'}
           </Button>
         </DialogFooter>
         </>)}

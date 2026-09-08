@@ -31,9 +31,10 @@ export function CartPanel() {
     total,
     itemCount,
   } = useCart();
-  const { isOpen: sessionOpen } = useSession();
-  const { checkout, error: checkoutError } = useCheckout();
+  const { isOpen: sessionOpen, refresh } = useSession();
+  const { checkout, resume, pending, loading: checkoutLoading, error: checkoutError } = useCheckout();
   const [showCheckout, setShowCheckout] = useState(false);
+  const [saleCompleted, setSaleCompleted] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   const handleCheckout = async (
@@ -45,7 +46,8 @@ export function CartPanel() {
     setSuccessMessage(null);
     const orderName = await checkout(cart, total, method, cashReceived, mixedSplits, voucherCode);
     if (orderName) {
-      clearCart();
+      await refresh();
+      setSaleCompleted(true);
       // Don't close modal — let user print/email ticket first
       // Modal closes when user clicks "Cerrar y siguiente venta"
     }
@@ -75,6 +77,22 @@ export function CartPanel() {
             <div className="flex items-center gap-2 rounded-sm bg-destructive/10 px-3 py-2 text-sm text-destructive">
               <AlertCircle className="size-4 shrink-0" />
               {checkoutError}
+            </div>
+          )}
+
+          {pending && (
+            <div role="status" className="space-y-2 rounded border border-amber-400 bg-amber-50 p-3 text-sm">
+              <p>Cobro pendiente de {formatCurrency(pending.payment.amount)}. Se conservarán el pedido y el método originales.</p>
+              <Button disabled={checkoutLoading} onClick={async () => {
+                const sameCart = JSON.stringify(pending.cart) === JSON.stringify(cart);
+                const name = await resume();
+                if (name) {
+                  await refresh();
+                  if (sameCart) clearCart();
+                  setShowCheckout(false);
+                  setSuccessMessage(`Pedido ${name} completado`);
+                }
+              }}>{checkoutLoading ? 'Procesando…' : 'Reanudar cobro pendiente'}</Button>
             </div>
           )}
 
@@ -132,8 +150,8 @@ export function CartPanel() {
                 <Button
                   className="w-full bg-primary hover:bg-primary/90"
                   size="lg"
-                  onClick={() => setShowCheckout(true)}
-                  disabled={!sessionOpen || cart.items.length === 0}
+                  onClick={() => { setSaleCompleted(false); setShowCheckout(true); }}
+                  disabled={!sessionOpen || cart.items.length === 0 || !!pending || checkoutLoading}
                 >
                   {`${es.pos.createOrder} — ${formatCurrency(total)}`}
                 </Button>
@@ -162,7 +180,10 @@ export function CartPanel() {
           items={cart.items.map(i => ({ title: i.title, variantTitle: i.variantTitle, quantity: i.quantity, price: i.price }))}
           customerEmail={cart.customer?.email}
           onConfirm={handleCheckout}
-          onClose={() => setShowCheckout(false)}
+          pending={!!pending}
+          checkoutError={checkoutError}
+          onResume={async () => { const name = await resume(); if (name) { await refresh(); setSaleCompleted(true); } return name; }}
+          onClose={() => { setShowCheckout(false); if (saleCompleted) clearCart(); }}
         />
       )}
     </Card>

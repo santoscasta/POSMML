@@ -2,7 +2,7 @@ export type SessionStatus = 'OPEN' | 'CLOSED';
 
 export interface CashSession {
   id: string;
-  openedAt: string;
+  openedAt: string | null;
   closedAt?: string;
   cashierName: string;
   openingAmount: number;
@@ -11,6 +11,8 @@ export interface CashSession {
   difference?: number;
   status: SessionStatus;
   notes?: string;
+  accountingError?: string;
+  kpis?: SessionKPIs;
 }
 
 export interface SessionKPIs {

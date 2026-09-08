@@ -11,6 +11,9 @@ import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
 import { Home, ShoppingCart, ClipboardList, Wallet, Ticket, CircleDot } from 'lucide-react';
+import { AuthGate } from './components/AuthGate';
+import { PendingOperations } from './components/PendingOperations';
+import { clearCredentials } from './utils/auth';
 
 const navItems = [
   { path: '/dashboard', label: es.nav.dashboard || 'Inicio', icon: Home },
@@ -124,7 +127,12 @@ function BottomNav() {
 function AppContent() {
   const navigate = useNavigate();
   return (
-    <div className="flex h-screen w-full">
+    <div className="flex h-screen w-full flex-col">
+      <header className="flex h-8 shrink-0 items-center justify-end gap-2 border-b bg-white px-3">
+        <PendingOperations />
+        <button className="px-2 text-xs text-muted-foreground hover:text-foreground" onClick={clearCredentials}>Salir</button>
+      </header>
+      <div className="flex min-h-0 flex-1">
       <Sidebar />
       <main className="flex-1 overflow-y-auto bg-background pb-16 md:pb-0">
         <Routes>
@@ -137,18 +145,19 @@ function AppContent() {
         </Routes>
       </main>
       <BottomNav />
+      </div>
     </div>
   );
 }
 
 export default function App() {
   return (
-    <SessionProvider>
+    <AuthGate><SessionProvider>
       <CartProvider>
         <BrowserRouter>
           <AppContent />
         </BrowserRouter>
       </CartProvider>
-    </SessionProvider>
+    </SessionProvider></AuthGate>
   );
 }

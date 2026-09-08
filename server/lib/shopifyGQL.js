@@ -9,9 +9,11 @@ export default async function shopifyGQL(query, variables = {}) {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'X-Shopify-Access-Token': token },
       body: JSON.stringify({ query, variables }),
+      signal: AbortSignal.timeout(30000),
     },
   );
   const data = await res.json();
+  if (!res.ok) throw new Error(`Shopify HTTP ${res.status}`);
   if (data.errors) throw new Error(data.errors.map(e => e.message).join(', '));
   return data.data;
 }

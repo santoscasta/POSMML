@@ -10,6 +10,8 @@ import paymentRoutes from './routes/payments.js';
 import voucherRoutes from './routes/vouchers.js';
 import dashboardRoutes from './routes/dashboard.js';
 import refundRoutes from './routes/refunds.js';
+import { requireAuth, checkOrigin } from './lib/auth.js';
+import { getStore } from './lib/operationStore.js';
 
 dotenv.config();
 
@@ -22,10 +24,15 @@ const isProduction = process.env.NODE_ENV === 'production';
 const allowedOrigins = process.env.ALLOWED_ORIGINS
   ? process.env.ALLOWED_ORIGINS.split(',')
   : ['http://localhost:3000', 'http://localhost:5173'];
-app.use(cors({ origin: isProduction ? true : allowedOrigins }));
+app.use(checkOrigin);
+app.use(cors({ origin: allowedOrigins.map(origin => origin.trim()) }));
 app.use(express.json());
+app.use('/api', requireAuth);
+app.use('/auth', requireAuth);
+getStore(); // Fail at startup if durable storage is not configured.
 
 // API Routes
+app.get('/api/access', (req, res) => res.json({ authenticated: true }));
 app.use('/api', graphqlRoutes);
 app.use('/api', sessionRoutes);
 app.use('/api', paymentRoutes);

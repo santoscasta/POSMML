@@ -138,7 +138,7 @@ export const FULFILLMENT_ORDERS = `
                 node {
                   id
                   remainingQuantity
-                  lineItem { title }
+                  lineItem { id title }
                 }
               }
             }
@@ -196,7 +196,7 @@ export const ORDER_DETAIL = `
           edges {
             node {
               quantity
-              lineItem { title }
+              lineItem { id title }
               subtotalSet { shopMoney { amount currencyCode } }
             }
           }

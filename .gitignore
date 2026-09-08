@@ -32,3 +32,9 @@ package-lock.json
 # Prisma
 prisma/dev.db
 prisma/dev.db-journal
+
+# Durable local POS journal (production uses a mounted volume)
+.pos-data/
+
+# Local browser verification artifacts
+.playwright-cli/

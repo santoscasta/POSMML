@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { shopifyGraphQL } from '../../utils/graphqlClient';
 import { ORDER_DETAIL } from '../../graphql/orders';
-import { apiPost } from '../../utils/apiClient';
+import { apiGet, apiPost } from '../../utils/apiClient';
+import type { PosPayment } from '../../types/payment';
 import { formatCurrency } from '../../utils/currency';
 import { RefundModal } from './RefundModal';
 import {
@@ -86,13 +87,18 @@ export function OrderDetailModal({ orderId, open, onClose, onUpdate }: OrderDeta
   const [actionLoading, setActionLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [refundOpen, setRefundOpen] = useState(false);
+  const [payments, setPayments] = useState<PosPayment[]>([]);
 
   const fetchDetail = useCallback(async (id: string) => {
     try {
       setLoading(true);
       setError(null);
-      const data = await shopifyGraphQL<OrderDetailResponse>(ORDER_DETAIL, { id });
+      const [data, movements] = await Promise.all([
+        shopifyGraphQL<OrderDetailResponse>(ORDER_DETAIL, { id }),
+        apiGet<PosPayment[]>(`/payments/order/${encodeURIComponent(id)}`),
+      ]);
       setOrder(data.order);
+      setPayments(movements);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error al cargar el pedido');
     } finally {
@@ -159,7 +165,8 @@ export function OrderDetailModal({ orderId, open, onClose, onUpdate }: OrderDeta
   const canFulfill = order?.displayFulfillmentStatus === 'UNFULFILLED';
   const canRefund =
     order?.displayFinancialStatus === 'PAID' ||
-    order?.displayFinancialStatus === 'PARTIALLY_PAID';
+    order?.displayFinancialStatus === 'PARTIALLY_PAID' ||
+    order?.displayFinancialStatus === 'PARTIALLY_REFUNDED';
   const canCancel = !order?.cancelledAt;
 
   const lineItems = order?.lineItems.edges.map((e) => e.node) ?? [];
@@ -174,9 +181,9 @@ export function OrderDetailModal({ orderId, open, onClose, onUpdate }: OrderDeta
     }
     return map;
   })();
-  const posPaymentMethod = posMetafields.payment_method;
-  const posVoucherCode = posMetafields.voucher_code;
-  const posRefundMethod = posMetafields.refund_method;
+  const posPaymentMethod = payments.find(p => p.type === 'sale')?.method || posMetafields.payment_method;
+  const posVoucherCode = payments.find(p => p.voucherCode)?.voucherCode || posMetafields.voucher_code;
+  const posRefundMethod = payments.find(p => p.type === 'refund')?.method || posMetafields.refund_method;
 
   const subtotal = parseFloat(order?.subtotalPriceSet.shopMoney.amount ?? '0');
   const discounts = parseFloat(order?.totalDiscountsSet.shopMoney.amount ?? '0');

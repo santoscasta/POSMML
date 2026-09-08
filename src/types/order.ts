@@ -42,7 +42,7 @@ export interface OrderRefund {
     edges: {
       node: {
         quantity: number;
-        lineItem: { title: string };
+        lineItem: { id: string; title: string };
         subtotalSet: { shopMoney: { amount: string; currencyCode: string } };
       };
     }[];
