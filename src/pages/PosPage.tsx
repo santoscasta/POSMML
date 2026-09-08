@@ -15,9 +15,16 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
 import { ShoppingCart, LayoutGrid } from 'lucide-react';
 
+const SHOW_OUT_OF_STOCK_KEY = 'posmml.showOutOfStock';
+
+function getInitialShowOutOfStock() {
+  return localStorage.getItem(SHOW_OUT_OF_STOCK_KEY) !== 'false';
+}
+
 export function PosPage() {
+  const [showOutOfStock, setShowOutOfStock] = useState(getInitialShowOutOfStock);
   const { products, loading, searchQuery, setSearchQuery, categoryFilter, setCategoryFilter, categories, hasNextPage, loadMore } =
-    useProducts();
+    useProducts(showOutOfStock);
   const { addItem, itemCount } = useCart();
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [variantModalOpen, setVariantModalOpen] = useState(false);
@@ -100,9 +107,23 @@ export function PosPage() {
 
   useBarcodeScanner(handleBarcodeScan);
 
+  const handleShowOutOfStockChange = useCallback((checked: boolean) => {
+    setShowOutOfStock(checked);
+    localStorage.setItem(SHOW_OUT_OF_STOCK_KEY, String(checked));
+  }, []);
+
   const productsContent = (
     <div className="space-y-3 p-3 sm:p-4">
       <ProductSearch value={searchQuery} onChange={setSearchQuery} />
+      <label className="flex w-fit cursor-pointer items-center gap-2 text-sm text-muted-foreground">
+        <input
+          type="checkbox"
+          checked={showOutOfStock}
+          onChange={(event) => handleShowOutOfStockChange(event.target.checked)}
+          className="size-4 accent-primary"
+        />
+        {es.pos.showOutOfStock}
+      </label>
       {categories.length > 0 && (
         <CategoryChips
           categories={categories}

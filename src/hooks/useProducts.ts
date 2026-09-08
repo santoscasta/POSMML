@@ -22,7 +22,7 @@ interface ProductsResponse {
   };
 }
 
-export function useProducts() {
+export function useProducts(showOutOfStock: boolean) {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -42,6 +42,7 @@ export function useProducts() {
         const queryParts: string[] = [];
         if (query) queryParts.push(query);
         if (category) queryParts.push(`product_type:"${category}"`);
+        if (!showOutOfStock) queryParts.push('inventory_total:>0');
         if (queryParts.length > 0) variables.query = queryParts.join(' ');
         if (after) variables.after = after;
 
@@ -74,7 +75,7 @@ export function useProducts() {
         setLoading(false);
       }
     },
-    [],
+    [showOutOfStock],
   );
 
   useEffect(() => {

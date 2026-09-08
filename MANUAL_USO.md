@@ -65,6 +65,7 @@ Debajo de la sesión actual aparecen las **últimas sesiones cerradas** con fech
 ### Buscar productos
 - Usa la **barra de búsqueda** para buscar por nombre o SKU
 - Filtra por **categoría** con los chips (Todas, accessories, etc.)
+- Marca o desmarca **Mostrar productos agotados** para incluirlos u ocultarlos. La preferencia queda guardada en este dispositivo
 - **Lector de código de barras**: compatible con escáner tipo wedge de teclado
 
 ### Añadir al carrito

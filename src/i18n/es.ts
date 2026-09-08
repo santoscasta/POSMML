@@ -18,6 +18,7 @@ export const es = {
     noProducts: 'No se encontraron productos',
     loading: 'Cargando...',
     outOfStock: 'Agotado',
+    showOutOfStock: 'Mostrar productos agotados',
     inStock: 'En stock',
     units: 'unidades',
     barcode: 'Código de barras',
