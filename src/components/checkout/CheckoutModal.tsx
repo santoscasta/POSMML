@@ -88,6 +88,7 @@ export function CheckoutModal({
   const [successOrder, setSuccessOrder] = useState<string | null>(null);
   const [emailTo, setEmailTo] = useState(customerEmail || '');
   const [emailSent, setEmailSent] = useState(false);
+  const [emailError, setEmailError] = useState<string | null>(null);
   const [emailSending, setEmailSending] = useState(false);
 
   if (!open) return null;
@@ -351,6 +352,7 @@ export function CheckoutModal({
             </Button>
 
             {/* Email ticket */}
+            {emailError && <p role="alert" className="text-sm text-destructive">{emailError}</p>}
             {!emailSent ? (
               <div className="space-y-2">
                 <div className="flex gap-2">
@@ -362,15 +364,16 @@ export function CheckoutModal({
                   />
                   <Button
                     variant="outline"
+                    aria-label="Enviar ticket por correo"
                     disabled={!emailTo.includes('@') || emailSending}
                     onClick={async () => {
                       setEmailSending(true);
+                      setEmailError(null);
                       try {
                         await apiGet(`/send-receipt?order=${encodeURIComponent(successOrder)}&email=${encodeURIComponent(emailTo)}`);
                         setEmailSent(true);
                       } catch {
-                        // If endpoint doesn't exist yet, just mark as sent (TODO: implement)
-                        setEmailSent(true);
+                        setEmailError('No se ha enviado el ticket. Puedes imprimirlo o volver a intentarlo.');
                       } finally {
                         setEmailSending(false);
                       }
