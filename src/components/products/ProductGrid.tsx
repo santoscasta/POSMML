@@ -38,7 +38,7 @@ export function ProductGrid({
 
   return (
     <div>
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,150px),1fr))] gap-3">
         {products.map((product) => (
           <ProductCard key={product.id} product={product} onSelect={onProductSelect} />
         ))}

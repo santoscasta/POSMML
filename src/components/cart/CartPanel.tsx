@@ -56,7 +56,7 @@ export function CartPanel() {
   };
 
   return (
-    <Card className="flex h-full flex-col rounded-sm">
+    <Card className="flex h-full min-h-0 flex-col rounded-sm">
       <CardHeader className="border-b pb-3">
         <CardTitle className="flex items-center justify-between">
           <span className="flex items-center gap-2">
@@ -67,7 +67,7 @@ export function CartPanel() {
         </CardTitle>
       </CardHeader>
 
-      <ScrollArea className="flex-1">
+      <ScrollArea className="min-h-0 flex-1">
         <CardContent className="space-y-3">
           {successMessage && (
             <div className="rounded-sm bg-success/10 px-3 py-2 text-sm font-medium text-success">

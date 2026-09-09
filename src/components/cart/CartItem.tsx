@@ -23,9 +23,9 @@ export function CartItemRow({ item, onUpdateQuantity, onUpdatePrice, onRemove }:
           </div>
         )}
         <div className="min-w-0 flex-1">
-          <div className="truncate text-sm font-medium">{item.title}</div>
+          <div className="break-words text-sm font-medium">{item.title}</div>
           {item.variantTitle && item.variantTitle !== 'Default Title' && (
-            <div className="truncate text-xs text-muted-foreground">{item.variantTitle}</div>
+            <div className="break-words text-xs text-muted-foreground">{item.variantTitle}</div>
           )}
         </div>
         <Button variant="ghost" size="icon-xs" className="text-destructive hover:text-destructive"

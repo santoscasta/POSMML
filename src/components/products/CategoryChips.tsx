@@ -9,11 +9,11 @@ interface CategoryChipsProps {
 
 export function CategoryChips({ categories, selected, onSelect }: CategoryChipsProps) {
   return (
-    <div className="flex gap-2 overflow-x-auto py-2">
+    <div className="flex flex-wrap gap-2 py-2">
       <Button
         variant={selected === null ? 'default' : 'outline'}
         size="sm"
-        className="shrink-0"
+        className="h-auto min-h-8 max-w-full whitespace-normal break-words"
         onClick={() => onSelect(null)}
       >
         {es.pos.allCategories}
@@ -23,7 +23,7 @@ export function CategoryChips({ categories, selected, onSelect }: CategoryChipsP
           key={cat}
           variant={selected === cat ? 'default' : 'outline'}
           size="sm"
-          className="shrink-0"
+          className="h-auto min-h-8 max-w-full whitespace-normal break-words"
           onClick={() => onSelect(cat)}
         >
           {cat}

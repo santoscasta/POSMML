@@ -129,7 +129,7 @@ function AppContent() {
   const navigate = useNavigate();
   const { isOpen, loading } = useSession();
   return (
-    <div className="flex h-screen w-full flex-col">
+    <div className="flex h-dvh w-full flex-col">
       <header className="flex h-8 shrink-0 items-center justify-end gap-2 border-b bg-white px-3">
         <PendingOperations />
         <button className="px-2 text-xs text-muted-foreground hover:text-foreground" onClick={clearCredentials}>Salir</button>
