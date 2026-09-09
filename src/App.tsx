@@ -14,6 +14,7 @@ import { Home, ShoppingCart, ClipboardList, Wallet, Ticket, CircleDot } from 'lu
 import { AuthGate } from './components/AuthGate';
 import { PendingOperations } from './components/PendingOperations';
 import { clearCredentials } from './utils/auth';
+import { OpenSessionModal } from './components/sessions/OpenSessionModal';
 
 const navItems = [
   { path: '/dashboard', label: es.nav.dashboard || 'Inicio', icon: Home },
@@ -126,6 +127,7 @@ function BottomNav() {
 
 function AppContent() {
   const navigate = useNavigate();
+  const { isOpen, loading } = useSession();
   return (
     <div className="flex h-screen w-full flex-col">
       <header className="flex h-8 shrink-0 items-center justify-end gap-2 border-b bg-white px-3">
@@ -134,7 +136,7 @@ function AppContent() {
       </header>
       <div className="flex min-h-0 flex-1">
       <Sidebar />
-      <main className="flex-1 overflow-y-auto bg-background pb-16 md:pb-0">
+      <main className="min-w-0 flex-1 overflow-y-auto bg-background pb-16 md:pb-0">
         <Routes>
           <Route path="/dashboard" element={<DashboardPage onNavigate={(path) => navigate(path)} />} />
           <Route path="/" element={<PosPage />} />
@@ -146,6 +148,7 @@ function AppContent() {
       </main>
       <BottomNav />
       </div>
+      <OpenSessionModal open={!loading && !isOpen} onClose={() => {}} required />
     </div>
   );
 }

@@ -14,9 +14,10 @@ import { Input } from '@/components/ui/input';
 interface OpenSessionModalProps {
   open: boolean;
   onClose: () => void;
+  required?: boolean;
 }
 
-export function OpenSessionModal({ open, onClose }: OpenSessionModalProps) {
+export function OpenSessionModal({ open, onClose, required = false }: OpenSessionModalProps) {
   const { openSession } = useSession();
   const [openingAmount, setOpeningAmount] = useState<string>('');
   const [cashierName, setCashierName] = useState<string>('Cajero');
@@ -58,8 +59,8 @@ export function OpenSessionModal({ open, onClose }: OpenSessionModalProps) {
   };
 
   return (
-    <Dialog open={open} onOpenChange={(isOpen) => { if (!isOpen) handleClose(); }}>
-      <DialogContent className="sm:max-w-sm">
+    <Dialog open={open} onOpenChange={(isOpen) => { if (!isOpen && !required) handleClose(); }}>
+      <DialogContent className="sm:max-w-sm" showCloseButton={!required}>
         <DialogHeader>
           <DialogTitle>{es.sessions.openSession}</DialogTitle>
         </DialogHeader>
@@ -144,9 +145,11 @@ export function OpenSessionModal({ open, onClose }: OpenSessionModalProps) {
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={handleClose} disabled={loading}>
-            {es.checkout.cancel}
-          </Button>
+          {!required && (
+            <Button variant="outline" onClick={handleClose} disabled={loading}>
+              {es.checkout.cancel}
+            </Button>
+          )}
           <Button onClick={handleConfirm} disabled={loading}>
             {loading ? es.pos.loading : es.sessions.openSession}
           </Button>

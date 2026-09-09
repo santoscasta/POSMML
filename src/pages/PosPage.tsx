@@ -142,7 +142,7 @@ export function PosPage() {
   );
 
   return (
-    <div className="flex h-screen flex-col bg-background">
+    <div className="flex h-full min-h-0 min-w-0 flex-col bg-background">
       {/* Header */}
       <div className="flex items-center gap-3 border-b border-border px-4 py-3">
         <img
@@ -200,8 +200,8 @@ export function PosPage() {
       </div>
 
       {/* Desktop two-column layout */}
-      <div className="hidden min-h-0 flex-1 md:grid md:grid-cols-[1fr_380px]">
-        <ScrollArea className="h-full">
+      <div className="hidden min-h-0 min-w-0 flex-1 md:grid md:grid-cols-[minmax(0,1fr)_380px]">
+        <ScrollArea className="h-full min-w-0">
           {productsContent}
         </ScrollArea>
         <div className="border-l border-border">

@@ -29,14 +29,14 @@ La pantalla principal muestra el estado general del sistema:
 ## 2. Caja — Gestión de Sesión
 
 ### Abrir sesión
-1. Ve a **Caja** en el menú lateral
-2. Pulsa **Abrir sesión de caja**
-3. Introduce el **monto de apertura** (fondo de caja en efectivo)
-4. Introduce el **nombre del cajero**
-5. Opcionalmente añade una nota
-6. Pulsa **Abrir sesión**
+1. Al entrar, si no hay una caja abierta, aparece automáticamente la apertura obligatoria
+2. Introduce el **monto de apertura** (fondo de caja en efectivo)
+3. Introduce el **nombre del cajero**
+4. Opcionalmente añade una nota
+5. Pulsa **Abrir sesión**
 
 > **IMPORTANTE**: No se pueden procesar cobros sin una sesión de caja abierta.
+> Si una sesión anterior continúa abierta, hay que cerrarla desde **Caja** antes de iniciar la siguiente.
 
 ### Durante la sesión
 La pantalla muestra en tiempo real:
@@ -68,11 +68,14 @@ Debajo de la sesión actual aparecen las **últimas sesiones cerradas** con fech
 - Marca o desmarca **Mostrar productos agotados** para incluirlos u ocultarlos. La preferencia queda guardada en este dispositivo
 - **Lector de código de barras**: compatible con escáner tipo wedge de teclado
 
+El carrito permanece visible a la derecha mientras recorres la lista de productos.
+
 ### Añadir al carrito
 - **Clic en un producto** lo añade directamente si tiene una sola variante
 - Si tiene **múltiples variantes** (talla, color), se abre un selector
 - Los productos **agotados** aparecen deshabilitados
 - Las variantes sin stock no se pueden seleccionar
+- Puedes escribir un **precio unitario manual**, incluido 0 €, directamente en la línea del carrito
 
 ### Gestionar carrito
 - **+/−** para ajustar cantidades

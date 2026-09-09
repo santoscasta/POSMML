@@ -12,7 +12,8 @@ import { requireAuth, checkOrigin } from '../lib/auth.js';
 const key = '11111111-1111-4111-8111-111111111111';
 const orderId = 'gid://shopify/Order/1';
 const refundInput = { orderId, amount: 20, method: 'VOUCHER', refundLineItems: [{ lineItemId: 'gid://shopify/LineItem/1', quantity: 1 }], restock: false };
-const checkoutInput = { cart: { items: [{ variantId: 'gid://shopify/ProductVariant/1', quantity: 1 }] }, payment: { method: 'CARD', amount: 100 } };
+const checkoutInput = { cart: { items: [{ variantId: 'gid://shopify/ProductVariant/1', quantity: 1, price: 100 }] }, payment: { method: 'CARD', amount: 100 } };
+const recoveryTag = `pos-op-${key.replaceAll('-', '').slice(0, 24)}`;
 function fixture(t, overrides = {}) {
   const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'pos-test-'));
   t.after(() => fs.rmSync(directory, { recursive: true, force: true }));
@@ -49,6 +50,18 @@ test('checkout retries return same order across process/store recreation', async
   assert.equal(count(f, 'PosComplete'), 1);
   assert.equal(f.store.read().movements.length, 1);
   assert.match(f.calls.find(c => c.name === 'PosComplete').query, /paymentPending: true/);
+  const draftInput = f.calls.find(c => c.name === 'PosDraft').variables.input;
+  assert.deepEqual(draftInput.lineItems[0].priceOverride, { amount: '100.00', currencyCode: 'EUR' });
+  assert.ok(draftInput.tags.every(tag => tag.length <= 40));
+});
+
+test('checkout accepts a zero manual item price', async t => {
+  const f = fixture(t, {
+    PosDraft: () => ({ draftOrderCreate: { draftOrder: { id: 'draft-1', totalPriceSet: { shopMoney: { amount: '0', currencyCode: 'EUR' } } }, userErrors: [] } }),
+  });
+  const input = { cart: { items: [{ variantId: 'gid://shopify/ProductVariant/1', quantity: 1, price: 0 }] }, payment: { method: 'CARD', amount: 0 } };
+  await f.service.checkout(key, input);
+  assert.equal(f.calls.find(c => c.name === 'PosDraft').variables.input.lineItems[0].priceOverride.amount, '0.00');
 });
 
 test('failed payment resumes after order creation without duplicating voucher debits', async t => {
@@ -69,7 +82,7 @@ test('failed payment resumes after order creation without duplicating voucher de
 test('lost draft response is reconciled by operation tag without another creation', async t => {
   const f = fixture(t, {
     PosDraft: () => { throw new Error('connection lost'); },
-    PosDraftRecovery: () => ({ draftOrders: { nodes: [{ id: 'draft-1', tags: [`pos-operation-${key}`], totalPriceSet: { shopMoney: { amount: '100', currencyCode: 'EUR' } } }] } }),
+    PosDraftRecovery: () => ({ draftOrders: { nodes: [{ id: 'draft-1', tags: [recoveryTag], totalPriceSet: { shopMoney: { amount: '100', currencyCode: 'EUR' } } }] } }),
   });
   await assert.rejects(f.service.checkout(key, checkoutInput), { code: 'RECONCILIATION_REQUIRED' });
   await createPosService(f.gql, createOperationStore(f.directory)).checkout(key, checkoutInput);

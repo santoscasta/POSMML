@@ -49,6 +49,15 @@ function cartReducer(state: CartState, action: CartAction): CartState {
             : item,
         ),
       };
+    case 'UPDATE_PRICE':
+      return {
+        ...state,
+        items: state.items.map((item) =>
+          item.variantId === action.payload.variantId
+            ? { ...item, price: action.payload.price }
+            : item,
+        ),
+      };
     case 'SET_CUSTOMER':
       return { ...state, customer: action.payload };
     case 'SET_DISCOUNT':
@@ -68,6 +77,7 @@ interface CartContextValue {
   addItem: (item: CartItem) => void;
   removeItem: (variantId: string) => void;
   updateQuantity: (variantId: string, quantity: number) => void;
+  updatePrice: (variantId: string, price: number) => void;
   clearCart: () => void;
   subtotal: number;
   discountAmount: number;
@@ -86,6 +96,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
     dispatch({ type: 'REMOVE_ITEM', payload: { variantId } });
   const updateQuantity = (variantId: string, quantity: number) =>
     dispatch({ type: 'UPDATE_QUANTITY', payload: { variantId, quantity } });
+  const updatePrice = (variantId: string, price: number) =>
+    dispatch({ type: 'UPDATE_PRICE', payload: { variantId, price } });
   const clearCart = () => dispatch({ type: 'CLEAR_CART' });
 
   const subtotal = cart.items.reduce(
@@ -115,6 +127,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
         addItem,
         removeItem,
         updateQuantity,
+        updatePrice,
         clearCart,
         subtotal,
         discountAmount,

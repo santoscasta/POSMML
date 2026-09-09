@@ -23,6 +23,7 @@ export function CartPanel() {
     cart,
     removeItem,
     updateQuantity,
+    updatePrice,
     clearCart,
     dispatch,
     subtotal,
@@ -127,6 +128,7 @@ export function CartPanel() {
                     key={item.variantId}
                     item={item}
                     onUpdateQuantity={updateQuantity}
+                    onUpdatePrice={updatePrice}
                     onRemove={removeItem}
                   />
                 ))}

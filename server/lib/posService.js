@@ -40,6 +40,7 @@ function movement(ctx, value) {
 }
 
 export function createPosService(gql, store) {
+  const operationTag = key => `pos-op-${key.replaceAll('-', '').slice(0, 24)}`;
   async function session(ctx) {
     if (!ctx.op.sessionId) {
       const current = await currentSession(gql);
@@ -104,10 +105,18 @@ export function createPosService(gql, store) {
     return store.operation(key, 'checkout', input, async ctx => {
       const { cart, payment } = input;
       const splits = paymentSplits(payment);
-      if (!cart?.items?.length || cart.items.some(i => !/^gid:\/\/shopify\/ProductVariant\/\d+$/.test(i.variantId) || !Number.isInteger(i.quantity) || i.quantity <= 0)) throw new PosError('Carrito inválido');
+      if (!cart?.items?.length || cart.items.some(i => !/^gid:\/\/shopify\/ProductVariant\/\d+$/.test(i.variantId) || !Number.isInteger(i.quantity) || i.quantity <= 0 || !Number.isFinite(i.price) || i.price < 0)) throw new PosError('Carrito inválido');
       const sessionId = await session(ctx);
       const vouchers = await resolveVouchers(ctx, splits);
-      const draftInput = { lineItems: cart.items.map(i => ({ variantId: i.variantId, quantity: i.quantity })), tags: ['POS MML', `pos-operation-${key}`] };
+      const recoveryTag = operationTag(key);
+      const draftInput = {
+        lineItems: cart.items.map(i => ({
+          variantId: i.variantId,
+          quantity: i.quantity,
+          priceOverride: { amount: i.price.toFixed(2), currencyCode: 'EUR' },
+        })),
+        tags: ['POS MML', recoveryTag],
+      };
       if (cart.customer) draftInput.customerId = cart.customer.id;
       if (cart.note) draftInput.note = cart.note;
       if (cart.discount) {
@@ -121,8 +130,8 @@ export function createPosService(gql, store) {
       }`, { input: draftInput }), 'draftOrderCreate', 'draftOrder'), async () => {
         const data = await gql(`query PosDraftRecovery($query: String!) {
           draftOrders(first: 100, query: $query) { nodes { id tags totalPriceSet { shopMoney { amount currencyCode } } } }
-        }`, { query: `tag:pos-operation-${key}` });
-        const matches = data.draftOrders.nodes.filter(d => d.tags.includes(`pos-operation-${key}`));
+        }`, { query: `tag:${recoveryTag}` });
+        const matches = data.draftOrders.nodes.filter(d => d.tags.includes(recoveryTag));
         return matches.length === 1 ? matches[0] : null;
       });
       if (draft.totalPriceSet.shopMoney.currencyCode !== 'EUR' || cents(draft.totalPriceSet.shopMoney.amount) !== cents(payment.amount)) throw new PosError('El total de Shopify difiere del cobro. Revisa el borrador antes de continuar.', 409, 'TOTAL_MISMATCH');

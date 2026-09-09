@@ -24,6 +24,7 @@ export type CartAction =
   | { type: 'ADD_ITEM'; payload: CartItem }
   | { type: 'REMOVE_ITEM'; payload: { variantId: string } }
   | { type: 'UPDATE_QUANTITY'; payload: { variantId: string; quantity: number } }
+  | { type: 'UPDATE_PRICE'; payload: { variantId: string; price: number } }
   | { type: 'SET_CUSTOMER'; payload: import('./customer').Customer | null }
   | { type: 'SET_DISCOUNT'; payload: Discount | null }
   | { type: 'SET_NOTE'; payload: string }
