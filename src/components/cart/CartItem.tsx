@@ -33,7 +33,7 @@ export function CartItemRow({ item, onUpdateQuantity, onUpdatePrice, onRemove }:
           <Trash2 className="size-3.5" />
         </Button>
       </div>
-      <div className="flex items-center justify-between gap-2 pl-12">
+      <div className="flex flex-wrap items-center justify-between gap-2 pl-12">
         <div className="flex shrink-0 items-center gap-1">
           <Button variant="outline" size="icon-xs"
             onClick={() => onUpdateQuantity(item.variantId, item.quantity - 1)} aria-label="Reducir cantidad">

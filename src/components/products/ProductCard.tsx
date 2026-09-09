@@ -37,10 +37,10 @@ export function ProductCard({ product, onSelect }: ProductCardProps) {
         </div>
       )}
       <CardContent className="space-y-1">
-        <div className="truncate text-sm font-medium text-foreground">
+        <div className="text-sm font-medium text-foreground">
           {product.title}
         </div>
-        <div className="flex items-center gap-1 text-sm text-muted-foreground">
+        <div className="flex flex-wrap items-center gap-1 text-sm text-muted-foreground">
           {formatCurrency(firstVariant?.price || '0')}
           {hasVariants && (
             <span className="text-xs text-accent">

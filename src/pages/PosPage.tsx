@@ -154,7 +154,7 @@ export function PosPage() {
       </div>
 
       {/* Mobile tab bar */}
-      <div className="flex border-b md:hidden">
+      <div className="flex border-b lg:hidden">
         <button
           onClick={() => setMobileTab('products')}
           className={cn(
@@ -187,7 +187,7 @@ export function PosPage() {
       </div>
 
       {/* Mobile content */}
-      <div className="flex min-h-0 flex-1 md:hidden">
+      <div className="flex min-h-0 flex-1 lg:hidden">
         {mobileTab === 'products' ? (
           <ScrollArea className="h-full w-full">
             {productsContent}
@@ -200,7 +200,7 @@ export function PosPage() {
       </div>
 
       {/* Desktop two-column layout */}
-      <div className="hidden min-h-0 min-w-0 flex-1 md:grid md:grid-cols-[minmax(0,1fr)_380px]">
+      <div className="hidden min-h-0 min-w-0 flex-1 lg:grid lg:grid-cols-[minmax(0,1fr)_380px]">
         <ScrollArea className="h-full min-w-0">
           {productsContent}
         </ScrollArea>

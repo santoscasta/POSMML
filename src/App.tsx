@@ -30,7 +30,7 @@ function Sidebar() {
   const { isOpen } = useSession();
 
   return (
-    <aside className="hidden md:flex md:w-60 flex-col border-r bg-white">
+    <aside className="hidden xl:flex xl:w-60 flex-col border-r bg-white">
       <div
         className="cursor-pointer px-4 pt-4 pb-2"
         onClick={() => navigate('/dashboard')}
@@ -93,7 +93,7 @@ function BottomNav() {
   const { isOpen } = useSession();
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 flex border-t bg-white md:hidden">
+    <nav className="fixed bottom-0 left-0 right-0 z-50 flex border-t bg-white xl:hidden">
       {navItems.map((item) => {
         const active = item.path === '/'
           ? location.pathname === '/'
@@ -136,7 +136,7 @@ function AppContent() {
       </header>
       <div className="flex min-h-0 flex-1">
       <Sidebar />
-      <main className="min-w-0 flex-1 overflow-y-auto bg-background pb-16 md:pb-0">
+      <main className="min-w-0 flex-1 overflow-y-auto bg-background pb-16 xl:pb-0">
         <Routes>
           <Route path="/dashboard" element={<DashboardPage onNavigate={(path) => navigate(path)} />} />
           <Route path="/" element={<PosPage />} />
