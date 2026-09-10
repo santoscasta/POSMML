@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { formatCurrency } from '../../utils/currency';
-import { apiGet } from '../../utils/apiClient';
+import { apiGet, apiPost } from '../../utils/apiClient';
 import type { PaymentMethod, MixedPaymentSplit } from '../../types/payment';
 import {
   Dialog,
@@ -352,6 +352,7 @@ export function CheckoutModal({
             </Button>
 
             {/* Email ticket */}
+            <p className="text-xs text-muted-foreground">Enviar documento del pedido mediante Shopify</p>
             {emailError && <p role="alert" className="text-sm text-destructive">{emailError}</p>}
             {!emailSent ? (
               <div className="space-y-2">
@@ -370,7 +371,7 @@ export function CheckoutModal({
                       setEmailSending(true);
                       setEmailError(null);
                       try {
-                        await apiGet(`/send-receipt?order=${encodeURIComponent(successOrder)}&email=${encodeURIComponent(emailTo)}`);
+                        await apiPost('/send-receipt', { order: successOrder, email: emailTo.trim() });
                         setEmailSent(true);
                       } catch {
                         setEmailError('No se ha enviado el ticket. Puedes imprimirlo o volver a intentarlo.');

@@ -127,7 +127,7 @@ function BottomNav() {
 
 function AppContent() {
   const navigate = useNavigate();
-  const { isOpen, loading } = useSession();
+  const { isOpen, loading, error, refresh } = useSession();
   return (
     <div className="flex h-dvh w-full flex-col">
       <header className="flex h-8 shrink-0 items-center justify-end gap-2 border-b bg-white px-3">
@@ -148,7 +148,8 @@ function AppContent() {
       </main>
       <BottomNav />
       </div>
-      <OpenSessionModal open={!loading && !isOpen} onClose={() => {}} required />
+      {error && <div role="alert" className="fixed inset-x-0 top-8 z-50 bg-destructive p-3 text-white">{error} <button onClick={() => void refresh()} className="underline">Reintentar</button></div>}
+      <OpenSessionModal open={!loading && !error && !isOpen} onClose={() => {}} required />
     </div>
   );
 }

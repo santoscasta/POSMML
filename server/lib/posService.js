@@ -106,6 +106,7 @@ export function createPosService(gql, store) {
       const { cart, payment } = input;
       const splits = paymentSplits(payment);
       if (!cart?.items?.length || cart.items.some(i => !/^gid:\/\/shopify\/ProductVariant\/\d+$/.test(i.variantId) || !Number.isInteger(i.quantity) || i.quantity <= 0 || !Number.isFinite(i.price) || i.price < 0)) throw new PosError('Carrito inválido');
+      cart.items.forEach(i => cents(i.price));
       const sessionId = await session(ctx);
       const vouchers = await resolveVouchers(ctx, splits);
       const recoveryTag = operationTag(key);

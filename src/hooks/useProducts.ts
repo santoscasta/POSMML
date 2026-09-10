@@ -31,10 +31,14 @@ export function useProducts(showOutOfStock: boolean) {
   const [categories, setCategories] = useState<string[]>([]);
   const [hasNextPage, setHasNextPage] = useState(false);
   const [endCursor, setEndCursor] = useState<string | null>(null);
+  const requestId = useRef(0);
+  const busy = useRef(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   const fetchProducts = useCallback(
     async (query: string, after?: string | null, category?: string | null) => {
+      const id = ++requestId.current;
+      busy.current = true;
       try {
         setLoading(true);
         setError(null);
@@ -48,6 +52,7 @@ export function useProducts(showOutOfStock: boolean) {
 
         const data = await shopifyGraphQL<ProductsResponse>(PRODUCTS_QUERY, variables);
 
+        if (id !== requestId.current) return;
         const fetched: Product[] = data.products.edges.map((edge) => ({
           ...edge.node,
           variants: edge.node.variants.edges.map((v) => v.node),
@@ -70,26 +75,30 @@ export function useProducts(showOutOfStock: boolean) {
         setHasNextPage(data.products.pageInfo.hasNextPage);
         setEndCursor(data.products.pageInfo.endCursor);
       } catch (err) {
+        if (id !== requestId.current) return;
         setError(err instanceof Error ? err.message : 'Error desconocido');
       } finally {
-        setLoading(false);
+        if (id === requestId.current) { busy.current = false; setLoading(false); }
       }
     },
     [showOutOfStock],
   );
 
   useEffect(() => {
+    const requests = requestId;
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => {
       fetchProducts(searchQuery, null, categoryFilter);
     }, 300);
     return () => {
+      ++requests.current;
+      busy.current = true;
       if (debounceRef.current) clearTimeout(debounceRef.current);
     };
   }, [searchQuery, categoryFilter, fetchProducts]);
 
   const loadMore = useCallback(() => {
-    if (hasNextPage && endCursor) {
+    if (!busy.current && hasNextPage && endCursor) {
       fetchProducts(searchQuery, endCursor, categoryFilter);
     }
   }, [hasNextPage, endCursor, searchQuery, categoryFilter, fetchProducts]);

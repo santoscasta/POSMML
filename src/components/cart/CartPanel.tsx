@@ -32,7 +32,7 @@ export function CartPanel() {
     total,
     itemCount,
   } = useCart();
-  const { isOpen: sessionOpen, refresh } = useSession();
+  const { isOpen: sessionOpen, error: sessionError, refresh } = useSession();
   const { checkout, resume, pending, loading: checkoutLoading, error: checkoutError } = useCheckout();
   const [showCheckout, setShowCheckout] = useState(false);
   const [saleCompleted, setSaleCompleted] = useState(false);
@@ -153,7 +153,7 @@ export function CartPanel() {
                   className="w-full bg-primary hover:bg-primary/90"
                   size="lg"
                   onClick={() => { setSaleCompleted(false); setShowCheckout(true); }}
-                  disabled={!sessionOpen || cart.items.length === 0 || !!pending || checkoutLoading}
+                  disabled={!!sessionError || !sessionOpen || cart.items.length === 0 || !!pending || checkoutLoading}
                 >
                   {`${es.pos.createOrder} — ${formatCurrency(total)}`}
                 </Button>

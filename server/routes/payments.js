@@ -4,7 +4,13 @@ import { getStore } from '../lib/operationStore.js';
 import { createPosService } from '../lib/posService.js';
 import { getPayments } from '../lib/accounting.js';
 
+import { sendReceipt } from '../lib/receipt.js';
+
 const router = Router();
+router.post('/send-receipt', async (req, res) => {
+  try { res.json(await sendReceipt(shopifyGQL, getStore(), req.body)); }
+  catch (error) { sendOperationError(res, error); }
+});
 export function sendOperationError(res, error) {
   res.status(error.status || 500).json({ error: error.message, code: error.code, safeToRestart: error.safeToRestart === true });
 }

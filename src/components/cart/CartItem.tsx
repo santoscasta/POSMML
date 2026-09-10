@@ -51,7 +51,7 @@ export function CartItemRow({ item, onUpdateQuantity, onUpdatePrice, onRemove }:
             <Input type="number" min="0" step="0.01" value={item.price}
               onChange={(event) => {
                 const price = Number(event.target.value);
-                if (Number.isFinite(price) && price >= 0) onUpdatePrice(item.variantId, price);
+                if (Number.isFinite(price) && price >= 0) onUpdatePrice(item.variantId, Math.round(price * 100) / 100);
               }}
               className="h-8 pr-6 text-right text-sm text-foreground" />
             <span className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-xs">€</span>

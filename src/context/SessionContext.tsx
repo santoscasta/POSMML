@@ -20,6 +20,7 @@ interface SessionContextValue {
   session: SessionWithKPIs | null;
   isOpen: boolean;
   loading: boolean;
+  error: string | null;
   openSession: (input: OpenSessionInput) => Promise<void>;
   closeSession: (input: CloseSessionInput) => Promise<SessionCloseResult>;
   refresh: () => Promise<void>;
@@ -31,12 +32,15 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<SessionWithKPIs | null>(null);
   const [loading, setLoading] = useState(true);
 
+  const [error, setError] = useState<string | null>(null);
+
   const refresh = useCallback(async () => {
     try {
       const data = await apiGet<SessionWithKPIs | null>('/sessions/current');
       setSession(data);
+      setError(null);
     } catch {
-      setSession(null);
+      setError("No se pudo comprobar la caja. Revisa la conexión y reintenta.");
     } finally {
       setLoading(false);
     }
@@ -59,12 +63,14 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   }, [session]);
 
   return (
-    <SessionContext.Provider value={{ session, isOpen: !!session, loading, openSession, closeSession, refresh }}>
+    <SessionContext.Provider value={{ session, isOpen: !!session, loading, error, openSession, closeSession, refresh }}>
       {children}
     </SessionContext.Provider>
   );
 }
 
+// Context hooks share their provider module; edits may require a full refresh.
+// eslint-disable-next-line react-refresh/only-export-components
 export function useSession() {
   const context = useContext(SessionContext);
   if (!context) throw new Error('useSession must be used within SessionProvider');
