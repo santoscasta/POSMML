@@ -12,6 +12,7 @@ interface ProductsResponse {
         title: string;
         featuredImage: { url: string; altText: string | null } | null;
         status: string;
+        productType: string;
         totalInventory: number;
         variants: {
           edges: { node: Omit<ProductVariant, 'image'> & { image?: { url: string; altText: string | null } | null } }[];
@@ -29,79 +30,63 @@ export function useProducts(showOutOfStock: boolean) {
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<string | null>(null);
   const [categories, setCategories] = useState<string[]>([]);
-  const [hasNextPage, setHasNextPage] = useState(false);
-  const [endCursor, setEndCursor] = useState<string | null>(null);
   const requestId = useRef(0);
-  const busy = useRef(false);
-  const debounceRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
-  const fetchProducts = useCallback(
-    async (query: string, after?: string | null, category?: string | null) => {
-      const id = ++requestId.current;
-      busy.current = true;
-      try {
-        setLoading(true);
-        setError(null);
-        const variables: Record<string, unknown> = { first: 30 };
-        const queryParts: string[] = [];
-        if (query) queryParts.push(query);
-        if (category) queryParts.push(`product_type:"${category}"`);
-        if (!showOutOfStock) queryParts.push('inventory_total:>0');
-        if (queryParts.length > 0) variables.query = queryParts.join(' ');
-        if (after) variables.after = after;
-
-        const data = await shopifyGraphQL<ProductsResponse>(PRODUCTS_QUERY, variables);
-
-        if (id !== requestId.current) return;
-        const fetched: Product[] = data.products.edges.map((edge) => ({
-          ...edge.node,
-          variants: edge.node.variants.edges.map((v) => v.node),
-        }));
-
-        if (after) {
-          setProducts((prev) => [...prev, ...fetched]);
-        } else {
-          setProducts(fetched);
-          // Extract unique categories from first fetch
-          if (!category && !query) {
-            const types = new Set<string>();
-            fetched.forEach((p) => { if (p.productType) types.add(p.productType); });
-            setCategories((prev) => {
-              const merged = new Set([...prev, ...types]);
-              return Array.from(merged).sort();
+  const fetchProducts = useCallback(async (query: string, category: string | null) => {
+    const id = ++requestId.current;
+    setLoading(true);
+    setError(null);
+    setProducts([]);
+    const queryParts = [];
+    if (query) queryParts.push(query);
+    if (category) queryParts.push(`product_type:${JSON.stringify(category)}`);
+    if (!showOutOfStock) queryParts.push('inventory_total:>0');
+    let after: string | null = null;
+    const cursors = new Set<string>();
+    const collected = new Map<string, Product>();
+    try {
+      do {
+        let data: ProductsResponse;
+        for (let attempt = 0; ; attempt++) {
+          try {
+            data = await shopifyGraphQL<ProductsResponse>(PRODUCTS_QUERY, {
+              first: 30, after, ...(queryParts.length ? { query: queryParts.join(' ') } : {}),
             });
+            break;
+          } catch (err) {
+            if (id !== requestId.current) return;
+            if (attempt >= 4 || !(err instanceof Error) || !/throttl|429/i.test(err.message)) throw err;
+            await new Promise(resolve => setTimeout(resolve, 1000 * 2 ** attempt));
+            if (id !== requestId.current) return;
           }
         }
-        setHasNextPage(data.products.pageInfo.hasNextPage);
-        setEndCursor(data.products.pageInfo.endCursor);
-      } catch (err) {
         if (id !== requestId.current) return;
-        setError(err instanceof Error ? err.message : 'Error desconocido');
-      } finally {
-        if (id === requestId.current) { busy.current = false; setLoading(false); }
-      }
-    },
-    [showOutOfStock],
-  );
+        for (const { node } of data.products.edges) {
+          collected.set(node.id, { ...node, variants: node.variants.edges.map(v => v.node) });
+        }
+        const fetched = [...collected.values()];
+        setProducts(fetched);
+        if (!category && !query) {
+          setCategories(prev => [...new Set([...prev, ...fetched.map(p => p.productType).filter((type): type is string => !!type)])].sort());
+        }
+        if (!data.products.pageInfo.hasNextPage) break;
+        after = data.products.pageInfo.endCursor;
+        if (!after || cursors.has(after)) throw new Error('No se ha podido completar el catálogo. Reintenta la carga.');
+        cursors.add(after);
+      } while (id === requestId.current);
+    } catch (err) {
+      if (id === requestId.current) setError(err instanceof Error ? err.message : 'Error al cargar el catálogo');
+    } finally {
+      if (id === requestId.current) setLoading(false);
+    }
+  }, [showOutOfStock]);
 
   useEffect(() => {
     const requests = requestId;
-    if (debounceRef.current) clearTimeout(debounceRef.current);
-    debounceRef.current = setTimeout(() => {
-      fetchProducts(searchQuery, null, categoryFilter);
-    }, 300);
-    return () => {
-      ++requests.current;
-      busy.current = true;
-      if (debounceRef.current) clearTimeout(debounceRef.current);
-    };
+    const timeout = setTimeout(() => { void fetchProducts(searchQuery, categoryFilter); }, 300);
+    return () => { ++requests.current; clearTimeout(timeout); };
   }, [searchQuery, categoryFilter, fetchProducts]);
 
-  const loadMore = useCallback(() => {
-    if (!busy.current && hasNextPage && endCursor) {
-      fetchProducts(searchQuery, endCursor, categoryFilter);
-    }
-  }, [hasNextPage, endCursor, searchQuery, categoryFilter, fetchProducts]);
-
-  return { products, loading, error, searchQuery, setSearchQuery, categoryFilter, setCategoryFilter, categories, hasNextPage, loadMore };
+  const retry = useCallback(() => { void fetchProducts(searchQuery, categoryFilter); }, [fetchProducts, searchQuery, categoryFilter]);
+  return { products, loading, error, retry, searchQuery, setSearchQuery, categoryFilter, setCategoryFilter, categories };
 }

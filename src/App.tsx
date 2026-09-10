@@ -127,6 +127,7 @@ function BottomNav() {
 
 function AppContent() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { isOpen, loading, error, refresh } = useSession();
   return (
     <div className="flex h-dvh w-full flex-col">
@@ -136,7 +137,7 @@ function AppContent() {
       </header>
       <div className="flex min-h-0 flex-1">
       <Sidebar />
-      <main className="min-w-0 flex-1 overflow-y-auto bg-background pb-16 xl:pb-0">
+      <main className={cn("min-h-0 min-w-0 flex-1 bg-background pb-16 xl:pb-0", location.pathname === "/" ? "overflow-hidden" : "overflow-y-auto")}>
         <Routes>
           <Route path="/dashboard" element={<DashboardPage onNavigate={(path) => navigate(path)} />} />
           <Route path="/" element={<PosPage />} />

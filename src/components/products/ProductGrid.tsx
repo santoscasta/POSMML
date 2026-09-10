@@ -1,23 +1,18 @@
 import { ProductCard } from './ProductCard';
 import type { Product } from '../../types/product';
 import { es } from '../../i18n/es';
-import { Button } from '@/components/ui/button';
 import { Package, Loader2 } from 'lucide-react';
 
 interface ProductGridProps {
   products: Product[];
   loading: boolean;
-  hasNextPage: boolean;
   onProductSelect: (product: Product) => void;
-  onLoadMore: () => void;
 }
 
 export function ProductGrid({
   products,
   loading,
-  hasNextPage,
   onProductSelect,
-  onLoadMore,
 }: ProductGridProps) {
   if (loading && products.length === 0) {
     return (
@@ -43,20 +38,9 @@ export function ProductGrid({
           <ProductCard key={product.id} product={product} onSelect={onProductSelect} />
         ))}
       </div>
-      {hasNextPage && (
-        <div className="flex justify-center py-4">
-          <Button variant="outline" onClick={onLoadMore} disabled={loading}>
-            {loading ? (
-              <>
-                <Loader2 className="size-4 animate-spin" />
-                {es.pos.loading}
-              </>
-            ) : (
-              'Cargar más'
-            )}
-          </Button>
-        </div>
-      )}
+      {loading && <div role="status" className="flex items-center justify-center gap-2 py-4 text-sm text-muted-foreground">
+        <Loader2 className="size-4 animate-spin" /> Cargando todos los productos…
+      </div>}
     </div>
   );
 }

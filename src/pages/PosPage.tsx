@@ -11,7 +11,6 @@ import { VariantSelector } from '../components/products/VariantSelector';
 import { CartPanel } from '../components/cart/CartPanel';
 import type { Product, ProductVariant } from '../types/product';
 import { es } from '../i18n/es';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
 import { ShoppingCart, LayoutGrid } from 'lucide-react';
 
@@ -23,7 +22,7 @@ function getInitialShowOutOfStock() {
 
 export function PosPage() {
   const [showOutOfStock, setShowOutOfStock] = useState(getInitialShowOutOfStock);
-  const { products, loading, searchQuery, setSearchQuery, categoryFilter, setCategoryFilter, categories, hasNextPage, loadMore } =
+  const { products, loading, searchQuery, setSearchQuery, categoryFilter, setCategoryFilter, categories, error, retry } =
     useProducts(showOutOfStock);
   const { addItem, itemCount } = useCart();
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
@@ -131,20 +130,21 @@ export function PosPage() {
           onSelect={setCategoryFilter}
         />
       )}
+      {error && <div role="alert" className="rounded border border-destructive p-3 text-sm text-destructive">
+        No se ha cargado todo el catálogo: {error} <button className="underline" onClick={retry}>Reintentar</button>
+      </div>}
       <ProductGrid
         products={products}
         loading={loading}
-        hasNextPage={hasNextPage}
         onProductSelect={handleProductSelect}
-        onLoadMore={loadMore}
       />
     </div>
   );
 
   return (
-    <div className="flex h-full min-h-0 min-w-0 flex-col bg-background">
+    <div className="flex h-full min-h-0 min-w-0 flex-col overflow-hidden bg-background">
       {/* Header */}
-      <div className="flex items-center gap-3 border-b border-border px-4 py-3">
+      <div className="flex shrink-0 items-center gap-3 border-b border-border px-4 py-3">
         <img
           src="/logo-myminileo.jpg"
           alt="My Mini Leo"
@@ -154,7 +154,7 @@ export function PosPage() {
       </div>
 
       {/* Mobile tab bar */}
-      <div className="flex border-b lg:hidden">
+      <div className="flex shrink-0 border-b lg:hidden">
         <button
           onClick={() => setMobileTab('products')}
           className={cn(
@@ -189,9 +189,9 @@ export function PosPage() {
       {/* Mobile content */}
       <div className="flex min-h-0 flex-1 lg:hidden">
         {mobileTab === 'products' ? (
-          <ScrollArea className="h-full w-full">
+          <div className="h-full w-full overflow-y-auto overscroll-contain" aria-label="Catálogo de productos">
             {productsContent}
-          </ScrollArea>
+          </div>
         ) : (
           <div className="flex-1 overflow-hidden">
             <CartPanel />
@@ -200,13 +200,13 @@ export function PosPage() {
       </div>
 
       {/* Desktop two-column layout */}
-      <div className="hidden min-h-0 min-w-0 flex-1 lg:grid lg:grid-cols-[minmax(0,1fr)_380px]">
-        <ScrollArea className="h-full min-w-0">
+      <div className="hidden min-h-0 min-w-0 flex-1 overflow-hidden lg:grid lg:grid-rows-[minmax(0,1fr)] lg:grid-cols-[minmax(0,1fr)_380px]">
+        <div className="h-full min-h-0 min-w-0 overflow-y-auto overscroll-contain" aria-label="Catálogo de productos">
           {productsContent}
-        </ScrollArea>
-        <div className="border-l border-border">
-          <CartPanel />
         </div>
+        <aside aria-label="Cesta de la compra" className="h-full min-h-0 overflow-hidden border-l border-border">
+          <CartPanel />
+        </aside>
       </div>
 
       {variantModalOpen && selectedProduct && (

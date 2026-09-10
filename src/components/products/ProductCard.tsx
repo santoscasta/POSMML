@@ -27,6 +27,8 @@ export function ProductCard({ product, onSelect }: ProductCardProps) {
     >
       {product.featuredImage?.url ? (
         <img
+          loading="lazy"
+          decoding="async"
           className="aspect-[4/3] w-full rounded-t-sm object-cover"
           src={product.featuredImage.url}
           alt={product.featuredImage.altText || product.title}
