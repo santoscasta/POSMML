@@ -3,6 +3,7 @@ export type VoucherStatus = 'ACTIVE' | 'EXHAUSTED' | 'CANCELLED';
 export interface Voucher {
   id: string;
   code: string;
+  fullCode?: string;
   originalAmount: number;
   currentBalance: number;
   customerName?: string;

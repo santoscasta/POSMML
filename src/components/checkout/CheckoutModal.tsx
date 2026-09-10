@@ -1,3 +1,4 @@
+import { escapeHtml, printDocument, thermalStyles } from '../../utils/print';
 import { useState } from 'react';
 import { formatCurrency } from '../../utils/currency';
 import { apiGet, apiPost } from '../../utils/apiClient';
@@ -268,28 +269,16 @@ export function CheckoutModal({
                 const now = new Date();
                 const dateStr = now.toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
                 const methodLabel = method === 'CASH' ? 'Efectivo' : method === 'CARD' ? 'Tarjeta' : method === 'BIZUM' ? 'Bizum' : method === 'VOUCHER' ? 'Vale' : 'Mixto';
-                const w = window.open('', '_blank', 'width=400,height=700');
-                if (!w) return;
-                w.document.write(`<!DOCTYPE html><html><head><title>Ticket ${successOrder}</title>
-                  <style>
-                    body { font-family: 'Courier New', monospace; width: 280px; margin: 0 auto; padding: 20px 0; font-size: 12px; color: #333; }
-                    .center { text-align: center; }
-                    .brand { font-size: 16px; margin-bottom: 2px; }
-                    .line { border-top: 1px dashed #999; margin: 8px 0; }
-                    .row { display: flex; justify-content: space-between; padding: 2px 0; }
-                    .bold { font-weight: bold; }
-                    .item { padding: 3px 0; }
-                    .total { font-size: 14px; font-weight: bold; margin-top: 4px; }
-                    .footer { margin-top: 12px; font-size: 10px; color: #999; text-align: center; }
-                  </style></head><body>
+                const printed = printDocument(`<!DOCTYPE html><html><head><title>Ticket ${escapeHtml(successOrder)}</title>
+                  <style>${thermalStyles}</style></head><body>
                   <div class="center brand">My mini Leo</div>
                   <div class="center" style="font-size:10px;color:#999">Clothes for your baby</div>
                   <div class="line"></div>
-                  <div class="row"><span>Ticket:</span><span class="bold">${successOrder}</span></div>
+                  <div class="row"><span>Ticket:</span><span class="bold">${escapeHtml(successOrder)}</span></div>
                   <div class="row"><span>Fecha:</span><span>${dateStr}</span></div>
                   <div class="row"><span>Método:</span><span>${methodLabel}</span></div>
                   <div class="line"></div>
-                  ${items.map(i => `<div class="item"><div class="row"><span>${i.quantity}x ${i.title}${i.variantTitle !== 'Default Title' ? ` (${i.variantTitle})` : ''}</span></div><div class="row"><span></span><span>${formatCurrency(i.price * i.quantity)}</span></div></div>`).join('')}
+                  ${items.map(i => `<div class="item"><div class="row"><span>${i.quantity}x ${escapeHtml(i.title)}${i.variantTitle !== 'Default Title' ? ` (${escapeHtml(i.variantTitle)})` : ''}</span></div><div class="row"><span></span><span>${formatCurrency(i.price * i.quantity)}</span></div></div>`).join('')}
                   <div class="line"></div>
                   <div class="row"><span>Subtotal</span><span>${formatCurrency(subtotal)}</span></div>
                   ${discountAmount > 0 ? `<div class="row"><span>Descuento</span><span>-${formatCurrency(discountAmount)}</span></div>` : ''}
@@ -300,8 +289,7 @@ export function CheckoutModal({
                   <div class="line"></div>
                   <div class="footer">Gracias por su compra<br/>myminileo.com</div>
                 </body></html>`);
-                w.document.close();
-                w.print();
+                if (!printed) window.alert('Permite las ventanas emergentes para imprimir el ticket.');
               }}
             >
               <Printer className="size-4" />
@@ -315,36 +303,23 @@ export function CheckoutModal({
               onClick={() => {
                 const now = new Date();
                 const dateStr = now.toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
-                const w = window.open('', '_blank', 'width=400,height=700');
-                if (!w) return;
-                w.document.write(`<!DOCTYPE html><html><head><title>Ticket Regalo ${successOrder}</title>
-                  <style>
-                    body { font-family: 'Courier New', monospace; width: 280px; margin: 0 auto; padding: 20px 0; font-size: 12px; color: #333; }
-                    .center { text-align: center; }
-                    .brand { font-size: 16px; margin-bottom: 2px; }
-                    .line { border-top: 1px dashed #999; margin: 8px 0; }
-                    .row { display: flex; justify-content: space-between; padding: 2px 0; }
-                    .bold { font-weight: bold; }
-                    .item { padding: 3px 0; }
-                    .gift-label { font-size: 14px; font-weight: bold; text-align: center; margin: 8px 0; letter-spacing: 2px; text-transform: uppercase; }
-                    .footer { margin-top: 12px; font-size: 10px; color: #999; text-align: center; }
-                  </style></head><body>
+                const printed = printDocument(`<!DOCTYPE html><html><head><title>Ticket Regalo ${escapeHtml(successOrder)}</title>
+                  <style>${thermalStyles}</style></head><body>
                   <div class="center brand">My mini Leo</div>
                   <div class="center" style="font-size:10px;color:#999">Clothes for your baby</div>
                   <div class="line"></div>
                   <div class="gift-label">🎁 Ticket Regalo</div>
                   <div class="line"></div>
-                  <div class="row"><span>Ticket:</span><span class="bold">${successOrder}</span></div>
+                  <div class="row"><span>Ticket:</span><span class="bold">${escapeHtml(successOrder)}</span></div>
                   <div class="row"><span>Fecha:</span><span>${dateStr}</span></div>
                   <div class="line"></div>
-                  ${items.map(i => `<div class="item"><div class="row"><span>${i.quantity}x ${i.title}${i.variantTitle !== 'Default Title' ? ` (${i.variantTitle})` : ''}</span></div></div>`).join('')}
+                  ${items.map(i => `<div class="item"><div class="row"><span>${i.quantity}x ${escapeHtml(i.title)}${i.variantTitle !== 'Default Title' ? ` (${escapeHtml(i.variantTitle)})` : ''}</span></div></div>`).join('')}
                   <div class="line"></div>
                   <div class="center" style="font-size:11px;margin:8px 0">Artículos: ${itemCount}</div>
                   <div class="line"></div>
                   <div class="footer">Este ticket no incluye precios.<br/>Para cambios o devoluciones, presente este ticket.<br/><br/>myminileo.com</div>
                 </body></html>`);
-                w.document.close();
-                w.print();
+                if (!printed) window.alert('Permite las ventanas emergentes para imprimir el ticket.');
               }}
             >
               <Gift className="size-4" />

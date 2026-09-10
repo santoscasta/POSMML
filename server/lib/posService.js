@@ -146,12 +146,24 @@ export function createPosService(gql, store) {
       const order = completed.order;
       if (!order?.id) throw new PosError('Pedido pendiente de comprobación', 409);
       await debitVouchers(ctx, vouchers, order.name);
-      await ctx.step('mark-paid', async () => mutationResult(await gql(`mutation PosPaid($input: OrderMarkAsPaidInput!) {
-        orderMarkAsPaid(input: $input) { order { id } userErrors { message } }
-      }`, { input: { id: order.id } }), 'orderMarkAsPaid', 'order'), async () => {
+      const paidOrder = async () => {
         const data = await gql(`query PosPaidRecovery($id: ID!) { order(id: $id) { id displayFinancialStatus } }`, { id: order.id });
         return data.order?.displayFinancialStatus === 'PAID' ? { id: data.order.id } : null;
-      });
+      };
+      await ctx.step('mark-paid', async () => {
+        // Zero-value orders can already be paid after draft completion. Also
+        // check before retrying a rejected payment on an existing order.
+        let paid;
+        try { paid = await paidOrder(); } catch (error) {
+          // A read failed before any payment mutation: retry remains safe.
+          error.definiteRejection = true;
+          throw error;
+        }
+        if (paid) return paid;
+        return mutationResult(await gql(`mutation PosPaid($input: OrderMarkAsPaidInput!) {
+          orderMarkAsPaid(input: $input) { order { id } userErrors { message } }
+        }`, { input: { id: order.id } }), 'orderMarkAsPaid', 'order');
+      }, paidOrder);
       const entry = movement(ctx, {
         shopifyOrderId: order.id, shopifyOrderName: order.name, sessionId,
         method: payment.method, amount: cents(payment.amount) / 100, type: 'sale',

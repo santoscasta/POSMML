@@ -1,23 +1,8 @@
 import { Router } from 'express';
-import { getAccessToken, SHOPIFY_STORE, API_VERSION } from '../lib/shopify.js';
+import shopifyGQL from '../lib/shopifyGQL.js';
+import { sendVoucherEmail } from '../lib/voucherEmail.js';
 
 const router = Router();
-
-async function shopifyGQL(query, variables = {}) {
-  const token = await getAccessToken();
-  if (!token) throw new Error('No access token');
-  const res = await fetch(
-    `https://${SHOPIFY_STORE}/admin/api/${API_VERSION}/graphql.json`,
-    {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'X-Shopify-Access-Token': token },
-      body: JSON.stringify({ query, variables }),
-    },
-  );
-  const data = await res.json();
-  if (data.errors) throw new Error(data.errors.map(e => e.message).join(', '));
-  return data.data;
-}
 
 function parseNoteMetadata(note) {
   if (!note) return {};
@@ -140,11 +125,19 @@ router.get('/vouchers/stats', async (req, res) => {
   }
 });
 
+router.post('/vouchers/send-email', async (req, res) => {
+  try {
+    res.json(await sendVoucherEmail(shopifyGQL, req.body));
+  } catch (err) {
+    res.status(err.status || 500).json({ error: err.message });
+  }
+});
+
 // Issue
 router.post('/vouchers', async (req, res) => {
   try {
     const { amount, customerName, customerEmail, notes } = req.body;
-    if (!amount || amount <= 0) return res.status(400).json({ error: 'Importe inválido' });
+    if (typeof amount !== 'number' || !Number.isFinite(amount) || amount <= 0) return res.status(400).json({ error: 'Importe inválido' });
 
     const displayNote = notes || `Vale POS MML${customerName ? ` - ${customerName}` : ''}`;
     const meta = {};

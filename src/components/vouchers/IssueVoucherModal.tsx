@@ -1,3 +1,4 @@
+import { VoucherDelivery } from './VoucherDelivery';
 import { useState } from 'react';
 import { apiPost } from '../../utils/apiClient';
 import { formatCurrency } from '../../utils/currency';
@@ -30,11 +31,15 @@ export function IssueVoucherModal({ open, onClose, onIssued }: IssueVoucherModal
 
   const handleSubmit = async () => {
     const parsedAmount = parseFloat(amount);
-    if (!parsedAmount || parsedAmount <= 0) {
+    if (!Number.isFinite(parsedAmount) || parsedAmount <= 0) {
       setError('Introduce un monto válido');
       return;
     }
 
+    if (customerEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customerEmail.trim())) {
+      setError('Introduce un correo válido');
+      return;
+    }
     try {
       setSubmitting(true);
       setError(null);
@@ -55,6 +60,7 @@ export function IssueVoucherModal({ open, onClose, onIssued }: IssueVoucherModal
   };
 
   const handleClose = () => {
+    if (submitting) return;
     setAmount('');
     setCustomerName('');
     setCustomerEmail('');
@@ -79,13 +85,14 @@ export function IssueVoucherModal({ open, onClose, onIssued }: IssueVoucherModal
             <div className="mb-2 text-base font-semibold">
               Vale emitido exitosamente
             </div>
-            <div className="mb-4 rounded-lg bg-muted px-5 py-3 font-mono text-2xl font-bold tracking-wider text-accent">
+            <div className="mb-4 max-w-full break-all rounded-lg bg-muted px-3 py-3 font-mono text-xl font-bold tracking-wider text-accent">
               {(createdVoucher as Voucher & { fullCode?: string }).fullCode || createdVoucher.code}
             </div>
             <div className="mb-5 text-lg font-semibold">
               {formatCurrency(createdVoucher.originalAmount)}
             </div>
-            <Button onClick={handleClose} className="w-full">
+            <VoucherDelivery voucher={createdVoucher} autoSend />
+            <Button onClick={handleClose} className="mt-3 w-full">
               Cerrar
             </Button>
           </div>
@@ -137,6 +144,7 @@ export function IssueVoucherModal({ open, onClose, onIssued }: IssueVoucherModal
                   onChange={(e) => setCustomerEmail(e.target.value)}
                   placeholder="Opcional"
                 />
+                <p className="mt-1 text-xs text-muted-foreground">Si indicas un correo, enviaremos el vale al emitirlo.</p>
               </div>
 
               <div>

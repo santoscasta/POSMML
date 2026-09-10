@@ -1,3 +1,5 @@
+import { escapeHtml, printDocument, thermalStyles } from '../../utils/print';
+import { VoucherDelivery } from './VoucherDelivery';
 import { useState } from 'react';
 import { apiPost } from '../../utils/apiClient';
 import { formatCurrency } from '../../utils/currency';
@@ -79,45 +81,32 @@ export function VoucherDetail({ voucher, open, onClose, onUpdate }: VoucherDetai
   };
 
   const handlePrint = () => {
-    const printWindow = window.open('', '_blank', 'width=400,height=600');
-    if (!printWindow) return;
-    printWindow.document.write(`
+    const printed = printDocument(`
       <!DOCTYPE html>
       <html>
       <head>
-        <title>Vale ${voucher.code}</title>
-        <style>
-          body { font-family: 'Source Sans 3', Arial, sans-serif; padding: 40px; text-align: center; color: #333; }
-          .brand { font-size: 24px; font-weight: 300; color: #91A1BB; margin-bottom: 4px; }
-          .brand strong { font-weight: 600; }
-          .tagline { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: #999; margin-bottom: 30px; }
-          .code { font-size: 32px; font-weight: 700; font-family: monospace; letter-spacing: 3px; margin: 20px 0; }
-          .amount { font-size: 24px; font-weight: 600; margin-bottom: 8px; }
-          .label { font-size: 12px; color: #999; text-transform: uppercase; letter-spacing: 1px; }
-          .info { margin-top: 20px; font-size: 14px; color: #666; }
-          .divider { border-top: 1px dashed #ccc; margin: 20px 0; }
-        </style>
+        <title>Vale ${escapeHtml(voucher.code)}</title>
+        <style>${thermalStyles} body { text-align: center; }</style>
       </head>
       <body>
         <div class="brand">my mini <strong>Leo</strong></div>
         <div class="tagline">Baby Clothing</div>
         <div class="divider"></div>
-        <div class="label">Vale Regalo</div>
-        <div class="code">${voucher.code}</div>
+        <div class="label">Referencia del vale</div><p>El código completo está en el correo o en el vale original.</p>
+        <div class="code">${escapeHtml(voucher.code)}</div>
         <div class="label">Valor</div>
         <div class="amount">${formatCurrency(voucher.originalAmount)}</div>
         ${voucher.currentBalance !== voucher.originalAmount
           ? `<div class="info">Saldo disponible: ${formatCurrency(voucher.currentBalance)}</div>`
           : ''
         }
-        ${voucher.customerName ? `<div class="info">Para: ${voucher.customerName}</div>` : ''}
+        ${voucher.customerName ? `<div class="info">Para: ${escapeHtml(voucher.customerName)}</div>` : ''}
         <div class="divider"></div>
         <div class="info">Emitido: ${new Date(voucher.issuedAt).toLocaleDateString('es-ES')}</div>
       </body>
       </html>
     `);
-    printWindow.document.close();
-    printWindow.print();
+    if (!printed) setError('Permite las ventanas emergentes para imprimir.');
   };
 
   return (
@@ -126,6 +115,7 @@ export function VoucherDetail({ voucher, open, onClose, onUpdate }: VoucherDetai
         <DialogHeader>
           <DialogTitle>Detalle del Vale</DialogTitle>
         </DialogHeader>
+        <VoucherDelivery key={voucher.id} voucher={voucher} />
 
         {error && (
           <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-3 text-sm text-destructive">
@@ -238,7 +228,7 @@ export function VoucherDetail({ voucher, open, onClose, onUpdate }: VoucherDetai
         <div className="flex gap-2">
           <Button className="flex-1" onClick={handlePrint}>
             <Printer className="size-4" />
-            Imprimir Vale
+            Imprimir referencia
           </Button>
           {voucher.status === 'ACTIVE' && !showConfirm && (
             <Button

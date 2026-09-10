@@ -23,6 +23,7 @@ function fixture(t, overrides = {}) {
     PosSessions: () => ({ metaobjects: { nodes: [{ id: 'session-A', updatedAt: '2026-09-07T08:00:00Z', fields: [{ key: 'status', value: 'OPEN' }] }], pageInfo: { hasNextPage: false } } }),
     PosDraft: () => ({ draftOrderCreate: { draftOrder: { id: 'draft-1', totalPriceSet: { shopMoney: { amount: '100', currencyCode: 'EUR' } } }, userErrors: [] } }),
     PosComplete: () => ({ draftOrderComplete: { draftOrder: { order: { id: orderId, name: '#1' } }, userErrors: [] } }),
+    PosPaidRecovery: () => ({ order: { id: orderId, displayFinancialStatus: 'PENDING' } }),
     PosPaid: () => ({ orderMarkAsPaid: { order: { id: orderId }, userErrors: [] } }),
     PosVoucher: () => ({ giftCards: { nodes: [{ id: 'card-1', lastCharacters: '1234', enabled: true, balance: { amount: '100' } }], pageInfo: { hasNextPage: false } } }),
     PosDebit: () => ({ giftCardDebit: { giftCardDebitTransaction: { id: 'debit-1' }, userErrors: [] } }),
@@ -284,4 +285,42 @@ test('card and voucher refunds do not subtract cash from a mixed sale', () => {
   assert.equal(kpis.refunds, 20);
   assert.equal(kpis.refundsCash, 0);
   assert.equal(kpis.expectedCash, 70);
+});
+
+test('already-paid zero order completes without trying to mark paid again', async t => {
+  const f = fixture(t, {
+    PosDraft: () => ({ draftOrderCreate: { draftOrder: { id: 'draft-1', totalPriceSet: { shopMoney: { amount: '0', currencyCode: 'EUR' } } } } }),
+    PosPaidRecovery: () => ({ order: { id: orderId, displayFinancialStatus: 'PAID' } }),
+  });
+  const input = { cart: { items: [{ variantId: 'gid://shopify/ProductVariant/1', quantity: 1, price: 0 }] }, payment: { method: 'CASH', amount: 0, cashReceived: 0 } };
+  await f.service.checkout(key, input);
+  await f.service.checkout(key, input);
+  assert.equal(count(f, 'PosPaid'), 0);
+  assert.equal(count(f, 'PosComplete'), 1);
+  assert.equal(f.store.read().movements.length, 1);
+});
+
+test('temporarily locked payment resumes once Shopify confirms paid, without a second mutation', async t => {
+  let paid = false;
+  const f = fixture(t, {
+    PosPaidRecovery: () => ({ order: { id: orderId, displayFinancialStatus: paid ? 'PAID' : 'PENDING' } }),
+    PosPaid: () => ({ orderMarkAsPaid: { order: null, userErrors: [{ message: 'Order is temporarily unavailable to be modified.' }] } }),
+  });
+  await assert.rejects(f.service.checkout(key, checkoutInput), /temporarily unavailable/);
+  paid = true;
+  await createPosService(f.gql, createOperationStore(f.directory)).checkout(key, checkoutInput);
+  assert.equal(count(f, 'PosDraft'), 1);
+  assert.equal(count(f, 'PosPaid'), 1);
+  assert.equal(f.store.read().movements.length, 1);
+});
+
+test('failed pre-payment status read remains safely retryable', async t => {
+  let tries = 0;
+  const f = fixture(t, {
+    PosPaidRecovery: () => { if (++tries === 1) throw new Error('read timeout'); return { order: { id: orderId, displayFinancialStatus: 'PENDING' } }; },
+  });
+  await assert.rejects(f.service.checkout(key, checkoutInput), /read timeout/);
+  await f.service.checkout(key, checkoutInput);
+  assert.equal(count(f, 'PosDraft'), 1);
+  assert.equal(count(f, 'PosPaid'), 1);
 });
