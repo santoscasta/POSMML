@@ -133,7 +133,7 @@ export function CloseSessionModal({ open, onClose }: CloseSessionModalProps) {
       <div class="dline"></div>
 
       <div class="section">Arqueo de caja</div>
-      <div class="row"><span>Efectivo esperado</span><span>${formatCurrency(rExpected)}</span></div>
+      <div class="row"><span>Efectivo teórico</span><span>${formatCurrency(rExpected)}</span></div>
       <div class="row"><span>Efectivo contado</span><span>${formatCurrency(data.closingAmount || 0)}</span></div>
       <div class="row bold"><span>Diferencia</span><span style="color:${rDifference >= 0 ? '#16a34a' : '#dc2626'}">${rDifference >= 0 ? '+' : ''}${formatCurrency(rDifference)}</span></div>
       <div class="dline"></div>
@@ -210,10 +210,15 @@ export function CloseSessionModal({ open, onClose }: CloseSessionModalProps) {
               )}
             </div>
 
+            <div className="flex justify-between text-sm">
+              <span className="text-muted-foreground">{es.sessions.openingAmount}</span>
+              <span>{formatCurrency(closeResult.openingAmount)}</span>
+            </div>
+
             {/* Cash reconciliation */}
             <div className="space-y-1.5 rounded-lg border p-3 text-sm">
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Efectivo esperado</span>
+                <span className="text-muted-foreground">Efectivo teórico</span>
                 <span>{formatCurrency(closeResult.expectedAmount ?? 0)}</span>
               </div>
               <div className="flex justify-between">
@@ -298,8 +303,8 @@ export function CloseSessionModal({ open, onClose }: CloseSessionModalProps) {
                       <span className="font-medium">{formatCurrency(kpis.bizumSales)}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-muted-foreground">Reembolsos</span>
-                      <span className="font-medium">-{formatCurrency(kpis.refunds)}</span>
+                      <span className="text-muted-foreground">Devoluciones en efectivo</span>
+                      <span className="font-medium">-{formatCurrency(kpis.refundsCash)}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Ventas brutas</span>
@@ -313,6 +318,8 @@ export function CloseSessionModal({ open, onClose }: CloseSessionModalProps) {
                   <span>{session?.accountingError ? 'Pendiente de conciliación' : formatCurrency(expectedCash)}</span>
                 </div>
               </div>
+
+              <p className="text-xs text-muted-foreground">Efectivo teórico = fondo inicial + ventas en efectivo − devoluciones en efectivo. Cuenta todo el efectivo, incluido el fondo inicial.</p>
 
               {/* Closing amount */}
               <div>

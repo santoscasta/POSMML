@@ -10,6 +10,7 @@ export interface ProductVariant {
 }
 
 export interface Product {
+  categoryIds?: string[];
   id: string;
   title: string;
   productType?: string;

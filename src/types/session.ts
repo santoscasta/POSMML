@@ -23,6 +23,7 @@ export interface SessionKPIs {
   bizumSales: number;
   voucherSales: number;
   refunds: number;
+  refundsCash: number;
   expectedCash: number;
 }
 

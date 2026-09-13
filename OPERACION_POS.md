@@ -50,3 +50,12 @@ Los pagos mixtos antiguos sin desglose y las ventas sobrescritas por una devoluc
 - `npm run lint`: el repositorio tiene cinco errores previos de Fast Refresh y un aviso en el escáner, ajenos a estos P1.
 
 Referencias de API verificadas: [Refund y estado de sus transacciones](https://shopify.dev/docs/api/admin-graphql/2025-10/objects/Refund), [Metaobject y updatedAt](https://shopify.dev/docs/api/admin-graphql/2025-10/objects/Metaobject), [código de emisión de un vale](https://shopify.dev/docs/api/admin-graphql/latest/input-objects/giftcardcreateinput).
+
+
+## Navegación por categorías
+
+El selector superior ofrece tres vistas y conserva la última elegida en ese navegador: «Todos los productos» muestra el catálogo completo; «Por categorías» muestra productos con un desplegable para filtrar; «Explorar categorías» sustituye los productos por tarjetas de categorías y subcategorías hasta llegar a una categoría sin hijos. En esta última vista los productos y su buscador aparecen únicamente en el último nivel. Las migas de navegación permiten retroceder. Al cambiar de vista se limpia la búsqueda y la categoría seleccionada.
+
+La jerarquía procede de los metaobjetos `categoria` de Shopify: `nombre`, `imagen` y `padre`. Los productos se vinculan mediante `custom.categorias` (lista de referencias a metaobjetos). Un producto puede aparecer en varias ramas. Al consultar una categoría se incluyen los productos asignados a ella o a cualquiera de sus descendientes, sin duplicarlos. «Todos los productos» incluye también los que no tengan categorías. Las dos vistas respetan la búsqueda y el control de productos agotados.
+
+No se utilizan los menús ni se requiere `read_online_store_navigation`. Tras modificar categorías o asignaciones en Shopify, recarga el POS. Las cargas incompletas y los errores del árbol se muestran con opción de reintentar.

@@ -85,6 +85,10 @@ router.get('/sessions/current', async (req, res) => {
 router.post('/sessions/open', async (req, res) => {
   try {
     await getStore().exclusive(async () => {
+      const { openingAmount, cashierName, notes, force } = req.body;
+      if (typeof openingAmount !== 'number') throw new PosError('Indica el fondo de caja inicial');
+      cents(openingAmount);
+
       // Check no open session exists (filter in code — Shopify query filter unreliable)
       const check = await shopifyGQL(
         `{
@@ -93,8 +97,6 @@ router.post('/sessions/open', async (req, res) => {
           }
         }`,
       );
-      const { openingAmount, cashierName, notes, force } = req.body;
-      cents(openingAmount || 0);
 
       const openSessions = check.metaobjects.edges.filter(e =>
         e.node.fields.find(f => f.key === 'status')?.value === 'OPEN'
@@ -126,7 +128,7 @@ router.post('/sessions/open', async (req, res) => {
 
       const fields = [
         { key: 'cashier_name', value: cashierName || 'Cajero' },
-        { key: 'opening_amount', value: String(openingAmount || 0) },
+        { key: 'opening_amount', value: String(openingAmount) },
         { key: 'closing_amount', value: '0' },
         { key: 'expected_amount', value: '0' },
         { key: 'difference', value: '0' },

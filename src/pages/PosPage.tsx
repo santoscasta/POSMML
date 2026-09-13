@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { useProducts } from '../hooks/useProducts';
 import { useCart } from '../context/CartContext';
 import { useBarcodeScanner } from '../hooks/useBarcodeScanner';
@@ -6,13 +6,17 @@ import { shopifyGraphQL } from '../utils/graphqlClient';
 import { PRODUCT_BY_BARCODE_QUERY } from '../graphql/products';
 import { ProductSearch } from '../components/products/ProductSearch';
 import { ProductGrid } from '../components/products/ProductGrid';
-import { CategoryChips } from '../components/products/CategoryChips';
+import { CategoryBrowser } from '../components/products/CategoryBrowser';
+import { useCategories } from '../hooks/useCategories';
+import { descendantCategoryIds, childCategories, type CatalogCategory } from '../utils/categoryTree';
 import { VariantSelector } from '../components/products/VariantSelector';
 import { CartPanel } from '../components/cart/CartPanel';
 import type { Product, ProductVariant } from '../types/product';
 import { es } from '../i18n/es';
 import { cn } from '@/lib/utils';
 import { ShoppingCart, LayoutGrid } from 'lucide-react';
+
+type CatalogView = 'categories' | 'products' | 'explore';
 
 const SHOW_OUT_OF_STOCK_KEY = 'posmml.showOutOfStock';
 
@@ -22,8 +26,46 @@ function getInitialShowOutOfStock() {
 
 export function PosPage() {
   const [showOutOfStock, setShowOutOfStock] = useState(getInitialShowOutOfStock);
-  const { products, loading, searchQuery, setSearchQuery, categoryFilter, setCategoryFilter, categories, error, retry } =
-    useProducts(showOutOfStock);
+  const catalog = useCategories();
+  const [categoryPath, setCategoryPath] = useState<CatalogCategory[]>([]);
+  const [catalogView, setCatalogView] = useState<CatalogView>(() => {
+    const saved = localStorage.getItem('posmml.catalogView');
+    return saved === 'products' || saved === 'explore' ? saved : 'categories';
+  });
+  const [searching, setSearching] = useState(false);
+  const currentCategory = categoryPath.at(-1);
+  const hasChildren = !currentCategory || childCategories(catalog.categories, currentCategory.id).length > 0;
+  const showProducts = catalogView !== 'explore' || (!!currentCategory && !hasChildren && !catalog.loading && !catalog.error);
+  const { products, loading, searchQuery, setSearchQuery, error, retry } = useProducts(showOutOfStock);
+  const visibleProducts = useMemo(() => {
+    if (catalogView === 'products' || !currentCategory) return products;
+    const ids = descendantCategoryIds(currentCategory);
+    return products.filter(product => product.categoryIds?.some(id => ids.has(id)));
+  }, [products, catalogView, currentCategory]);
+  const changeView = (view: CatalogView) => {
+    setCatalogView(view);
+    localStorage.setItem('posmml.catalogView', view);
+    setCategoryPath([]);
+    setSearchQuery('');
+    setSearching(false);
+  };
+  const navigateCategory = (path: CatalogCategory[]) => {
+    setCategoryPath(path);
+    setSearchQuery('');
+    setSearching(false);
+  };
+  const categoryOptions = useMemo(() => {
+    const options: { category: CatalogCategory; path: CatalogCategory[]; label: string }[] = [];
+    function visit(categories: CatalogCategory[], parents: CatalogCategory[]) {
+      for (const category of categories) {
+        const path = [...parents, category];
+        options.push({ category, path, label: path.map(item => item.title).join(' › ') });
+        visit(category.children, path);
+      }
+    }
+    visit(catalog.categories, []);
+    return options;
+  }, [catalog.categories]);
   const { addItem, itemCount } = useCart();
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [variantModalOpen, setVariantModalOpen] = useState(false);
@@ -113,7 +155,15 @@ export function PosPage() {
 
   const productsContent = (
     <div className="space-y-3 p-3 sm:p-4">
-      <ProductSearch value={searchQuery} onChange={setSearchQuery} />
+      <fieldset className="flex flex-wrap items-center gap-2">
+        <legend className="mb-2 text-sm font-medium">Vista del catálogo</legend>
+        {([{ value: 'categories', label: 'Por categorías' }, { value: 'products', label: 'Todos los productos' }, { value: 'explore', label: 'Explorar categorías' }] as const).map(view => (
+          <button type="button" key={view.value} aria-pressed={catalogView === view.value} onClick={() => changeView(view.value)} className={cn('cursor-pointer rounded-lg border px-4 py-2.5 text-sm font-medium transition-colors focus-within:ring-2 focus-within:ring-primary', catalogView === view.value ? 'border-primary bg-primary text-primary-foreground' : 'bg-card hover:bg-muted')}>
+            {view.label}
+          </button>
+        ))}
+      </fieldset>
+      {showProducts && <ProductSearch value={searchQuery} onChange={value => { setSearchQuery(value); setSearching(!!value.trim()); }} />}
       <label className="flex w-fit cursor-pointer items-center gap-2 text-sm text-muted-foreground">
         <input
           type="checkbox"
@@ -123,21 +173,27 @@ export function PosPage() {
         />
         {es.pos.showOutOfStock}
       </label>
-      {categories.length > 0 && (
-        <CategoryChips
-          categories={categories}
-          selected={categoryFilter}
-          onSelect={setCategoryFilter}
-        />
-      )}
-      {error && <div role="alert" className="rounded border border-destructive p-3 text-sm text-destructive">
+      {catalogView !== 'products' && catalog.error && <div role="alert" className="rounded border border-destructive p-3 text-sm">No se han cargado las categorías: {catalog.error} <button className="underline" onClick={catalog.retry}>Reintentar categorías</button></div>}
+      {catalogView === 'categories' && <label className="block space-y-1.5 text-sm font-medium">
+        <span>Filtrar por categoría</span>
+        <select aria-label="Filtrar por categoría" className="w-full min-w-0 rounded-lg border bg-card px-3 py-2.5" value={currentCategory?.id ?? ''} disabled={catalog.loading || !!catalog.error} onChange={event => navigateCategory(categoryOptions.find(option => option.category.id === event.target.value)?.path ?? [])}>
+          <option value="">{catalog.loading ? 'Cargando categorías…' : 'Todas las categorías'}</option>
+          {categoryOptions.map(option => <option key={option.category.id} value={option.category.id}>{option.label}</option>)}
+        </select>
+      </label>}
+      {catalogView === 'explore' && <>
+        <p className="text-sm text-muted-foreground">{hasChildren ? 'Selecciona una categoría para continuar hasta los productos.' : `Productos de ${currentCategory?.title}`}</p>
+        {catalog.loading ? <p role="status" className="py-8 text-center text-sm text-muted-foreground">Cargando categorías…</p> : !catalog.error && <CategoryBrowser categories={catalog.categories} path={categoryPath} onNavigate={navigateCategory} showCards={hasChildren} />}
+      </>}
+      {searching && <p className="text-xs text-muted-foreground">Buscando en {currentCategory?.title ?? 'todo el catálogo'}</p>}
+      {showProducts && error && <div role="alert" className="rounded border border-destructive p-3 text-sm text-destructive">
         No se ha cargado todo el catálogo: {error} <button className="underline" onClick={retry}>Reintentar</button>
       </div>}
-      <ProductGrid
-        products={products}
+      {showProducts && <ProductGrid
+        products={visibleProducts}
         loading={loading}
         onProductSelect={handleProductSelect}
-      />
+      />}
     </div>
   );
 

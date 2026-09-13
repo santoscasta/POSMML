@@ -26,8 +26,8 @@ export function OpenSessionModal({ open, onClose, required = false }: OpenSessio
   const [error, setError] = useState<string | null>(null);
 
   const handleConfirm = async () => {
-    const amount = parseFloat(openingAmount);
-    if (isNaN(amount) || amount < 0) {
+    const amount = Number(openingAmount);
+    if (openingAmount.trim() === '' || !Number.isFinite(amount) || amount < 0 || !Number.isSafeInteger(Math.round(amount * 100)) || Math.abs(amount * 100 - Math.round(amount * 100)) > 0.00001) {
       setError(es.errors.invalidAmount);
       return;
     }
@@ -68,7 +68,7 @@ export function OpenSessionModal({ open, onClose, required = false }: OpenSessio
         <div className="space-y-4">
           <div>
             <label className="mb-1.5 block text-sm font-medium" htmlFor="openingAmount">
-              {es.sessions.openingAmount} (Fondo de caja)
+              {es.sessions.openingAmount} (€)
             </label>
             <Input
               id="openingAmount"
@@ -77,8 +77,11 @@ export function OpenSessionModal({ open, onClose, required = false }: OpenSessio
               step="0.01"
               value={openingAmount}
               onChange={(e) => setOpeningAmount(e.target.value)}
+              required
+              aria-describedby="openingAmountHelp"
               autoFocus
             />
+            <p id="openingAmountHelp" className="mt-1.5 text-xs text-muted-foreground">Introduce el efectivo que hay en caja antes de empezar. Si no hay fondo, indica 0.</p>
           </div>
 
           <div>
@@ -118,8 +121,8 @@ export function OpenSessionModal({ open, onClose, required = false }: OpenSessio
                   className="w-full"
                   disabled={loading}
                   onClick={async () => {
-                    const amount = parseFloat(openingAmount);
-                    if (isNaN(amount) || amount < 0) return;
+                    const amount = Number(openingAmount);
+                    if (openingAmount.trim() === '' || !Number.isFinite(amount) || amount < 0 || !Number.isSafeInteger(Math.round(amount * 100)) || Math.abs(amount * 100 - Math.round(amount * 100)) > 0.00001) return;
                     setLoading(true);
                     setError(null);
                     try {

@@ -6,6 +6,7 @@ export const PRODUCTS_QUERY = `
         node {
           id
           title
+          categoryMembership: metafield(namespace: "custom", key: "categorias") { value }
           productType
           featuredImage {
             url
@@ -50,6 +51,7 @@ export const PRODUCT_BY_BARCODE_QUERY = `
         node {
           id
           title
+          categoryMembership: metafield(namespace: "custom", key: "categorias") { value }
           productType
           featuredImage { url altText }
           status

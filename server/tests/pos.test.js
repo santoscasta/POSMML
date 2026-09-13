@@ -324,3 +324,15 @@ test('failed pre-payment status read remains safely retryable', async t => {
   assert.equal(count(f, 'PosDraft'), 1);
   assert.equal(count(f, 'PosPaid'), 1);
 });
+
+test('closing theoretical cash includes initial float, mixed cash and cash refunds only', () => {
+  const movements = [
+    { type: 'sale', method: 'CASH', amount: 25.50 },
+    { type: 'sale', method: 'MIXED', amount: 40, mixedPayments: [{ method: 'CASH', amount: 10 }, { method: 'CARD', amount: 30 }] },
+    { type: 'refund', method: 'CASH', amount: 5.25 },
+    { type: 'refund', method: 'CARD', amount: 12 },
+  ];
+  assert.equal(computeKPIs([], 100).expectedCash, 100);
+  assert.equal(computeKPIs(movements, 100).expectedCash, 130.25);
+  assert.equal(computeKPIs(movements, 0).expectedCash, 30.25);
+});
