@@ -150,7 +150,7 @@ function AppContent() {
       <BottomNav />
       </div>
       {error && <div role="alert" className="fixed inset-x-0 top-8 z-50 bg-destructive p-3 text-white">{error} <button onClick={() => void refresh()} className="underline">Reintentar</button></div>}
-      <OpenSessionModal open={!loading && !error && !isOpen} onClose={() => {}} required />
+      <OpenSessionModal open={location.pathname === "/" && !loading && !error && !isOpen} onClose={() => {}} required />
     </div>
   );
 }

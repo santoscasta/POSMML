@@ -1,5 +1,7 @@
 import { Router } from 'express';
 import shopifyGQL from '../lib/shopifyGQL.js';
+import { getStore } from '../lib/operationStore.js';
+import { issueVoucher, allGiftCards } from '../lib/voucherIssue.js';
 import { sendVoucherEmail } from '../lib/voucherEmail.js';
 
 const router = Router();
@@ -17,11 +19,6 @@ function parseNoteMetadata(note) {
   const nameMatch = note.match(/^Vale POS MML\s*-\s*(.+)$/);
   if (nameMatch) return { customerName: nameMatch[1].trim() };
   return {};
-}
-
-function buildNoteWithMeta(displayNote, meta) {
-  const metaStr = JSON.stringify(meta);
-  return `${displayNote}\n---POS_META---\n${metaStr}`;
 }
 
 function mapGiftCard(gc) {
@@ -87,15 +84,8 @@ const GC_FIELDS = `
 router.get('/vouchers', async (req, res) => {
   try {
     const { status, search } = req.query;
-    const data = await shopifyGQL(
-      `query($first: Int!, $query: String) {
-        giftCards(first: $first, query: $query, sortKey: CREATED_AT, reverse: true) {
-          edges { node { ${GC_FIELDS} } }
-        }
-      }`,
-      { first: 50, query: search || null },
-    );
-    let cards = data.giftCards.edges.map(e => mapGiftCard(e.node));
+    const all = await allGiftCards(shopifyGQL, GC_FIELDS, 10, search || null);
+    let cards = all.map(mapGiftCard);
     if (status) cards = cards.filter(c => c.status === status);
     res.json(cards);
   } catch (err) {
@@ -107,10 +97,8 @@ router.get('/vouchers', async (req, res) => {
 // Stats
 router.get('/vouchers/stats', async (req, res) => {
   try {
-    const data = await shopifyGQL(
-      `query { giftCards(first: 250) { edges { node { ${GC_FIELDS} } } } }`,
-    );
-    const all = data.giftCards.edges.map(e => mapGiftCard(e.node));
+    const cards = await allGiftCards(shopifyGQL, 'id balance { amount currencyCode } initialValue { amount currencyCode } enabled createdAt lastCharacters', 100);
+    const all = cards.map(mapGiftCard);
     const active = all.filter(v => v.status === 'ACTIVE');
     res.json({
       total: all.length,
@@ -136,35 +124,11 @@ router.post('/vouchers/send-email', async (req, res) => {
 // Issue
 router.post('/vouchers', async (req, res) => {
   try {
-    const { amount, customerName, customerEmail, notes } = req.body;
-    if (typeof amount !== 'number' || !Number.isFinite(amount) || amount <= 0) return res.status(400).json({ error: 'Importe inválido' });
-
-    const displayNote = notes || `Vale POS MML${customerName ? ` - ${customerName}` : ''}`;
-    const meta = {};
-    if (customerName) meta.customerName = customerName;
-    if (customerEmail) meta.customerEmail = customerEmail;
-    const note = Object.keys(meta).length > 0
-      ? buildNoteWithMeta(displayNote, meta)
-      : displayNote;
-    const data = await shopifyGQL(
-      `mutation($input: GiftCardCreateInput!) {
-        giftCardCreate(input: $input) {
-          giftCard { ${GC_FIELDS} }
-          giftCardCode
-          userErrors { field message }
-        }
-      }`,
-      { input: { initialValue: amount, note } },
-    );
-    if (data.giftCardCreate.userErrors?.length) {
-      return res.status(400).json({ error: data.giftCardCreate.userErrors.map(e => e.message).join(', ') });
-    }
-    const card = mapGiftCard(data.giftCardCreate.giftCard);
-    card.fullCode = data.giftCardCreate.giftCardCode;
-    res.json(card);
+    const { operationId, ...input } = req.body;
+    const result = await issueVoucher(shopifyGQL, getStore(), operationId, input, GC_FIELDS);
+    res.json({ ...mapGiftCard(result.card), fullCode: result.fullCode });
   } catch (err) {
-    console.error('Issue voucher error:', err);
-    res.status(500).json({ error: err.message });
+    res.status(err.status || 500).json({ error: err.message, code: err.code, safeToRestart: err.safeToRestart === true });
   }
 });
 

@@ -26,21 +26,27 @@ export function SessionsPage() {
   const [openModalVisible, setOpenModalVisible] = useState(false);
   const [closeModalVisible, setCloseModalVisible] = useState(false);
   const [history, setHistory] = useState<CashSession[]>([]);
+  const [historyError, setHistoryError] = useState<string | null>(null);
+  const [historyAttempt, setHistoryAttempt] = useState(0);
   const [historyLoading, setHistoryLoading] = useState(true);
 
   useEffect(() => {
+    let cancelled = false;
     const fetchHistory = async () => {
+      setHistoryLoading(true);
+      setHistoryError(null);
       try {
         const data = await apiGet<CashSession[]>('/sessions?limit=5');
-        setHistory(data);
-      } catch {
-        setHistory([]);
+        if (!cancelled) setHistory(data);
+      } catch (error) {
+        if (!cancelled) setHistoryError(error instanceof Error ? error.message : 'Error al consultar el historial');
       } finally {
-        setHistoryLoading(false);
+        if (!cancelled) setHistoryLoading(false);
       }
     };
-    fetchHistory();
-  }, [isOpen]);
+    void fetchHistory();
+    return () => { cancelled = true; };
+  }, [isOpen, historyAttempt]);
 
   const kpis = session?.kpis;
 
@@ -158,7 +164,7 @@ export function SessionsPage() {
       {/* Session history */}
       <h2 className="mb-4 text-base font-semibold">{es.sessions.sessionHistory}</h2>
 
-      {historyLoading ? (
+      {historyError ? <div role="alert" className="rounded-lg border border-destructive p-3 text-sm text-destructive">No se pudo cargar el historial: {historyError} <button className="underline" onClick={() => setHistoryAttempt(value => value + 1)}>Reintentar historial</button></div> : historyLoading ? (
         <p className="text-sm text-muted-foreground">{es.pos.loading}</p>
       ) : history.length === 0 ? (
         <p className="text-sm text-muted-foreground">No hay sesiones anteriores</p>

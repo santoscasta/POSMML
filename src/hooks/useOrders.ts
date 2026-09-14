@@ -37,10 +37,14 @@ export function useOrders() {
   const [endCursor, setEndCursor] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [posOnly, setPosOnly] = useState(false);
+  const requestId = useRef(0);
+  const busy = useRef(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   const fetchOrders = useCallback(
     async (search: string, posFilter: boolean, after?: string | null) => {
+      const id = ++requestId.current;
+      busy.current = true;
       try {
         setLoading(true);
         setError(null);
@@ -54,6 +58,7 @@ export function useOrders() {
 
         const data = await shopifyGraphQL<OrdersResponse>(ORDERS_QUERY, variables);
 
+        if (id !== requestId.current) return;
         const fetched: Order[] = data.orders.edges.map((edge) => ({
           ...edge.node,
           lineItems: edge.node.lineItems.edges.map((e) => e.node),
@@ -67,32 +72,42 @@ export function useOrders() {
         setHasNextPage(data.orders.pageInfo.hasNextPage);
         setEndCursor(data.orders.pageInfo.endCursor);
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Error desconocido');
+        if (id === requestId.current) setError(err instanceof Error ? err.message : 'Error desconocido');
       } finally {
-        setLoading(false);
+        if (id === requestId.current) { busy.current = false; setLoading(false); }
       }
     },
     [],
   );
 
   useEffect(() => {
+    const requests = requestId;
+    ++requests.current;
+    busy.current = true;
+    setLoading(true);
+    setOrders([]);
+    setHasNextPage(false);
+    setEndCursor(null);
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => {
       fetchOrders(searchQuery, posOnly);
     }, 300);
     return () => {
+      ++requests.current;
       if (debounceRef.current) clearTimeout(debounceRef.current);
     };
   }, [searchQuery, posOnly, fetchOrders]);
 
   const loadMore = useCallback(() => {
-    if (hasNextPage && endCursor) {
+    if (!busy.current && hasNextPage && endCursor) {
       fetchOrders(searchQuery, posOnly, endCursor);
     }
   }, [hasNextPage, endCursor, searchQuery, posOnly, fetchOrders]);
 
   const refresh = useCallback(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
     setEndCursor(null);
+    setHasNextPage(false);
     fetchOrders(searchQuery, posOnly);
   }, [searchQuery, posOnly, fetchOrders]);
 

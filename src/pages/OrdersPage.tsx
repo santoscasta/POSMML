@@ -13,6 +13,7 @@ export function OrdersPage() {
   const {
     orders,
     loading,
+    error,
     hasNextPage,
     loadMore,
     refresh,
@@ -80,14 +81,16 @@ export function OrdersPage() {
         </div>
       </div>
 
+      {error && <div role="alert" className="mb-4 rounded-lg border border-destructive p-3 text-sm text-destructive">No se pudieron cargar los pedidos: {error} <button className="underline" onClick={refresh}>Reintentar</button></div>}
+
       {/* Order table */}
-      <OrderList
+      {(!error || orders.length > 0) && <OrderList
         orders={orders}
         loading={loading}
         hasNextPage={hasNextPage}
         onLoadMore={loadMore}
         onSelectOrder={handleSelectOrder}
-      />
+      />}
 
       {/* Order detail modal */}
       <OrderDetailModal

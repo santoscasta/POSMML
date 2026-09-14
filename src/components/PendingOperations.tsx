@@ -2,11 +2,12 @@ import { useState } from 'react';
 import { apiGet, apiPost } from '../utils/apiClient';
 import { Button } from './ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog';
+import { PENDING_VOUCHER_KEY, readPendingVoucher } from '../utils/pendingVoucher';
 import { useSession } from '../context/SessionContext';
 
 interface PendingOperation {
   operationId: string;
-  kind: 'checkout' | 'refund';
+  kind: 'checkout' | 'refund' | 'voucher_issue';
   input: Record<string, unknown>;
   createdAt: string;
   steps: Record<string, string>;
@@ -30,10 +31,13 @@ export function PendingOperations() {
     setBusy(true);
     setMessage('');
     try {
-      const result = await apiPost<{ name?: string; voucherCode?: string }>(operation.kind === 'checkout' ? '/checkout' : '/refunds', {
+      const result = await apiPost<{ name?: string; voucherCode?: string; fullCode?: string }>(operation.kind === 'checkout' ? '/checkout' : operation.kind === 'voucher_issue' ? '/vouchers' : '/refunds', {
         operationId: operation.operationId, ...operation.input,
       });
-      setMessage(result.voucherCode ? `Devolución completada. Vale: ${result.voucherCode}` : `Operación completada${result.name ? `: pedido ${result.name}` : ''}`);
+      if (operation.kind === 'voucher_issue') {
+        try { if (readPendingVoucher()?.operationId === operation.operationId) localStorage.removeItem(PENDING_VOUCHER_KEY); } catch { /* Server recovery remains available. */ }
+      }
+      setMessage(result.fullCode ? `Vale emitido. Código: ${result.fullCode}` : result.voucherCode ? `Devolución completada. Vale: ${result.voucherCode}` : `Operación completada${result.name ? `: pedido ${result.name}` : ''}`);
       setOperations(await apiGet('/operations/pending'));
       await refresh();
     } catch (error) { setMessage(error instanceof Error ? error.message : 'No se pudo reanudar'); }
@@ -48,7 +52,7 @@ export function PendingOperations() {
         {message && <p role="status" className="break-words rounded border p-3 text-sm">{message}</p>}
         {!busy && !operations.length && <p className="text-sm">No hay operaciones pendientes.</p>}
         {operations.map(operation => <div key={operation.operationId} className="space-y-2 rounded border p-3 text-sm">
-          <p>{operation.kind === 'checkout' ? 'Cobro' : 'Devolución'} · {new Date(operation.createdAt).toLocaleString('es-ES')}</p>
+          <p>{operation.kind === 'checkout' ? 'Cobro' : operation.kind === 'voucher_issue' ? 'Emisión de vale' : 'Devolución'} · {new Date(operation.createdAt).toLocaleString('es-ES')}</p>
           <p className="break-all text-xs text-muted-foreground">{operation.operationId}</p>
           <Button disabled={busy} onClick={() => resume(operation)}>Reanudar operación</Button>
         </div>)}

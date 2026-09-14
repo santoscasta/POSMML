@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import shopifyGQL from '../lib/shopifyGQL.js';
 import { getStore, PosError } from '../lib/operationStore.js';
+import { mutationResult, currentSession } from '../lib/posService.js';
 import { getPayments, computeKPIs, cents } from '../lib/accounting.js';
 
 const router = Router();
@@ -110,7 +111,7 @@ router.post('/sessions/open', async (req, res) => {
         for (const s of openSessions) {
           assertNoPending(s.node.id);
           rememberOpening(parseMetaobject(s.node));
-          await shopifyGQL(
+          const closed = await shopifyGQL(
             `mutation($id: ID!, $metaobject: MetaobjectUpdateInput!) {
               metaobjectUpdate(id: $id, metaobject: $metaobject) {
                 metaobject { id }
@@ -123,7 +124,13 @@ router.post('/sessions/open', async (req, res) => {
               { key: 'notes', value: 'Cierre forzado' },
             ] } },
           );
+          mutationResult(closed, 'metaobjectUpdate', 'metaobject');
         }
+        // Confirm remote state before creating a replacement session.
+        let stillOpen = false;
+        try { await currentSession(shopifyGQL); stillOpen = true; }
+        catch (error) { if (error.message !== 'No hay sesión de caja abierta') throw error; }
+        if (stillOpen) throw new PosError('La caja anterior sigue abierta. Reintenta su cierre antes de abrir otra.', 409);
       }
 
       const fields = [
