@@ -1,0 +1,30 @@
+[
+  {
+    "id": "QA-05",
+    "result": "reproduced",
+    "firstStatus": 500,
+    "secondStatus": 200,
+    "remoteCreations": 2,
+    "explanation": "Same issue request after response loss creates another gift card"
+  },
+  {
+    "id": "QA-06",
+    "result": "reproduced",
+    "availableInShopifyMock": 60,
+    "listCount": 50,
+    "statsTotal": 60,
+    "listingHasCursor": false
+  },
+  {
+    "id": "QA-07",
+    "result": "reproduced",
+    "forcedOpenStatus": 200,
+    "body": {
+      "id": "gid://shopify/Metaobject/2",
+      "status": "OPEN",
+      "openingAmount": 50,
+      "openedAt": "2026-09-14T08:00:00Z"
+    },
+    "explanation": "Shopify rejected prior session close; endpoint still creates a second open session"
+  }
+]

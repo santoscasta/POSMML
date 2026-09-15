@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useSession } from '../context/SessionContext';
 import { apiGet } from '../utils/apiClient';
 import { formatCurrency } from '../utils/currency';
@@ -23,6 +24,7 @@ import type { CashSession } from '../types/session';
 
 export function SessionsPage() {
   const { session, isOpen, loading } = useSession();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [openModalVisible, setOpenModalVisible] = useState(false);
   const [closeModalVisible, setCloseModalVisible] = useState(false);
   const [history, setHistory] = useState<CashSession[]>([]);
@@ -47,6 +49,13 @@ export function SessionsPage() {
     void fetchHistory();
     return () => { cancelled = true; };
   }, [isOpen, historyAttempt]);
+
+  useEffect(() => {
+    if (isOpen && searchParams.get('cerrar') === '1') {
+      setCloseModalVisible(true);
+      setSearchParams({}, { replace: true });
+    }
+  }, [isOpen, searchParams, setSearchParams]);
 
   const kpis = session?.kpis;
 

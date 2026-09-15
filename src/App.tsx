@@ -131,7 +131,10 @@ function AppContent() {
   const { isOpen, loading, error, refresh } = useSession();
   return (
     <div className="flex h-dvh w-full flex-col">
-      <header className="flex h-8 shrink-0 items-center justify-end gap-2 border-b bg-white px-3">
+      <header className="flex h-11 shrink-0 items-center justify-end gap-2 border-b bg-white px-3">
+        {isOpen && <Button size="sm" variant="outline" onClick={() => navigate('/caja?cerrar=1')}>
+          <Wallet className="size-4" />Cerrar caja
+        </Button>}
         <PendingOperations />
         <button className="px-2 text-xs text-muted-foreground hover:text-foreground" onClick={clearCredentials}>Salir</button>
       </header>

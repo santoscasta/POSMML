@@ -1,0 +1,277 @@
+{
+  "shop": {
+    "name": "MiminileoDev",
+    "myshopifyDomain": "miminileodev.myshopify.com",
+    "currencyCode": "EUR",
+    "plan": {
+      "partnerDevelopment": true
+    }
+  },
+  "metaobjects": {
+    "nodes": [
+      {
+        "id": "gid://shopify/Metaobject/483976544633",
+        "handle": "app--319421349889--pos-session-acs4qu2e",
+        "updatedAt": "2026-03-25T08:09:28Z",
+        "fields": [
+          {
+            "key": "cashier_name",
+            "value": "Celia"
+          },
+          {
+            "key": "opening_amount",
+            "value": "150.0"
+          },
+          {
+            "key": "closing_amount",
+            "value": "200.0"
+          },
+          {
+            "key": "expected_amount",
+            "value": "1035.95"
+          },
+          {
+            "key": "difference",
+            "value": "-835.95"
+          },
+          {
+            "key": "status",
+            "value": "CLOSED"
+          },
+          {
+            "key": "closed_at",
+            "value": "2026-03-25T08:09:28.250Z"
+          },
+          {
+            "key": "notes",
+            "value": null
+          }
+        ]
+      },
+      {
+        "id": "gid://shopify/Metaobject/484079731065",
+        "handle": "app--319421349889--pos-session-qc15ups0",
+        "updatedAt": "2026-03-25T16:58:38Z",
+        "fields": [
+          {
+            "key": "cashier_name",
+            "value": "Celia"
+          },
+          {
+            "key": "opening_amount",
+            "value": "100.0"
+          },
+          {
+            "key": "closing_amount",
+            "value": "100.0"
+          },
+          {
+            "key": "expected_amount",
+            "value": "100.0"
+          },
+          {
+            "key": "difference",
+            "value": "0.0"
+          },
+          {
+            "key": "status",
+            "value": "CLOSED"
+          },
+          {
+            "key": "closed_at",
+            "value": "2026-03-25T16:58:38.005Z"
+          },
+          {
+            "key": "notes",
+            "value": null
+          }
+        ]
+      },
+      {
+        "id": "gid://shopify/Metaobject/484285710713",
+        "handle": "app--319421349889--pos-session-pzldtby3",
+        "updatedAt": "2026-03-30T08:27:06Z",
+        "fields": [
+          {
+            "key": "cashier_name",
+            "value": "Celia"
+          },
+          {
+            "key": "opening_amount",
+            "value": "100.0"
+          },
+          {
+            "key": "closing_amount",
+            "value": "100.0"
+          },
+          {
+            "key": "expected_amount",
+            "value": "100.0"
+          },
+          {
+            "key": "difference",
+            "value": "0.0"
+          },
+          {
+            "key": "status",
+            "value": "CLOSED"
+          },
+          {
+            "key": "closed_at",
+            "value": "2026-03-30T08:27:06.862Z"
+          },
+          {
+            "key": "notes",
+            "value": null
+          }
+        ]
+      },
+      {
+        "id": "gid://shopify/Metaobject/485588271481",
+        "handle": "app--319421349889--pos-session-uikncz1u",
+        "updatedAt": "2026-04-10T09:14:08Z",
+        "fields": [
+          {
+            "key": "cashier_name",
+            "value": "Celia"
+          },
+          {
+            "key": "opening_amount",
+            "value": "189.35"
+          },
+          {
+            "key": "closing_amount",
+            "value": "189.35"
+          },
+          {
+            "key": "expected_amount",
+            "value": "189.35"
+          },
+          {
+            "key": "difference",
+            "value": "0.0"
+          },
+          {
+            "key": "status",
+            "value": "CLOSED"
+          },
+          {
+            "key": "closed_at",
+            "value": "2026-04-10T09:14:08.746Z"
+          },
+          {
+            "key": "notes",
+            "value": null
+          }
+        ]
+      },
+      {
+        "id": "gid://shopify/Metaobject/491724734841",
+        "handle": "app--319421349889--pos-session-tgqydmwl",
+        "updatedAt": "2026-04-10T09:14:56Z",
+        "fields": [
+          {
+            "key": "cashier_name",
+            "value": "Celia"
+          },
+          {
+            "key": "opening_amount",
+            "value": "158.15"
+          },
+          {
+            "key": "closing_amount",
+            "value": "0.0"
+          },
+          {
+            "key": "expected_amount",
+            "value": "0.0"
+          },
+          {
+            "key": "difference",
+            "value": "0.0"
+          },
+          {
+            "key": "status",
+            "value": "OPEN"
+          },
+          {
+            "key": "closed_at",
+            "value": null
+          },
+          {
+            "key": "notes",
+            "value": null
+          }
+        ]
+      }
+    ],
+    "pageInfo": {
+      "hasNextPage": false,
+      "endCursor": "eyJsYXN0X2lkIjo0OTE3MjQ3MzQ4NDEsImxhc3RfdmFsdWUiOiI0OTE3MjQ3MzQ4NDEifQ=="
+    }
+  },
+  "products": {
+    "nodes": [
+      {
+        "id": "gid://shopify/Product/15419130741113",
+        "title": "Babero pique blanco con blonda",
+        "variants": {
+          "nodes": [
+            {
+              "id": "gid://shopify/ProductVariant/56908670075257",
+              "title": "Default Title",
+              "price": "15.50",
+              "inventoryQuantity": 4
+            }
+          ]
+        }
+      },
+      {
+        "id": "gid://shopify/Product/15419130872185",
+        "title": "Tirantes étnicos fresón",
+        "variants": {
+          "nodes": [
+            {
+              "id": "gid://shopify/ProductVariant/56908670173561",
+              "title": "Default Title",
+              "price": "31.50",
+              "inventoryQuantity": 2
+            }
+          ]
+        }
+      },
+      {
+        "id": "gid://shopify/Product/15419131101561",
+        "title": "Cubre Baile",
+        "variants": {
+          "nodes": [
+            {
+              "id": "gid://shopify/ProductVariant/64531897942393",
+              "title": "3-6 meses",
+              "price": "14.00",
+              "inventoryQuantity": 0
+            },
+            {
+              "id": "gid://shopify/ProductVariant/64531898007929",
+              "title": "0-3 meses",
+              "price": "14.00",
+              "inventoryQuantity": 0
+            },
+            {
+              "id": "gid://shopify/ProductVariant/64531898040697",
+              "title": "18-24 meses",
+              "price": "14.00",
+              "inventoryQuantity": 1
+            },
+            {
+              "id": "gid://shopify/ProductVariant/64531898106233",
+              "title": "6-18 meses",
+              "price": "14.00",
+              "inventoryQuantity": 0
+            }
+          ]
+        }
+      }
+    ]
+  }
+}

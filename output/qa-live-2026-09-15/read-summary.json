@@ -1,0 +1,41 @@
+{
+  "summary": {
+    "products": 377,
+    "variants": 1035,
+    "missingCategory": [
+      "gid://shopify/Product/15791979757945"
+    ],
+    "truncatedVariants": [],
+    "zeroStock": 214,
+    "moreThan20": 0
+  },
+  "routes": [
+    {
+      "route": "/sessions/current",
+      "status": 200,
+      "ms": 329
+    },
+    {
+      "route": "/sessions",
+      "status": 200,
+      "ms": 987,
+      "count": 5
+    },
+    {
+      "route": "/vouchers",
+      "status": 200,
+      "ms": 332,
+      "count": 16
+    },
+    {
+      "route": "/vouchers/stats",
+      "status": 200,
+      "ms": 138
+    },
+    {
+      "route": "/dashboard",
+      "status": 200,
+      "ms": 434
+    }
+  ]
+}

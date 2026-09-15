@@ -1,0 +1,68 @@
+[
+  {
+    "path": "/",
+    "status": 200,
+    "type": "text/html; charset=utf-8",
+    "bytes": 392
+  },
+  {
+    "path": "/dashboard",
+    "status": 200,
+    "type": "text/html; charset=utf-8",
+    "bytes": 392
+  },
+  {
+    "path": "/orders",
+    "status": 200,
+    "type": "text/html; charset=utf-8",
+    "bytes": 392
+  },
+  {
+    "path": "/caja",
+    "status": 200,
+    "type": "text/html; charset=utf-8",
+    "bytes": 392
+  },
+  {
+    "path": "/vales",
+    "status": 200,
+    "type": "text/html; charset=utf-8",
+    "bytes": 392
+  },
+  {
+    "path": "/api/access",
+    "status": 401,
+    "type": "application/json; charset=utf-8",
+    "bytes": 32
+  },
+  {
+    "path": "/api/sessions/current",
+    "status": 401,
+    "type": "application/json; charset=utf-8",
+    "bytes": 32
+  },
+  {
+    "path": "/api/dashboard",
+    "status": 401,
+    "type": "application/json; charset=utf-8",
+    "bytes": 32
+  },
+  {
+    "path": "/auth",
+    "status": 401,
+    "type": "application/json; charset=utf-8",
+    "bytes": 32
+  },
+  {
+    "path": "/.env",
+    "status": 200,
+    "type": "text/html; charset=utf-8",
+    "bytes": 392
+  },
+  {
+    "path": "/.git/config",
+    "status": 200,
+    "type": "text/html; charset=utf-8",
+    "bytes": 392
+  }
+]

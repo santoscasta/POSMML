@@ -1,4 +1,5 @@
-import { escapeHtml, printDocument, thermalStyles } from '../../utils/print';
+import { printDocument } from '../../utils/print';
+import { saleReceipt } from '../../utils/saleReceipt';
 import { useState } from 'react';
 import { formatCurrency } from '../../utils/currency';
 import { apiGet, apiPost } from '../../utils/apiClient';
@@ -220,7 +221,7 @@ export function CheckoutModal({
     <Dialog open onOpenChange={(openState) => { if (!openState) handleClose(); }}>
       <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
         {checkoutError && <p role="alert" className="text-sm text-destructive">{checkoutError}</p>}
-        {pending && !successOrder && <div className="space-y-2 rounded border p-3">
+        {pending && !loading && !successOrder && <div className="space-y-2 rounded border p-3">
           <p className="text-sm">Hay un cobro pendiente. Reanúdalo con sus datos originales.</p>
           <Button disabled={loading} onClick={async () => {
             if (!onResume) return;
@@ -269,26 +270,9 @@ export function CheckoutModal({
                 const now = new Date();
                 const dateStr = now.toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
                 const methodLabel = method === 'CASH' ? 'Efectivo' : method === 'CARD' ? 'Tarjeta' : method === 'BIZUM' ? 'Bizum' : method === 'VOUCHER' ? 'Vale' : 'Mixto';
-                const printed = printDocument(`<!DOCTYPE html><html><head><title>Ticket ${escapeHtml(successOrder)}</title>
-                  <style>${thermalStyles}</style></head><body>
-                  <div class="center brand">My mini Leo</div>
-                  <div class="center" style="font-size:10px;color:#999">Clothes for your baby</div>
-                  <div class="line"></div>
-                  <div class="row"><span>Ticket:</span><span class="bold">${escapeHtml(successOrder)}</span></div>
-                  <div class="row"><span>Fecha:</span><span>${dateStr}</span></div>
-                  <div class="row"><span>Método:</span><span>${methodLabel}</span></div>
-                  <div class="line"></div>
-                  ${items.map(i => `<div class="item"><div class="row"><span>${i.quantity}x ${escapeHtml(i.title)}${i.variantTitle !== 'Default Title' ? ` (${escapeHtml(i.variantTitle)})` : ''}</span></div><div class="row"><span></span><span>${formatCurrency(i.price * i.quantity)}</span></div></div>`).join('')}
-                  <div class="line"></div>
-                  <div class="row"><span>Subtotal</span><span>${formatCurrency(subtotal)}</span></div>
-                  ${discountAmount > 0 ? `<div class="row"><span>Descuento</span><span>-${formatCurrency(discountAmount)}</span></div>` : ''}
-                  <div class="row"><span>IVA (21% incl.)</span><span>${formatCurrency(taxAmount)}</span></div>
-                  <div class="line"></div>
-                  <div class="row total"><span>TOTAL</span><span>${formatCurrency(total)}</span></div>
-                  ${method === 'CASH' && cashReceivedNum > 0 ? `<div class="row"><span>Recibido</span><span>${formatCurrency(cashReceivedNum)}</span></div><div class="row bold"><span>Cambio</span><span>${formatCurrency(change)}</span></div>` : ''}
-                  <div class="line"></div>
-                  <div class="footer">Gracias por su compra<br/>myminileo.com</div>
-                </body></html>`);
+                const printed = printDocument(saleReceipt({ order: successOrder, date: dateStr,
+                  method: methodLabel, items, subtotal, discountAmount, taxAmount, total,
+                  cashReceived: method === 'CASH' ? cashReceivedNum : undefined }));
                 if (!printed) window.alert('Permite las ventanas emergentes para imprimir el ticket.');
               }}
             >
@@ -303,22 +287,9 @@ export function CheckoutModal({
               onClick={() => {
                 const now = new Date();
                 const dateStr = now.toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
-                const printed = printDocument(`<!DOCTYPE html><html><head><title>Ticket Regalo ${escapeHtml(successOrder)}</title>
-                  <style>${thermalStyles}</style></head><body>
-                  <div class="center brand">My mini Leo</div>
-                  <div class="center" style="font-size:10px;color:#999">Clothes for your baby</div>
-                  <div class="line"></div>
-                  <div class="gift-label">🎁 Ticket Regalo</div>
-                  <div class="line"></div>
-                  <div class="row"><span>Ticket:</span><span class="bold">${escapeHtml(successOrder)}</span></div>
-                  <div class="row"><span>Fecha:</span><span>${dateStr}</span></div>
-                  <div class="line"></div>
-                  ${items.map(i => `<div class="item"><div class="row"><span>${i.quantity}x ${escapeHtml(i.title)}${i.variantTitle !== 'Default Title' ? ` (${escapeHtml(i.variantTitle)})` : ''}</span></div></div>`).join('')}
-                  <div class="line"></div>
-                  <div class="center" style="font-size:11px;margin:8px 0">Artículos: ${itemCount}</div>
-                  <div class="line"></div>
-                  <div class="footer">Este ticket no incluye precios.<br/>Para cambios o devoluciones, presente este ticket.<br/><br/>myminileo.com</div>
-                </body></html>`);
+                const printed = printDocument(saleReceipt({ order: successOrder, date: dateStr,
+                  method: methodButtons.find(button => button.key === method)?.label || 'Mixto',
+                  items, subtotal, discountAmount, taxAmount, total }, true));
                 if (!printed) window.alert('Permite las ventanas emergentes para imprimir el ticket.');
               }}
             >
@@ -555,7 +526,7 @@ export function CheckoutModal({
                 </div>
               )}
 
-              {error && (
+              {error && !checkoutError && (
                 <div className="rounded-sm bg-destructive/10 px-3 py-2 text-sm text-destructive">
                   {error}
                 </div>

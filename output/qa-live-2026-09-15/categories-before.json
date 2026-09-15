@@ -1,0 +1,2586 @@
+[
+  {
+    "id": "gid://shopify/Metaobject/1107922747769",
+    "displayName": "BABY (de 0 a 2 años)",
+    "fields": [
+      {
+        "key": "nombre",
+        "value": "BABY (de 0 a 2 años)"
+      },
+      {
+        "key": "slug",
+        "value": "bebe-de-0-a-2-anos"
+      },
+      {
+        "key": "descripcion",
+        "value": "Descubre la Colección Perfecta para tu Bebé (0 a 2 años):\r\n\r\nDesde los primeros días hasta los pasos más firmes, nuestra colección Baby ofrece todo lo necesario para vestir a tu pequeño con el máximo confort. Encontrarás desde pelelitos suaves, culetines perfectos para explorar con libertad, camisitas y vestidos con diseños preciosos, hasta complementos a juego para crear looks únicos. Cada pieza ha sido seleccionada pensando en las necesidades de tu bebé, garantizando la máxima calidad y seguridad."
+      },
+      {
+        "key": "ruta",
+        "value": "BABY (de 0 a 2 años)"
+      },
+      {
+        "key": "imagen",
+        "value": "https://www.myminileo.com/wp-content/uploads/2026/01/Gemini_Generated_Image_dognfldognfldogn.png"
+      },
+      {
+        "key": "woo_id",
+        "value": "985"
+      },
+      {
+        "key": "padre",
+        "value": null
+      }
+    ]
+  },
+  {
+    "id": "gid://shopify/Metaobject/1107922813305",
+    "displayName": "COLECCIONES",
+    "fields": [
+      {
+        "key": "nombre",
+        "value": "COLECCIONES"
+      },
+      {
+        "key": "slug",
+        "value": "colecciones"
+      },
+      {
+        "key": "descripcion",
+        "value": "Aquí podrás ver todas nuestros productos agrupados por colecciones, lo que hará que te resulte muy fácil buscar prendas confeccionadas con el mismo tejido pero distinto patrón para combinar hermanitos."
+      },
+      {
+        "key": "ruta",
+        "value": "COLECCIONES"
+      },
+      {
+        "key": "imagen",
+        "value": "https://www.myminileo.com/wp-content/uploads/2026/01/bajo-del-mar-y-helado.png"
+      },
+      {
+        "key": "woo_id",
+        "value": "389"
+      },
+      {
+        "key": "padre",
+        "value": null
+      }
+    ]
+  },
+  {
+    "id": "gid://shopify/Metaobject/1107922878841",
+    "displayName": "FLAMECA",
+    "fields": [
+      {
+        "key": "nombre",
+        "value": "FLAMECA"
+      },
+      {
+        "key": "slug",
+        "value": "flamenca"
+      },
+      {
+        "key": "descripcion",
+        "value": null
+      },
+      {
+        "key": "ruta",
+        "value": "FLAMECA"
+      },
+      {
+        "key": "imagen",
+        "value": "https://www.myminileo.com/wp-content/uploads/2026/02/IMG_1866.jpg"
+      },
+      {
+        "key": "woo_id",
+        "value": "1078"
+      },
+      {
+        "key": "padre",
+        "value": null
+      }
+    ]
+  },
+  {
+    "id": "gid://shopify/Metaobject/1107922911609",
+    "displayName": "KIDS",
+    "fields": [
+      {
+        "key": "nombre",
+        "value": "KIDS"
+      },
+      {
+        "key": "slug",
+        "value": "ninos"
+      },
+      {
+        "key": "descripcion",
+        "value": "La Categoría KIDS es un tesoro lleno de opciones de vestuario para niños y niñas de 2 a 8 años.\r\n\r\nEncontrarás pantalones y camisas ideales para sus infinitas aventuras, poleras cómodas para el día a día, hasta vestidos encantadores para ocasiones especiales, sin olvidar los accesorios que ponen el toque final a cada atuendo. Cada pieza ha sido seleccionada con el objetivo de acompañar a tus hijos en cada nueva exploración, garantizando la durabilidad y la funcionalidad que los padres modernos esperan."
+      },
+      {
+        "key": "ruta",
+        "value": "KIDS"
+      },
+      {
+        "key": "imagen",
+        "value": "https://www.myminileo.com/wp-content/uploads/2026/01/vestido-dibujar-2.png"
+      },
+      {
+        "key": "woo_id",
+        "value": "984"
+      },
+      {
+        "key": "padre",
+        "value": null
+      }
+    ]
+  },
+  {
+    "id": "gid://shopify/Metaobject/1107922977145",
+    "displayName": "MAMÁ Y PAPÁ",
+    "fields": [
+      {
+        "key": "nombre",
+        "value": "MAMÁ Y PAPÁ"
+      },
+      {
+        "key": "slug",
+        "value": "mama-y-papa"
+      },
+      {
+        "key": "descripcion",
+        "value": "La categoría Mamá y Papá es un homenaje al vínculo especial entre padres e hijos, ofreciendo una colección cuidadosamente seleccionada para aquellos que desean compartir un estilo único con sus pequeños. Perfecta para regalos memorables en fechas especiales, nuestra colección brinda la oportunidad de crear momentos inolvidables y fotografías para toda la vida."
+      },
+      {
+        "key": "ruta",
+        "value": "MAMÁ Y PAPÁ"
+      },
+      {
+        "key": "imagen",
+        "value": "https://www.myminileo.com/wp-content/uploads/2025/11/IMG_9375.jpg"
+      },
+      {
+        "key": "woo_id",
+        "value": "986"
+      },
+      {
+        "key": "padre",
+        "value": null
+      }
+    ]
+  },
+  {
+    "id": "gid://shopify/Metaobject/1107923042681",
+    "displayName": "Otono/invierno",
+    "fields": [
+      {
+        "key": "nombre",
+        "value": "Otono/invierno"
+      },
+      {
+        "key": "slug",
+        "value": "otono-invierno"
+      },
+      {
+        "key": "descripcion",
+        "value": null
+      },
+      {
+        "key": "ruta",
+        "value": "Otono/invierno"
+      },
+      {
+        "key": "imagen",
+        "value": null
+      },
+      {
+        "key": "woo_id",
+        "value": "905"
+      },
+      {
+        "key": "padre",
+        "value": null
+      }
+    ]
+  },
+  {
+    "id": "gid://shopify/Metaobject/1107923108217",
+    "displayName": "OTROS",
+    "fields": [
+      {
+        "key": "nombre",
+        "value": "OTROS"
+      },
+      {
+        "key": "slug",
+        "value": "sin-categorizar"
+      },
+      {
+        "key": "descripcion",
+        "value": null
+      },
+      {
+        "key": "ruta",
+        "value": "OTROS"
+      },
+      {
+        "key": "imagen",
+        "value": "https://www.myminileo.com/wp-content/uploads/2019/02/myminileo-01-e1550348655665.jpg"
+      },
+      {
+        "key": "woo_id",
+        "value": "15"
+      },
+      {
+        "key": "padre",
+        "value": null
+      }
+    ]
+  },
+  {
+    "id": "gid://shopify/Metaobject/1107923140985",
+    "displayName": "OUTLET",
+    "fields": [
+      {
+        "key": "nombre",
+        "value": "OUTLET"
+      },
+      {
+        "key": "slug",
+        "value": "outlet"
+      },
+      {
+        "key": "descripcion",
+        "value": "En nuestra categoría Outlet, te ofrecemos una segunda oportunidad para descubrir prendas y complementos de otras temporadas a precios únicos.\r\n\r\nEsta es tu ocasión para adquirir, por tiempo limitado, tesoros de otras colecciones para que formen parte de los momentos más dulces y memorables de tus pequeños.\r\n"
+      },
+      {
+        "key": "ruta",
+        "value": "OUTLET"
+      },
+      {
+        "key": "imagen",
+        "value": "https://www.myminileo.com/wp-content/uploads/2021/10/shooting_my_minileo_inv21_095.jpg"
+      },
+      {
+        "key": "woo_id",
+        "value": "762"
+      },
+      {
+        "key": "padre",
+        "value": null
+      }
+    ]
+  },
+  {
+    "id": "gid://shopify/Metaobject/1107923173753",
+    "displayName": "PUERICULTURA",
+    "fields": [
+      {
+        "key": "nombre",
+        "value": "PUERICULTURA"
+      },
+      {
+        "key": "slug",
+        "value": "puericultura"
+      },
+      {
+        "key": "descripcion",
+        "value": "En nuestra categoría Puericultura, ofrecemos una selección exclusiva de productos esenciales diseñados para el cuidado y confort de tus hijos, desde bolsas de carrito hasta colchonetas, toallas, toquillas, chupeteros y muchas cosas más. Nuestros productos combinan funcionalidad, estilo y calidad.\r\n\r\nCada producto ha sido cuidadosamente seleccionado para satisfacer las necesidades de las familias modernas, garantizando practicidad y durabilidad sin olvidar la elegancia."
+      },
+      {
+        "key": "ruta",
+        "value": "PUERICULTURA"
+      },
+      {
+        "key": "imagen",
+        "value": null
+      },
+      {
+        "key": "woo_id",
+        "value": "987"
+      },
+      {
+        "key": "padre",
+        "value": null
+      }
+    ]
+  },
+  {
+    "id": "gid://shopify/Metaobject/1107923206521",
+    "displayName": "TOP VENTAS",
+    "fields": [
+      {
+        "key": "nombre",
+        "value": "TOP VENTAS"
+      },
+      {
+        "key": "slug",
+        "value": "top-ventas"
+      },
+      {
+        "key": "descripcion",
+        "value": "Aquí hemos reunido las joyas de nuestra colección, aquellas que han tocado el corazón de familias enteras.\r\n\r\nÚnete a la comunidad de familias que ya confían en nosotras para vestir a sus hijos con los sueños y la esperanza de un futuro brillante. "
+      },
+      {
+        "key": "ruta",
+        "value": "TOP VENTAS"
+      },
+      {
+        "key": "imagen",
+        "value": "https://www.myminileo.com/wp-content/uploads/2026/01/poelra-helado-pantalon-baile-2-.png"
+      },
+      {
+        "key": "woo_id",
+        "value": "982"
+      },
+      {
+        "key": "padre",
+        "value": null
+      }
+    ]
+  },
+  {
+    "id": "gid://shopify/Metaobject/1107923239289",
+    "displayName": "Veranito",
+    "fields": [
+      {
+        "key": "nombre",
+        "value": "Veranito"
+      },
+      {
+        "key": "slug",
+        "value": "veranito"
+      },
+      {
+        "key": "descripcion",
+        "value": null
+      },
+      {
+        "key": "ruta",
+        "value": "Veranito"
+      },
+      {
+        "key": "imagen",
+        "value": "https://www.myminileo.com/wp-content/uploads/2025/03/Copia-de-194A0447-scaled-e1742985476324.jpg"
+      },
+      {
+        "key": "woo_id",
+        "value": "897"
+      },
+      {
+        "key": "padre",
+        "value": null
+      }
+    ]
+  },
+  {
+    "id": "gid://shopify/Metaobject/1107923272057",
+    "displayName": "A toda vela",
+    "fields": [
+      {
+        "key": "nombre",
+        "value": "A toda vela"
+      },
+      {
+        "key": "slug",
+        "value": "a-toda-vela"
+      },
+      {
+        "key": "descripcion",
+        "value": null
+      },
+      {
+        "key": "ruta",
+        "value": "COLECCIONES > A toda vela"
+      },
+      {
+        "key": "imagen",
+        "value": "https://www.myminileo.com/wp-content/uploads/2026/01/a-toda-vela-y-trepar.png"
+      },
+      {
+        "key": "woo_id",
+        "value": "1081"
+      },
+      {
+        "key": "padre",
+        "value": "gid://shopify/Metaobject/1107922813305"
+      }
+    ]
+  },
+  {
+    "id": "gid://shopify/Metaobject/1107923304825",
+    "displayName": "Accesorios Baby",
+    "fields": [
+      {
+        "key": "nombre",
+        "value": "Accesorios Baby"
+      },
+      {
+        "key": "slug",
+        "value": "accesorios-bebe-de-0-a-2-anos"
+      },
+      {
+        "key": "descripcion",
+        "value": null
+      },
+      {
+        "key": "ruta",
+        "value": "BABY (de 0 a 2 años) > Accesorios Baby"
+      },
+      {
+        "key": "imagen",
+        "value": "https://www.myminileo.com/wp-content/uploads/2022/02/Shooting_-MyMinileo_verano22_275-1-e1742301579336.jpg"
+      },
+      {
+        "key": "woo_id",
+        "value": "996"
+      },
+      {
+        "key": "padre",
+        "value": "gid://shopify/Metaobject/1107922747769"
+      }
+    ]
+  },
+  {
+    "id": "gid://shopify/Metaobject/1107923370361",
+    "displayName": "Accesorios Kids",
+    "fields": [
+      {
+        "key": "nombre",
+        "value": "Accesorios Kids"
+      },
+      {
+        "key": "slug",
+        "value": "accesorios"
+      },
+      {
+        "key": "descripcion",
+        "value": null
+      },
+      {
+        "key": "ruta",
+        "value": "KIDS > Accesorios Kids"
+      },
+      {
+        "key": "imagen",
+        "value": "https://www.myminileo.com/wp-content/uploads/2025/10/@DOLORESTALBAC-166-scaled.jpg"
+      },
+      {
+        "key": "woo_id",
+        "value": "236"
+      },
+      {
+        "key": "padre",
+        "value": "gid://shopify/Metaobject/1107922911609"
+      }
+    ]
+  },
+  {
+    "id": "gid://shopify/Metaobject/1107923403129",
+    "displayName": "Atajo",
+    "fields": [
+      {
+        "key": "nombre",
+        "value": "Atajo"
+      },
+      {
+        "key": "slug",
+        "value": "atajo"
+      },
+      {
+        "key": "descripcion",
+        "value": null
+      },
+      {
+        "key": "ruta",
+        "value": "COLECCIONES > Atajo"
+      },
+      {
+        "key": "imagen",
+        "value": "https://www.myminileo.com/wp-content/uploads/2026/09/IMG_1448-rotated.jpg"
+      },
+      {
+        "key": "woo_id",
+        "value": "1101"
+      },
+      {
+        "key": "padre",
+        "value": "gid://shopify/Metaobject/1107922813305"
+      }
+    ]
+  },
+  {
+    "id": "gid://shopify/Metaobject/1107923435897",
+    "displayName": "Baberos",
+    "fields": [
+      {
+        "key": "nombre",
+        "value": "Baberos"
+      },
+      {
+        "key": "slug",
+        "value": "baberos"
+      },
+      {
+        "key": "descripcion",
+        "value": null
+      },
+      {
+        "key": "ruta",
+        "value": "PUERICULTURA > Baberos"
+      },
+      {
+        "key": "imagen",
+        "value": "https://www.myminileo.com/wp-content/uploads/2023/03/IMG_2357.jpg"
+      },
+      {
+        "key": "woo_id",
+        "value": "757"
+      },
+      {
+        "key": "padre",
+        "value": "gid://shopify/Metaobject/1107923173753"
+      }
+    ]
+  },
+  {
+    "id": "gid://shopify/Metaobject/1107923501433",
+    "displayName": "Baile",
+    "fields": [
+      {
+        "key": "nombre",
+        "value": "Baile"
+      },
+      {
+        "key": "slug",
+        "value": "baile"
+      },
+      {
+        "key": "descripcion",
+        "value": null
+      },
+      {
+        "key": "ruta",
+        "value": "COLECCIONES > Baile"
+      },
+      {
+        "key": "imagen",
+        "value": "https://www.myminileo.com/wp-content/uploads/2026/01/vestido-baile.png"
+      },
+      {
+        "key": "woo_id",
+        "value": "1082"
+      },
+      {
+        "key": "padre",
+        "value": "gid://shopify/Metaobject/1107922813305"
+      }
+    ]
+  },
+  {
+    "id": "gid://shopify/Metaobject/1107923566969",
+    "displayName": "Bajo del mar",
+    "fields": [
+      {
+        "key": "nombre",
+        "value": "Bajo del mar"
+      },
+      {
+        "key": "slug",
+        "value": "bajo-del-mar"
+      },
+      {
+        "key": "descripcion",
+        "value": null
+      },
+      {
+        "key": "ruta",
+        "value": "COLECCIONES > Bajo del mar"
+      },
+      {
+        "key": "imagen",
+        "value": "https://www.myminileo.com/wp-content/uploads/2026/01/bajo-del-mar-1.png"
+      },
+      {
+        "key": "woo_id",
+        "value": "1079"
+      },
+      {
+        "key": "padre",
+        "value": "gid://shopify/Metaobject/1107922813305"
+      }
+    ]
+  },
+  {
+    "id": "gid://shopify/Metaobject/1107923665273",
+    "displayName": "Basicos",
+    "fields": [
+      {
+        "key": "nombre",
+        "value": "Basicos"
+      },
+      {
+        "key": "slug",
+        "value": "basicos"
+      },
+      {
+        "key": "descripcion",
+        "value": null
+      },
+      {
+        "key": "ruta",
+        "value": "COLECCIONES > Basicos"
+      },
+      {
+        "key": "imagen",
+        "value": "https://www.myminileo.com/wp-content/uploads/2026/01/camisa-nina-bambula-blanca-y-cometa.png"
+      },
+      {
+        "key": "woo_id",
+        "value": "816"
+      },
+      {
+        "key": "padre",
+        "value": "gid://shopify/Metaobject/1107922813305"
+      }
+    ]
+  },
+  {
+    "id": "gid://shopify/Metaobject/1107923763577",
+    "displayName": "Belita",
+    "fields": [
+      {
+        "key": "nombre",
+        "value": "Belita"
+      },
+      {
+        "key": "slug",
+        "value": "belita"
+      },
+      {
+        "key": "descripcion",
+        "value": null
+      },
+      {
+        "key": "ruta",
+        "value": "COLECCIONES > Belita"
+      },
+      {
+        "key": "imagen",
+        "value": "https://www.myminileo.com/wp-content/uploads/2026/01/poelra-blanca-y-pantalon-tati-6.png"
+      },
+      {
+        "key": "woo_id",
+        "value": "1049"
+      },
+      {
+        "key": "padre",
+        "value": "gid://shopify/Metaobject/1107922813305"
+      }
+    ]
+  },
+  {
+    "id": "gid://shopify/Metaobject/1107923861881",
+    "displayName": "Brújula",
+    "fields": [
+      {
+        "key": "nombre",
+        "value": "Brújula"
+      },
+      {
+        "key": "slug",
+        "value": "brujula"
+      },
+      {
+        "key": "descripcion",
+        "value": null
+      },
+      {
+        "key": "ruta",
+        "value": "COLECCIONES > Brújula"
+      },
+      {
+        "key": "imagen",
+        "value": "https://www.myminileo.com/wp-content/uploads/2023/09/M08_shooting_Myminileoi_invierno22_256.jpg"
+      },
+      {
+        "key": "woo_id",
+        "value": "1096"
+      },
+      {
+        "key": "padre",
+        "value": "gid://shopify/Metaobject/1107922813305"
+      }
+    ]
+  },
+  {
+    "id": "gid://shopify/Metaobject/1107923992953",
+    "displayName": "Camisas y Poleras Kids",
+    "fields": [
+      {
+        "key": "nombre",
+        "value": "Camisas y Poleras Kids"
+      },
+      {
+        "key": "slug",
+        "value": "camisasypoleraskids"
+      },
+      {
+        "key": "descripcion",
+        "value": null
+      },
+      {
+        "key": "ruta",
+        "value": "KIDS > Camisas y Poleras Kids"
+      },
+      {
+        "key": "imagen",
+        "value": "https://www.myminileo.com/wp-content/uploads/2026/01/camisa-helado-y-pantalon-bajo-del-mar.png"
+      },
+      {
+        "key": "woo_id",
+        "value": "1035"
+      },
+      {
+        "key": "padre",
+        "value": "gid://shopify/Metaobject/1107922911609"
+      }
+    ]
+  },
+  {
+    "id": "gid://shopify/Metaobject/1107924091257",
+    "displayName": "Camisitas y Poleras",
+    "fields": [
+      {
+        "key": "nombre",
+        "value": "Camisitas y Poleras"
+      },
+      {
+        "key": "slug",
+        "value": "camisitas-y-poleras"
+      },
+      {
+        "key": "descripcion",
+        "value": null
+      },
+      {
+        "key": "ruta",
+        "value": "BABY (de 0 a 2 años) > Camisitas y Poleras"
+      },
+      {
+        "key": "imagen",
+        "value": "https://www.myminileo.com/wp-content/uploads/2026/01/polera-bambula-blanca-y-pantalon-tati-.png"
+      },
+      {
+        "key": "woo_id",
+        "value": "991"
+      },
+      {
+        "key": "padre",
+        "value": "gid://shopify/Metaobject/1107922747769"
+      }
+    ]
+  },
+  {
+    "id": "gid://shopify/Metaobject/1107924124025",
+    "displayName": "Chupeteros",
+    "fields": [
+      {
+        "key": "nombre",
+        "value": "Chupeteros"
+      },
+      {
+        "key": "slug",
+        "value": "chupeteros"
+      },
+      {
+        "key": "descripcion",
+        "value": "Preciosos chupeteros de tela de diferentes estampados, muy originales y prácticos. Para que tu pequeño no pierda o se le caiga al suelo el chupe o mordedor cumpliendo todas las normativas europeas."
+      },
+      {
+        "key": "ruta",
+        "value": "PUERICULTURA > Chupeteros"
+      },
+      {
+        "key": "imagen",
+        "value": "https://www.myminileo.com/wp-content/uploads/2022/12/IMG_9737_jpg.jpg"
+      },
+      {
+        "key": "woo_id",
+        "value": "144"
+      },
+      {
+        "key": "padre",
+        "value": "gid://shopify/Metaobject/1107923173753"
+      }
+    ]
+  },
+  {
+    "id": "gid://shopify/Metaobject/1107924156793",
+    "displayName": "Chupetes",
+    "fields": [
+      {
+        "key": "nombre",
+        "value": "Chupetes"
+      },
+      {
+        "key": "slug",
+        "value": "chupetes"
+      },
+      {
+        "key": "descripcion",
+        "value": null
+      },
+      {
+        "key": "ruta",
+        "value": "PUERICULTURA > Chupetes"
+      },
+      {
+        "key": "imagen",
+        "value": "https://www.myminileo.com/wp-content/uploads/2022/04/Captura-de-pantalla-2022-04-11-a-las-18.08.09.png"
+      },
+      {
+        "key": "woo_id",
+        "value": "441"
+      },
+      {
+        "key": "padre",
+        "value": "gid://shopify/Metaobject/1107923173753"
+      }
+    ]
+  },
+  {
+    "id": "gid://shopify/Metaobject/1107924255097",
+    "displayName": "Cima",
+    "fields": [
+      {
+        "key": "nombre",
+        "value": "Cima"
+      },
+      {
+        "key": "slug",
+        "value": "cima"
+      },
+      {
+        "key": "descripcion",
+        "value": null
+      },
+      {
+        "key": "ruta",
+        "value": "COLECCIONES > Cima"
+      },
+      {
+        "key": "imagen",
+        "value": "https://www.myminileo.com/wp-content/uploads/2026/09/IMG_1450-rotated.jpg"
+      },
+      {
+        "key": "woo_id",
+        "value": "1100"
+      },
+      {
+        "key": "padre",
+        "value": "gid://shopify/Metaobject/1107922813305"
+      }
+    ]
+  },
+  {
+    "id": "gid://shopify/Metaobject/1107924320633",
+    "displayName": "Colina",
+    "fields": [
+      {
+        "key": "nombre",
+        "value": "Colina"
+      },
+      {
+        "key": "slug",
+        "value": "colina"
+      },
+      {
+        "key": "descripcion",
+        "value": null
+      },
+      {
+        "key": "ruta",
+        "value": "COLECCIONES > Colina"
+      },
+      {
+        "key": "imagen",
+        "value": "https://www.myminileo.com/wp-content/uploads/2023/06/@DOLORESTALBAC-168-scaled.jpg"
+      },
+      {
+        "key": "woo_id",
+        "value": "1093"
+      },
+      {
+        "key": "padre",
+        "value": "gid://shopify/Metaobject/1107922813305"
+      }
+    ]
+  },
+  {
+    "id": "gid://shopify/Metaobject/1107924451705",
+    "displayName": "Comba",
+    "fields": [
+      {
+        "key": "nombre",
+        "value": "Comba"
+      },
+      {
+        "key": "slug",
+        "value": "comba"
+      },
+      {
+        "key": "descripcion",
+        "value": null
+      },
+      {
+        "key": "ruta",
+        "value": "COLECCIONES > Comba"
+      },
+      {
+        "key": "imagen",
+        "value": "https://www.myminileo.com/wp-content/uploads/2023/10/@DOLORESTALBAC-502-scaled.jpg"
+      },
+      {
+        "key": "woo_id",
+        "value": "1090"
+      },
+      {
+        "key": "padre",
+        "value": "gid://shopify/Metaobject/1107922813305"
+      }
+    ]
+  },
+  {
+    "id": "gid://shopify/Metaobject/1107924648313",
+    "displayName": "Cometa",
+    "fields": [
+      {
+        "key": "nombre",
+        "value": "Cometa"
+      },
+      {
+        "key": "slug",
+        "value": "cometa"
+      },
+      {
+        "key": "descripcion",
+        "value": null
+      },
+      {
+        "key": "ruta",
+        "value": "COLECCIONES > Cometa"
+      },
+      {
+        "key": "imagen",
+        "value": "https://www.myminileo.com/wp-content/uploads/2026/01/Vestido-cometa.png"
+      },
+      {
+        "key": "woo_id",
+        "value": "1080"
+      },
+      {
+        "key": "padre",
+        "value": "gid://shopify/Metaobject/1107922813305"
+      }
+    ]
+  },
+  {
+    "id": "gid://shopify/Metaobject/1107924877689",
+    "displayName": "Conjuntos de primera puesta",
+    "fields": [
+      {
+        "key": "nombre",
+        "value": "Conjuntos de primera puesta"
+      },
+      {
+        "key": "slug",
+        "value": "conjuntos-de-primera-puesta"
+      },
+      {
+        "key": "descripcion",
+        "value": null
+      },
+      {
+        "key": "ruta",
+        "value": "BABY (de 0 a 2 años) > Conjuntos de primera puesta"
+      },
+      {
+        "key": "imagen",
+        "value": null
+      },
+      {
+        "key": "woo_id",
+        "value": "995"
+      },
+      {
+        "key": "padre",
+        "value": "gid://shopify/Metaobject/1107922747769"
+      }
+    ]
+  },
+  {
+    "id": "gid://shopify/Metaobject/1107925008761",
+    "displayName": "Cubrepañales",
+    "fields": [
+      {
+        "key": "nombre",
+        "value": "Cubrepañales"
+      },
+      {
+        "key": "slug",
+        "value": "cubrepanal"
+      },
+      {
+        "key": "descripcion",
+        "value": "Cubrepañal o pantaloncito muy corto que deja los muslos al aire, dando toda libertad de movimiento a tu pequeño.\r\nLa tela que usamos es 100% algodón y el elástico de tensión baja para que no le pueda apretar ni en las piernas ni en la cintura a tu peque.\r\n"
+      },
+      {
+        "key": "ruta",
+        "value": "BABY (de 0 a 2 años) > Cubrepañales"
+      },
+      {
+        "key": "imagen",
+        "value": "https://www.myminileo.com/wp-content/uploads/2026/03/IMG_2192.jpg"
+      },
+      {
+        "key": "woo_id",
+        "value": "22"
+      },
+      {
+        "key": "padre",
+        "value": "gid://shopify/Metaobject/1107922747769"
+      }
+    ]
+  },
+  {
+    "id": "gid://shopify/Metaobject/1107925139833",
+    "displayName": "De paseo",
+    "fields": [
+      {
+        "key": "nombre",
+        "value": "De paseo"
+      },
+      {
+        "key": "slug",
+        "value": "de-paseo"
+      },
+      {
+        "key": "descripcion",
+        "value": null
+      },
+      {
+        "key": "ruta",
+        "value": "PUERICULTURA > De paseo"
+      },
+      {
+        "key": "imagen",
+        "value": "https://www.myminileo.com/wp-content/uploads/2021/12/IMG_1617_jpg.jpg"
+      },
+      {
+        "key": "woo_id",
+        "value": "549"
+      },
+      {
+        "key": "padre",
+        "value": "gid://shopify/Metaobject/1107923173753"
+      }
+    ]
+  },
+  {
+    "id": "gid://shopify/Metaobject/1107925369209",
+    "displayName": "Dibujar",
+    "fields": [
+      {
+        "key": "nombre",
+        "value": "Dibujar"
+      },
+      {
+        "key": "slug",
+        "value": "dibujar"
+      },
+      {
+        "key": "descripcion",
+        "value": null
+      },
+      {
+        "key": "ruta",
+        "value": "COLECCIONES > Dibujar"
+      },
+      {
+        "key": "imagen",
+        "value": "https://www.myminileo.com/wp-content/uploads/2026/01/vestido-dibujar.png"
+      },
+      {
+        "key": "woo_id",
+        "value": "1085"
+      },
+      {
+        "key": "padre",
+        "value": "gid://shopify/Metaobject/1107922813305"
+      }
+    ]
+  },
+  {
+    "id": "gid://shopify/Metaobject/1107925467513",
+    "displayName": "Explorador",
+    "fields": [
+      {
+        "key": "nombre",
+        "value": "Explorador"
+      },
+      {
+        "key": "slug",
+        "value": "explorador"
+      },
+      {
+        "key": "descripcion",
+        "value": null
+      },
+      {
+        "key": "ruta",
+        "value": "COLECCIONES > Explorador"
+      },
+      {
+        "key": "imagen",
+        "value": "https://www.myminileo.com/wp-content/uploads/2026/02/BE3CAFD8-731C-49CF-ADB6-546691C59AF7.png"
+      },
+      {
+        "key": "woo_id",
+        "value": "1086"
+      },
+      {
+        "key": "padre",
+        "value": "gid://shopify/Metaobject/1107922813305"
+      }
+    ]
+  },
+  {
+    "id": "gid://shopify/Metaobject/1107925598585",
+    "displayName": "Helado",
+    "fields": [
+      {
+        "key": "nombre",
+        "value": "Helado"
+      },
+      {
+        "key": "slug",
+        "value": "helado"
+      },
+      {
+        "key": "descripcion",
+        "value": null
+      },
+      {
+        "key": "ruta",
+        "value": "COLECCIONES > Helado"
+      },
+      {
+        "key": "imagen",
+        "value": "https://www.myminileo.com/wp-content/uploads/2026/01/image2.png"
+      },
+      {
+        "key": "woo_id",
+        "value": "1083"
+      },
+      {
+        "key": "padre",
+        "value": "gid://shopify/Metaobject/1107922813305"
+      }
+    ]
+  },
+  {
+    "id": "gid://shopify/Metaobject/1107925696889",
+    "displayName": "Ladera",
+    "fields": [
+      {
+        "key": "nombre",
+        "value": "Ladera"
+      },
+      {
+        "key": "slug",
+        "value": "ladera"
+      },
+      {
+        "key": "descripcion",
+        "value": null
+      },
+      {
+        "key": "ruta",
+        "value": "COLECCIONES > Ladera"
+      },
+      {
+        "key": "imagen",
+        "value": "https://www.myminileo.com/wp-content/uploads/2026/09/IMG_1449-rotated.jpg"
+      },
+      {
+        "key": "woo_id",
+        "value": "1102"
+      },
+      {
+        "key": "padre",
+        "value": "gid://shopify/Metaobject/1107922813305"
+      }
+    ]
+  },
+  {
+    "id": "gid://shopify/Metaobject/1107925827961",
+    "displayName": "Maleta de Viaje",
+    "fields": [
+      {
+        "key": "nombre",
+        "value": "Maleta de Viaje"
+      },
+      {
+        "key": "slug",
+        "value": "maleta-de-viaje"
+      },
+      {
+        "key": "descripcion",
+        "value": null
+      },
+      {
+        "key": "ruta",
+        "value": "PUERICULTURA > Maleta de Viaje"
+      },
+      {
+        "key": "imagen",
+        "value": "https://www.myminileo.com/wp-content/uploads/2023/12/IMG_4447.jpg"
+      },
+      {
+        "key": "woo_id",
+        "value": "1005"
+      },
+      {
+        "key": "padre",
+        "value": "gid://shopify/Metaobject/1107923173753"
+      }
+    ]
+  },
+  {
+    "id": "gid://shopify/Metaobject/1107926024569",
+    "displayName": "Mordedor y juguetes",
+    "fields": [
+      {
+        "key": "nombre",
+        "value": "Mordedor y juguetes"
+      },
+      {
+        "key": "slug",
+        "value": "mordedor"
+      },
+      {
+        "key": "descripcion",
+        "value": "Los mordedores para bebés hechos de caucho 100% natural extraído de los árboles. Son productos ecológicos, hechos a mano y pintados con pigmentos naturales, siendo así completamente seguros para los niños más pequeños. La textura suave y fácil sujeción del mordedor permite a los bebés experimentar un nuevo mundo mientras calman las molestias de la dentición."
+      },
+      {
+        "key": "ruta",
+        "value": "PUERICULTURA > Mordedor y juguetes"
+      },
+      {
+        "key": "imagen",
+        "value": "https://www.myminileo.com/wp-content/uploads/2020/11/wally-the-watermelon.jpg"
+      },
+      {
+        "key": "woo_id",
+        "value": "295"
+      },
+      {
+        "key": "padre",
+        "value": "gid://shopify/Metaobject/1107923173753"
+      }
+    ]
+  },
+  {
+    "id": "gid://shopify/Metaobject/1107926122873",
+    "displayName": "Muselina",
+    "fields": [
+      {
+        "key": "nombre",
+        "value": "Muselina"
+      },
+      {
+        "key": "slug",
+        "value": "muselina"
+      },
+      {
+        "key": "descripcion",
+        "value": null
+      },
+      {
+        "key": "ruta",
+        "value": "PUERICULTURA > Muselina"
+      },
+      {
+        "key": "imagen",
+        "value": "https://www.myminileo.com/wp-content/uploads/2025/05/IMG_2328-rotated.jpg"
+      },
+      {
+        "key": "woo_id",
+        "value": "894"
+      },
+      {
+        "key": "padre",
+        "value": "gid://shopify/Metaobject/1107923173753"
+      }
+    ]
+  },
+  {
+    "id": "gid://shopify/Metaobject/1107926253945",
+    "displayName": "otros",
+    "fields": [
+      {
+        "key": "nombre",
+        "value": "otros"
+      },
+      {
+        "key": "slug",
+        "value": "otros"
+      },
+      {
+        "key": "descripcion",
+        "value": null
+      },
+      {
+        "key": "ruta",
+        "value": "COLECCIONES > otros"
+      },
+      {
+        "key": "imagen",
+        "value": null
+      },
+      {
+        "key": "woo_id",
+        "value": "921"
+      },
+      {
+        "key": "padre",
+        "value": "gid://shopify/Metaobject/1107922813305"
+      }
+    ]
+  },
+  {
+    "id": "gid://shopify/Metaobject/1107926319481",
+    "displayName": "Otros",
+    "fields": [
+      {
+        "key": "nombre",
+        "value": "Otros"
+      },
+      {
+        "key": "slug",
+        "value": "otras"
+      },
+      {
+        "key": "descripcion",
+        "value": null
+      },
+      {
+        "key": "ruta",
+        "value": "PUERICULTURA > Otros"
+      },
+      {
+        "key": "imagen",
+        "value": null
+      },
+      {
+        "key": "woo_id",
+        "value": "744"
+      },
+      {
+        "key": "padre",
+        "value": "gid://shopify/Metaobject/1107923173753"
+      }
+    ]
+  },
+  {
+    "id": "gid://shopify/Metaobject/1107926417785",
+    "displayName": "Pana azul marino",
+    "fields": [
+      {
+        "key": "nombre",
+        "value": "Pana azul marino"
+      },
+      {
+        "key": "slug",
+        "value": "pana-azul-marino"
+      },
+      {
+        "key": "descripcion",
+        "value": null
+      },
+      {
+        "key": "ruta",
+        "value": "COLECCIONES > Pana azul marino"
+      },
+      {
+        "key": "imagen",
+        "value": "https://www.myminileo.com/wp-content/uploads/2024/05/pelele-pana-azul-scaled.jpg"
+      },
+      {
+        "key": "woo_id",
+        "value": "1097"
+      },
+      {
+        "key": "padre",
+        "value": "gid://shopify/Metaobject/1107922813305"
+      }
+    ]
+  },
+  {
+    "id": "gid://shopify/Metaobject/1107926483321",
+    "displayName": "Pana Burdeos",
+    "fields": [
+      {
+        "key": "nombre",
+        "value": "Pana Burdeos"
+      },
+      {
+        "key": "slug",
+        "value": "pana-burdeos"
+      },
+      {
+        "key": "descripcion",
+        "value": null
+      },
+      {
+        "key": "ruta",
+        "value": "COLECCIONES > Pana Burdeos"
+      },
+      {
+        "key": "imagen",
+        "value": "https://www.myminileo.com/wp-content/uploads/2024/09/IMG_1659.jpg"
+      },
+      {
+        "key": "woo_id",
+        "value": "1103"
+      },
+      {
+        "key": "padre",
+        "value": "gid://shopify/Metaobject/1107922813305"
+      }
+    ]
+  },
+  {
+    "id": "gid://shopify/Metaobject/1107926516089",
+    "displayName": "Para dormir",
+    "fields": [
+      {
+        "key": "nombre",
+        "value": "Para dormir"
+      },
+      {
+        "key": "slug",
+        "value": "para-dormir"
+      },
+      {
+        "key": "descripcion",
+        "value": null
+      },
+      {
+        "key": "ruta",
+        "value": "BABY (de 0 a 2 años) > Para dormir"
+      },
+      {
+        "key": "imagen",
+        "value": "https://www.myminileo.com/wp-content/uploads/2024/11/saco-hojas-5.webp"
+      },
+      {
+        "key": "woo_id",
+        "value": "1055"
+      },
+      {
+        "key": "padre",
+        "value": "gid://shopify/Metaobject/1107922747769"
+      }
+    ]
+  },
+  {
+    "id": "gid://shopify/Metaobject/1107926581625",
+    "displayName": "Peleles Kids",
+    "fields": [
+      {
+        "key": "nombre",
+        "value": "Peleles Kids"
+      },
+      {
+        "key": "slug",
+        "value": "peleles"
+      },
+      {
+        "key": "descripcion",
+        "value": null
+      },
+      {
+        "key": "ruta",
+        "value": "KIDS > Peleles Kids"
+      },
+      {
+        "key": "imagen",
+        "value": "https://www.myminileo.com/wp-content/uploads/2026/01/Gemini_Generated_Image_dognfldognfldogn.png"
+      },
+      {
+        "key": "woo_id",
+        "value": "1003"
+      },
+      {
+        "key": "padre",
+        "value": "gid://shopify/Metaobject/1107922911609"
+      }
+    ]
+  },
+  {
+    "id": "gid://shopify/Metaobject/1107926647161",
+    "displayName": "Pelelitos",
+    "fields": [
+      {
+        "key": "nombre",
+        "value": "Pelelitos"
+      },
+      {
+        "key": "slug",
+        "value": "pelelitos"
+      },
+      {
+        "key": "descripcion",
+        "value": null
+      },
+      {
+        "key": "ruta",
+        "value": "BABY (de 0 a 2 años) > Pelelitos"
+      },
+      {
+        "key": "imagen",
+        "value": "https://www.myminileo.com/wp-content/uploads/2026/01/a-toda-vela-y-trepar.png"
+      },
+      {
+        "key": "woo_id",
+        "value": "990"
+      },
+      {
+        "key": "padre",
+        "value": "gid://shopify/Metaobject/1107922747769"
+      }
+    ]
+  },
+  {
+    "id": "gid://shopify/Metaobject/1107926745465",
+    "displayName": "Petos y pantalones baby",
+    "fields": [
+      {
+        "key": "nombre",
+        "value": "Petos y pantalones baby"
+      },
+      {
+        "key": "slug",
+        "value": "petosypantalonesbaby"
+      },
+      {
+        "key": "descripcion",
+        "value": null
+      },
+      {
+        "key": "ruta",
+        "value": "BABY (de 0 a 2 años) > Petos y pantalones baby"
+      },
+      {
+        "key": "imagen",
+        "value": "https://www.myminileo.com/wp-content/uploads/2026/01/pantalon-baile.png"
+      },
+      {
+        "key": "woo_id",
+        "value": "1034"
+      },
+      {
+        "key": "padre",
+        "value": "gid://shopify/Metaobject/1107922747769"
+      }
+    ]
+  },
+  {
+    "id": "gid://shopify/Metaobject/1107926876537",
+    "displayName": "Petos y pantalones kids",
+    "fields": [
+      {
+        "key": "nombre",
+        "value": "Petos y pantalones kids"
+      },
+      {
+        "key": "slug",
+        "value": "petosypantaloneskids"
+      },
+      {
+        "key": "descripcion",
+        "value": null
+      },
+      {
+        "key": "ruta",
+        "value": "KIDS > Petos y pantalones kids"
+      },
+      {
+        "key": "imagen",
+        "value": "https://www.myminileo.com/wp-content/uploads/2026/01/IMG_2556-scaled-e1773661022983.jpg"
+      },
+      {
+        "key": "woo_id",
+        "value": "366"
+      },
+      {
+        "key": "padre",
+        "value": "gid://shopify/Metaobject/1107922911609"
+      }
+    ]
+  },
+  {
+    "id": "gid://shopify/Metaobject/1107926974841",
+    "displayName": "Portadocumentos",
+    "fields": [
+      {
+        "key": "nombre",
+        "value": "Portadocumentos"
+      },
+      {
+        "key": "slug",
+        "value": "portadocumentos"
+      },
+      {
+        "key": "descripcion",
+        "value": null
+      },
+      {
+        "key": "ruta",
+        "value": "PUERICULTURA > Portadocumentos"
+      },
+      {
+        "key": "imagen",
+        "value": null
+      },
+      {
+        "key": "woo_id",
+        "value": "864"
+      },
+      {
+        "key": "padre",
+        "value": "gid://shopify/Metaobject/1107923173753"
+      }
+    ]
+  },
+  {
+    "id": "gid://shopify/Metaobject/1107927171449",
+    "displayName": "Pradera",
+    "fields": [
+      {
+        "key": "nombre",
+        "value": "Pradera"
+      },
+      {
+        "key": "slug",
+        "value": "pradera"
+      },
+      {
+        "key": "descripcion",
+        "value": null
+      },
+      {
+        "key": "ruta",
+        "value": "COLECCIONES > Pradera"
+      },
+      {
+        "key": "imagen",
+        "value": "https://www.myminileo.com/wp-content/uploads/2024/09/peto-largo-scaled.jpg"
+      },
+      {
+        "key": "woo_id",
+        "value": "1098"
+      },
+      {
+        "key": "padre",
+        "value": "gid://shopify/Metaobject/1107922813305"
+      }
+    ]
+  },
+  {
+    "id": "gid://shopify/Metaobject/1107927302521",
+    "displayName": "Punto Baby",
+    "fields": [
+      {
+        "key": "nombre",
+        "value": "Punto Baby"
+      },
+      {
+        "key": "slug",
+        "value": "punto-bebe-de-0-a-2-anos"
+      },
+      {
+        "key": "descripcion",
+        "value": null
+      },
+      {
+        "key": "ruta",
+        "value": "BABY (de 0 a 2 años) > Punto Baby"
+      },
+      {
+        "key": "imagen",
+        "value": "https://www.myminileo.com/wp-content/uploads/2026/02/4-PIEZAS-MINT.jpg"
+      },
+      {
+        "key": "woo_id",
+        "value": "989"
+      },
+      {
+        "key": "padre",
+        "value": "gid://shopify/Metaobject/1107922747769"
+      }
+    ]
+  },
+  {
+    "id": "gid://shopify/Metaobject/1107927433593",
+    "displayName": "Punto Kids",
+    "fields": [
+      {
+        "key": "nombre",
+        "value": "Punto Kids"
+      },
+      {
+        "key": "slug",
+        "value": "punto-ninos"
+      },
+      {
+        "key": "descripcion",
+        "value": null
+      },
+      {
+        "key": "ruta",
+        "value": "KIDS > Punto Kids"
+      },
+      {
+        "key": "imagen",
+        "value": null
+      },
+      {
+        "key": "woo_id",
+        "value": "1001"
+      },
+      {
+        "key": "padre",
+        "value": "gid://shopify/Metaobject/1107922911609"
+      }
+    ]
+  },
+  {
+    "id": "gid://shopify/Metaobject/1107927597433",
+    "displayName": "Rayuela",
+    "fields": [
+      {
+        "key": "nombre",
+        "value": "Rayuela"
+      },
+      {
+        "key": "slug",
+        "value": "rayuela"
+      },
+      {
+        "key": "descripcion",
+        "value": null
+      },
+      {
+        "key": "ruta",
+        "value": "COLECCIONES > Rayuela"
+      },
+      {
+        "key": "imagen",
+        "value": "https://www.myminileo.com/wp-content/uploads/2022/09/M08_shooting_Myminileoi_invierno22_288.jpg"
+      },
+      {
+        "key": "woo_id",
+        "value": "1089"
+      },
+      {
+        "key": "padre",
+        "value": "gid://shopify/Metaobject/1107922813305"
+      }
+    ]
+  },
+  {
+    "id": "gid://shopify/Metaobject/1107927662969",
+    "displayName": "Ruta",
+    "fields": [
+      {
+        "key": "nombre",
+        "value": "Ruta"
+      },
+      {
+        "key": "slug",
+        "value": "ruta"
+      },
+      {
+        "key": "descripcion",
+        "value": null
+      },
+      {
+        "key": "ruta",
+        "value": "COLECCIONES > Ruta"
+      },
+      {
+        "key": "imagen",
+        "value": "https://www.myminileo.com/wp-content/uploads/2022/10/M08_shooting_Myminileoi_invierno22_163.jpg"
+      },
+      {
+        "key": "woo_id",
+        "value": "1095"
+      },
+      {
+        "key": "padre",
+        "value": "gid://shopify/Metaobject/1107922813305"
+      }
+    ]
+  },
+  {
+    "id": "gid://shopify/Metaobject/1107927761273",
+    "displayName": "Sendero",
+    "fields": [
+      {
+        "key": "nombre",
+        "value": "Sendero"
+      },
+      {
+        "key": "slug",
+        "value": "sendero"
+      },
+      {
+        "key": "descripcion",
+        "value": null
+      },
+      {
+        "key": "ruta",
+        "value": "COLECCIONES > Sendero"
+      },
+      {
+        "key": "imagen",
+        "value": "https://www.myminileo.com/wp-content/uploads/2026/09/IMG_1447-rotated.jpg"
+      },
+      {
+        "key": "woo_id",
+        "value": "1099"
+      },
+      {
+        "key": "padre",
+        "value": "gid://shopify/Metaobject/1107922813305"
+      }
+    ]
+  },
+  {
+    "id": "gid://shopify/Metaobject/1107927925113",
+    "displayName": "Tati",
+    "fields": [
+      {
+        "key": "nombre",
+        "value": "Tati"
+      },
+      {
+        "key": "slug",
+        "value": "tati"
+      },
+      {
+        "key": "descripcion",
+        "value": null
+      },
+      {
+        "key": "ruta",
+        "value": "COLECCIONES > Tati"
+      },
+      {
+        "key": "imagen",
+        "value": "https://www.myminileo.com/wp-content/uploads/2025/11/image0-4-copia.png"
+      },
+      {
+        "key": "woo_id",
+        "value": "1048"
+      },
+      {
+        "key": "padre",
+        "value": "gid://shopify/Metaobject/1107922813305"
+      }
+    ]
+  },
+  {
+    "id": "gid://shopify/Metaobject/1107928056185",
+    "displayName": "Tirantes",
+    "fields": [
+      {
+        "key": "nombre",
+        "value": "Tirantes"
+      },
+      {
+        "key": "slug",
+        "value": "tirantes"
+      },
+      {
+        "key": "descripcion",
+        "value": null
+      },
+      {
+        "key": "ruta",
+        "value": "PUERICULTURA > Tirantes"
+      },
+      {
+        "key": "imagen",
+        "value": "https://www.myminileo.com/wp-content/uploads/2026/01/IMG_1302.jpg"
+      },
+      {
+        "key": "woo_id",
+        "value": "1073"
+      },
+      {
+        "key": "padre",
+        "value": "gid://shopify/Metaobject/1107923173753"
+      }
+    ]
+  },
+  {
+    "id": "gid://shopify/Metaobject/1107928121721",
+    "displayName": "Toallas",
+    "fields": [
+      {
+        "key": "nombre",
+        "value": "Toallas"
+      },
+      {
+        "key": "slug",
+        "value": "toallas"
+      },
+      {
+        "key": "descripcion",
+        "value": null
+      },
+      {
+        "key": "ruta",
+        "value": "PUERICULTURA > Toallas"
+      },
+      {
+        "key": "imagen",
+        "value": "https://www.myminileo.com/wp-content/uploads/2024/01/IMG_4491.jpg"
+      },
+      {
+        "key": "woo_id",
+        "value": "695"
+      },
+      {
+        "key": "padre",
+        "value": "gid://shopify/Metaobject/1107923173753"
+      }
+    ]
+  },
+  {
+    "id": "gid://shopify/Metaobject/1107928220025",
+    "displayName": "Toquillas",
+    "fields": [
+      {
+        "key": "nombre",
+        "value": "Toquillas"
+      },
+      {
+        "key": "slug",
+        "value": "toquillas"
+      },
+      {
+        "key": "descripcion",
+        "value": null
+      },
+      {
+        "key": "ruta",
+        "value": "PUERICULTURA > Toquillas"
+      },
+      {
+        "key": "imagen",
+        "value": "https://www.myminileo.com/wp-content/uploads/2024/07/TO-72-toquilla-blanca.png"
+      },
+      {
+        "key": "woo_id",
+        "value": "615"
+      },
+      {
+        "key": "padre",
+        "value": "gid://shopify/Metaobject/1107923173753"
+      }
+    ]
+  },
+  {
+    "id": "gid://shopify/Metaobject/1107928383865",
+    "displayName": "Trepar",
+    "fields": [
+      {
+        "key": "nombre",
+        "value": "Trepar"
+      },
+      {
+        "key": "slug",
+        "value": "trepar"
+      },
+      {
+        "key": "descripcion",
+        "value": null
+      },
+      {
+        "key": "ruta",
+        "value": "COLECCIONES > Trepar"
+      },
+      {
+        "key": "imagen",
+        "value": "https://www.myminileo.com/wp-content/uploads/2023/10/@DOLORESTALBAC-180-scaled.jpg"
+      },
+      {
+        "key": "woo_id",
+        "value": "1084"
+      },
+      {
+        "key": "padre",
+        "value": "gid://shopify/Metaobject/1107922813305"
+      }
+    ]
+  },
+  {
+    "id": "gid://shopify/Metaobject/1107928482169",
+    "displayName": "Valle",
+    "fields": [
+      {
+        "key": "nombre",
+        "value": "Valle"
+      },
+      {
+        "key": "slug",
+        "value": "valle"
+      },
+      {
+        "key": "descripcion",
+        "value": null
+      },
+      {
+        "key": "ruta",
+        "value": "COLECCIONES > Valle"
+      },
+      {
+        "key": "imagen",
+        "value": "https://www.myminileo.com/wp-content/uploads/2022/11/IMG_4412-rotated.jpg"
+      },
+      {
+        "key": "woo_id",
+        "value": "1094"
+      },
+      {
+        "key": "padre",
+        "value": "gid://shopify/Metaobject/1107922813305"
+      }
+    ]
+  },
+  {
+    "id": "gid://shopify/Metaobject/1107928514937",
+    "displayName": "Vestidos y Bailarinas",
+    "fields": [
+      {
+        "key": "nombre",
+        "value": "Vestidos y Bailarinas"
+      },
+      {
+        "key": "slug",
+        "value": "vestidos-y-bailarinas"
+      },
+      {
+        "key": "descripcion",
+        "value": null
+      },
+      {
+        "key": "ruta",
+        "value": "BABY (de 0 a 2 años) > Vestidos y Bailarinas"
+      },
+      {
+        "key": "imagen",
+        "value": "https://www.myminileo.com/wp-content/uploads/2026/01/bailarina-baile.png"
+      },
+      {
+        "key": "woo_id",
+        "value": "998"
+      },
+      {
+        "key": "padre",
+        "value": "gid://shopify/Metaobject/1107922747769"
+      }
+    ]
+  },
+  {
+    "id": "gid://shopify/Metaobject/1107928646009",
+    "displayName": "Vestidos y bailarinas kids",
+    "fields": [
+      {
+        "key": "nombre",
+        "value": "Vestidos y bailarinas kids"
+      },
+      {
+        "key": "slug",
+        "value": "vestidos"
+      },
+      {
+        "key": "descripcion",
+        "value": null
+      },
+      {
+        "key": "ruta",
+        "value": "KIDS > Vestidos y bailarinas kids"
+      },
+      {
+        "key": "imagen",
+        "value": "https://www.myminileo.com/wp-content/uploads/2026/01/vestido-baile-2.png"
+      },
+      {
+        "key": "woo_id",
+        "value": "96"
+      },
+      {
+        "key": "padre",
+        "value": "gid://shopify/Metaobject/1107922911609"
+      }
+    ]
+  },
+  {
+    "id": "gid://shopify/Metaobject/1107928777081",
+    "displayName": "Vuelta al cole",
+    "fields": [
+      {
+        "key": "nombre",
+        "value": "Vuelta al cole"
+      },
+      {
+        "key": "slug",
+        "value": "botellas-y-cajitas"
+      },
+      {
+        "key": "descripcion",
+        "value": null
+      },
+      {
+        "key": "ruta",
+        "value": "PUERICULTURA > Vuelta al cole"
+      },
+      {
+        "key": "imagen",
+        "value": "https://www.myminileo.com/wp-content/uploads/2021/07/botella-animales-1.jpg"
+      },
+      {
+        "key": "woo_id",
+        "value": "493"
+      },
+      {
+        "key": "padre",
+        "value": "gid://shopify/Metaobject/1107923173753"
+      }
+    ]
+  },
+  {
+    "id": "gid://shopify/Metaobject/1107928875385",
+    "displayName": "Bolsas de carro",
+    "fields": [
+      {
+        "key": "nombre",
+        "value": "Bolsas de carro"
+      },
+      {
+        "key": "slug",
+        "value": "bolsas-de-carro"
+      },
+      {
+        "key": "descripcion",
+        "value": null
+      },
+      {
+        "key": "ruta",
+        "value": "PUERICULTURA > De paseo > Bolsas de carro"
+      },
+      {
+        "key": "imagen",
+        "value": "https://www.myminileo.com/wp-content/uploads/2021/12/IMG_1614_jpg.jpg"
+      },
+      {
+        "key": "woo_id",
+        "value": "604"
+      },
+      {
+        "key": "padre",
+        "value": "gid://shopify/Metaobject/1107925139833"
+      }
+    ]
+  },
+  {
+    "id": "gid://shopify/Metaobject/1107928908153",
+    "displayName": "Cambiadores y bolsas",
+    "fields": [
+      {
+        "key": "nombre",
+        "value": "Cambiadores y bolsas"
+      },
+      {
+        "key": "slug",
+        "value": "cambiadores-y-bolsas"
+      },
+      {
+        "key": "descripcion",
+        "value": "Nuestros cambiadores están pensados para ocupar poco espacio en el bolso del carrito, ya que se pliegan muy fácilmente, miden 50x70 cm. Su interior está plastificado, lo que facilita su limpieza. Contamos con diversos diseños."
+      },
+      {
+        "key": "ruta",
+        "value": "PUERICULTURA > De paseo > Cambiadores y bolsas"
+      },
+      {
+        "key": "imagen",
+        "value": "https://www.myminileo.com/wp-content/uploads/2025/03/IMG_2114.jpg"
+      },
+      {
+        "key": "woo_id",
+        "value": "24"
+      },
+      {
+        "key": "padre",
+        "value": "gid://shopify/Metaobject/1107925139833"
+      }
+    ]
+  },
+  {
+    "id": "gid://shopify/Metaobject/1107929006457",
+    "displayName": "Colchonetas",
+    "fields": [
+      {
+        "key": "nombre",
+        "value": "Colchonetas"
+      },
+      {
+        "key": "slug",
+        "value": "colchonetas"
+      },
+      {
+        "key": "descripcion",
+        "value": null
+      },
+      {
+        "key": "ruta",
+        "value": "PUERICULTURA > De paseo > Colchonetas"
+      },
+      {
+        "key": "imagen",
+        "value": "https://www.myminileo.com/wp-content/uploads/2021/09/IMG_1802_jpg.jpg"
+      },
+      {
+        "key": "woo_id",
+        "value": "606"
+      },
+      {
+        "key": "padre",
+        "value": "gid://shopify/Metaobject/1107925139833"
+      }
+    ]
+  },
+  {
+    "id": "gid://shopify/Metaobject/1107929170297",
+    "displayName": "Cuellos",
+    "fields": [
+      {
+        "key": "nombre",
+        "value": "Cuellos"
+      },
+      {
+        "key": "slug",
+        "value": "cuellos"
+      },
+      {
+        "key": "descripcion",
+        "value": null
+      },
+      {
+        "key": "ruta",
+        "value": "BABY (de 0 a 2 años) > Accesorios Baby > Cuellos"
+      },
+      {
+        "key": "imagen",
+        "value": "https://www.myminileo.com/wp-content/uploads/2020/10/IMG_7484.jpg"
+      },
+      {
+        "key": "woo_id",
+        "value": "284"
+      },
+      {
+        "key": "padre",
+        "value": "gid://shopify/Metaobject/1107923304825"
+      }
+    ]
+  },
+  {
+    "id": "gid://shopify/Metaobject/1107929235833",
+    "displayName": "Cuellos Kids",
+    "fields": [
+      {
+        "key": "nombre",
+        "value": "Cuellos Kids"
+      },
+      {
+        "key": "slug",
+        "value": "cuelloskids"
+      },
+      {
+        "key": "descripcion",
+        "value": null
+      },
+      {
+        "key": "ruta",
+        "value": "KIDS > Accesorios Kids > Cuellos Kids"
+      },
+      {
+        "key": "imagen",
+        "value": "https://www.myminileo.com/wp-content/uploads/2025/05/IMG_2329.jpg"
+      },
+      {
+        "key": "woo_id",
+        "value": "1037"
+      },
+      {
+        "key": "padre",
+        "value": "gid://shopify/Metaobject/1107923370361"
+      }
+    ]
+  },
+  {
+    "id": "gid://shopify/Metaobject/1107929301369",
+    "displayName": "Gorros y capotas",
+    "fields": [
+      {
+        "key": "nombre",
+        "value": "Gorros y capotas"
+      },
+      {
+        "key": "slug",
+        "value": "gorros-y-capotas"
+      },
+      {
+        "key": "descripcion",
+        "value": null
+      },
+      {
+        "key": "ruta",
+        "value": "KIDS > Accesorios Kids > Gorros y capotas"
+      },
+      {
+        "key": "imagen",
+        "value": "https://www.myminileo.com/wp-content/uploads/2025/02/IMG_7692.jpg"
+      },
+      {
+        "key": "woo_id",
+        "value": "238"
+      },
+      {
+        "key": "padre",
+        "value": "gid://shopify/Metaobject/1107923370361"
+      }
+    ]
+  },
+  {
+    "id": "gid://shopify/Metaobject/1107929366905",
+    "displayName": "Lazos y diademas",
+    "fields": [
+      {
+        "key": "nombre",
+        "value": "Lazos y diademas"
+      },
+      {
+        "key": "slug",
+        "value": "lazosbaby"
+      },
+      {
+        "key": "descripcion",
+        "value": null
+      },
+      {
+        "key": "ruta",
+        "value": "BABY (de 0 a 2 años) > Accesorios Baby > Lazos y diademas"
+      },
+      {
+        "key": "imagen",
+        "value": "https://www.myminileo.com/wp-content/uploads/2025/10/@DOLORESTALBAC-166-scaled.jpg"
+      },
+      {
+        "key": "woo_id",
+        "value": "582"
+      },
+      {
+        "key": "padre",
+        "value": "gid://shopify/Metaobject/1107923304825"
+      }
+    ]
+  },
+  {
+    "id": "gid://shopify/Metaobject/1107929465209",
+    "displayName": "Lazos y Diademas Kids",
+    "fields": [
+      {
+        "key": "nombre",
+        "value": "Lazos y Diademas Kids"
+      },
+      {
+        "key": "slug",
+        "value": "lazos-y-diademas-kids"
+      },
+      {
+        "key": "descripcion",
+        "value": null
+      },
+      {
+        "key": "ruta",
+        "value": "KIDS > Accesorios Kids > Lazos y Diademas Kids"
+      },
+      {
+        "key": "imagen",
+        "value": "https://www.myminileo.com/wp-content/uploads/2025/10/@DOLORESTALBAC-396-scaled.jpg"
+      },
+      {
+        "key": "woo_id",
+        "value": "1036"
+      },
+      {
+        "key": "padre",
+        "value": "gid://shopify/Metaobject/1107923370361"
+      }
+    ]
+  },
+  {
+    "id": "gid://shopify/Metaobject/1107929530745",
+    "displayName": "Patuquitos y Capotas",
+    "fields": [
+      {
+        "key": "nombre",
+        "value": "Patuquitos y Capotas"
+      },
+      {
+        "key": "slug",
+        "value": "botitas"
+      },
+      {
+        "key": "descripcion",
+        "value": null
+      },
+      {
+        "key": "ruta",
+        "value": "BABY (de 0 a 2 años) > Accesorios Baby > Patuquitos y Capotas"
+      },
+      {
+        "key": "imagen",
+        "value": "https://www.myminileo.com/wp-content/uploads/2022/02/Shooting_-MyMinileo_verano22_275-1-e1742301579336.jpg"
+      },
+      {
+        "key": "woo_id",
+        "value": "358"
+      },
+      {
+        "key": "padre",
+        "value": "gid://shopify/Metaobject/1107923304825"
+      }
+    ]
+  },
+  {
+    "id": "gid://shopify/Metaobject/1107929563513",
+    "displayName": "Portachupetes",
+    "fields": [
+      {
+        "key": "nombre",
+        "value": "Portachupetes"
+      },
+      {
+        "key": "slug",
+        "value": "portachupetes"
+      },
+      {
+        "key": "descripcion",
+        "value": null
+      },
+      {
+        "key": "ruta",
+        "value": "PUERICULTURA > De paseo > Portachupetes"
+      },
+      {
+        "key": "imagen",
+        "value": "https://www.myminileo.com/wp-content/uploads/2023/12/IMG_4462.jpg"
+      },
+      {
+        "key": "woo_id",
+        "value": "758"
+      },
+      {
+        "key": "padre",
+        "value": "gid://shopify/Metaobject/1107925139833"
+      }
+    ]
+  },
+  {
+    "id": "gid://shopify/Metaobject/1107929661817",
+    "displayName": "Sacos silla y capazo",
+    "fields": [
+      {
+        "key": "nombre",
+        "value": "Sacos silla y capazo"
+      },
+      {
+        "key": "slug",
+        "value": "sacos"
+      },
+      {
+        "key": "descripcion",
+        "value": null
+      },
+      {
+        "key": "ruta",
+        "value": "PUERICULTURA > De paseo > Sacos silla y capazo"
+      },
+      {
+        "key": "imagen",
+        "value": "https://www.myminileo.com/wp-content/uploads/2021/09/IMG_5739_jpg.jpg"
+      },
+      {
+        "key": "woo_id",
+        "value": "605"
+      },
+      {
+        "key": "padre",
+        "value": "gid://shopify/Metaobject/1107925139833"
+      }
+    ]
+  },
+  {
+    "id": "gid://shopify/Metaobject/1107929825657",
+    "displayName": "Talegas",
+    "fields": [
+      {
+        "key": "nombre",
+        "value": "Talegas"
+      },
+      {
+        "key": "slug",
+        "value": "talegas"
+      },
+      {
+        "key": "descripcion",
+        "value": null
+      },
+      {
+        "key": "ruta",
+        "value": "PUERICULTURA > De paseo > Talegas"
+      },
+      {
+        "key": "imagen",
+        "value": "https://www.myminileo.com/wp-content/uploads/2022/01/IMG_2923_jpg.jpg"
+      },
+      {
+        "key": "woo_id",
+        "value": "607"
+      },
+      {
+        "key": "padre",
+        "value": "gid://shopify/Metaobject/1107925139833"
+      }
+    ]
+  }
+]

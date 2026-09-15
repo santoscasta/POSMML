@@ -1,0 +1,50 @@
+### Error
+ReferenceError: setTimeout is not defined
+### Ran Playwright code
+```js
+await (async(page)=>{
+ const findings=[];const pageErrors=[];page.on('pageerror',e=>pageErrors.push(e.message));
+ let session={id:'qa-session',status:'OPEN',openingAmount:50,cashierName:'QA',openedAt:'2026-09-14T08:00:00Z',kpis:{totalOrders:1,grossSales:20,cashSales:20,cardSales:0,bizumSales:0,voucherSales:0,refunds:0,refundsCash:0,expectedCash:70}};
+ let mode='normal';const pending=[];
+ const order=name=>({id:'gid://shopify/Order/'+name,name,createdAt:'2026-09-14T08:00:00Z',displayFinancialStatus:'PAID',displayFulfillmentStatus:'UNFULFILLED',totalPriceSet:{shopMoney:{amount:'20',currencyCode:'EUR'}},customer:null,lineItems:{edges:[]}});
+ await page.route('**/api/**',async route=>{
+  const path=route.request().url().replace(/^https?:\/\/[^/]+/,'').split('?')[0];let status=200;let body={};
+  if(path.endsWith('/sessions/current'))body=session;
+  else if(path.endsWith('/sessions/close')){body={...session,status:'CLOSED',closingAmount:70,expectedAmount:70,difference:0,closedAt:'2026-09-14T17:00:00Z',orderDetails:[]};session=null;}
+  else if(path.endsWith('/sessions')){if(mode==='history-error'){status=500;body={error:'History failed'}}else body=[];}
+  else if(path.endsWith('/graphql')){
+   const input=route.request().postDataJSON();
+   if(input.query.includes('GetOrders')){
+    if(mode==='orders-error'){status=500;body={error:'Orders failed'}}
+    else {const q=input.variables.query||'';if(mode==='race'){await page.waitForTimeout(q==='OLD'?1800:100);}body={data:{orders:{edges:[{node:order(q||'INITIAL')}],pageInfo:{hasNextPage:false}}}};}
+   }else if(input.query.includes('PosCategories'))body={data:{metaobjects:{nodes:[],pageInfo:{hasNextPage:false}}}};
+   else body={data:{products:{edges:[],pageInfo:{hasNextPage:false}}}};
+  }
+  else if(path.endsWith('/dashboard'))body={shopifyConnected:true,sessionOpen:true,todaySales:20,todayOrders:1,activeVouchers:0,voucherBalance:0,paymentBreakdown:{cash:20,card:0,bizum:0,mixed:0}};
+  else if(path.endsWith('/vouchers/stats'))body={total:0,active:0,exhausted:0,cancelled:0,activeBalance:0};
+  else if(path.endsWith('/vouchers')||path.endsWith('/operations/pending'))body=[];
+  await route.fulfill({status,contentType:'application/json',body:JSON.stringify(body)});
+ });
+ const button=name=>page.getByRole('button',{name,exact:true}).filter({visible:true});
+ async function login(){await page.getByRole('textbox',{name:'Usuario',exact:true}).fill('QA');await page.getByRole('textbox',{name:'Contraseña',exact:true}).fill('mock-only');await button('Entrar').click();}
+ await page.evaluate(()=>localStorage.clear());await page.reload();await login();await page.setViewportSize({width:1366,height:900});
+ await button('Caja').click();await button('Cerrar sesión de caja').click();await page.getByLabel(/Monto de cierre/).fill('70');await page.getByRole('dialog').getByRole('button',{name:'Cerrar sesión de caja',exact:true}).click();
+ await page.getByRole('dialog',{name:'Abrir sesión de caja'}).waitFor();
+ findings.push({id:'QA-01',result:'reproduced',dialogs:await page.getByRole('dialog').allTextContents(),printAccessible:await page.getByRole('button',{name:'Imprimir informe',exact:true}).count()});
+ await page.screenshot({path:'output/qa-2026-09-14/close-forces-open.png'});
+ session={id:'qa-session',status:'OPEN',openingAmount:50,cashierName:'QA',openedAt:'2026-09-14T08:00:00Z'};mode='orders-error';await page.reload();await login();await button('Pedidos').click();await page.getByText('No hay pedidos',{exact:true}).waitFor();
+ findings.push({id:'QA-02',result:'reproduced',text:await page.locator('main').innerText()});await page.screenshot({path:'output/qa-2026-09-14/orders-error-empty.png'});
+ mode='race';const search=page.getByPlaceholder('Buscar pedidos...');await search.fill('OLD');await page.waitForRequest(r=>r.url().endsWith('/graphql')&&r.postDataJSON()?.variables?.query==='OLD');await search.fill('NEW');await page.getByText('NEW',{exact:true}).waitFor();await page.getByText('OLD',{exact:true}).waitFor();findings.push({id:'QA-03',result:'reproduced',search:await search.inputValue(),text:await page.locator('main').innerText()});await page.screenshot({path:'output/qa-2026-09-14/orders-search-race.png'});
+ mode='history-error';await button('Caja').click();await page.getByText('No hay sesiones anteriores',{exact:true}).waitFor();findings.push({id:'QA-04',result:'reproduced',text:await page.locator('main').innerText()});
+ mode='normal';const widths=[];for(const width of [1366,1024,768,390,320]){await page.setViewportSize({width,height:800});for(const name of ['Inicio','POS','Pedidos','Caja','Vales']){await button(name).click();await page.waitForTimeout(350);widths.push({width,page:name,overflow:await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth)});}};
+ await button('Inicio').click();await page.screenshot({path:'output/qa-2026-09-14/dashboard-320.png'});
+ console.log(JSON.stringify({findings,widths,pageErrors},null,2));
+}
+)(page);
+```
+### Page
+- Page URL: https://posmml-production.up.railway.app/dashboard
+- Page Title: POS MML
+- Console: 2 errors, 0 warnings
+### Events
+- New console entries: .playwright-cli/console-2026-09-14T18-20-52-913Z.log#L12-L14

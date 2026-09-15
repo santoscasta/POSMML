@@ -150,7 +150,9 @@ export function createPosService(gql, store) {
         const data = await gql(`query PosPaidRecovery($id: ID!) { order(id: $id) { id displayFinancialStatus } }`, { id: order.id });
         return data.order?.displayFinancialStatus === 'PAID' ? { id: data.order.id } : null;
       };
-      await ctx.step('mark-paid', async () => {
+      for (let attempt = 0; ; attempt++) {
+        try {
+          await ctx.step('mark-paid', async () => {
         // Zero-value orders can already be paid after draft completion. Also
         // check before retrying a rejected payment on an existing order.
         let paid;
@@ -163,7 +165,18 @@ export function createPosService(gql, store) {
         return mutationResult(await gql(`mutation PosPaid($input: OrderMarkAsPaidInput!) {
           orderMarkAsPaid(input: $input) { order { id } userErrors { message } }
         }`, { input: { id: order.id } }), 'orderMarkAsPaid', 'order');
-      }, paidOrder);
+          }, paidOrder);
+          break;
+        } catch (error) {
+          // Only retry an explicit temporary rejection, never an unknown outcome.
+          if (!error.definiteRejection || !/Order is temporarily unavailable to be modified/i.test(error.message)) throw error;
+          if (attempt >= 3) {
+            error.message = 'Shopify sigue preparando el pedido. Espera unos segundos y pulsa «Reanudar cobro pendiente».';
+            throw error;
+          }
+          await new Promise(resolve => setTimeout(resolve, 500 * 2 ** attempt));
+        }
+      }
       const entry = movement(ctx, {
         shopifyOrderId: order.id, shopifyOrderName: order.name, sessionId,
         method: payment.method, amount: cents(payment.amount) / 100, type: 'sale',

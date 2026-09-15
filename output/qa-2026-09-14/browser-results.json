@@ -1,0 +1,156 @@
+{
+  "findings": [
+    {
+      "id": "QA-01",
+      "result": "reproduced",
+      "dialogs": [
+        "Abrir sesión de cajaFondo de caja inicial (€)Introduce el efectivo que hay en caja antes de empezar. Si no hay fondo, indica 0.Nombre del cajeroNotasAbrir sesión de caja"
+      ],
+      "printAccessible": 0
+    },
+    {
+      "id": "QA-02",
+      "result": "reproduced",
+      "text": "Pedidos\nActualizar\nTodos\nSolo POS\nNo hay pedidos"
+    },
+    {
+      "id": "QA-03",
+      "result": "reproduced",
+      "search": "NEW",
+      "text": "Pedidos\nActualizar\nTodos\nSolo POS\nPedido\tFecha\tCliente\tTotal\tEstado\tEnvio\nOLD\t14 sept 2026, 10:00\t—\t20,00 €\tPagado\tSin completar"
+    },
+    {
+      "id": "QA-04",
+      "result": "reproduced",
+      "text": "Caja\nSesión actual\nAbierta\nNombre del cajero\nQA\nApertura\n14/09/2026, 10:00\nDuración\n10h 25m\nFondo de caja inicial\n50,00 €\nCerrar sesión de caja\nHistorial de sesiones\n\nNo hay sesiones anteriores"
+    }
+  ],
+  "widths": [
+    {
+      "width": 1366,
+      "page": "Inicio",
+      "overflow": false
+    },
+    {
+      "width": 1366,
+      "page": "POS",
+      "overflow": false
+    },
+    {
+      "width": 1366,
+      "page": "Pedidos",
+      "overflow": false
+    },
+    {
+      "width": 1366,
+      "page": "Caja",
+      "overflow": false
+    },
+    {
+      "width": 1366,
+      "page": "Vales",
+      "overflow": false
+    },
+    {
+      "width": 1024,
+      "page": "Inicio",
+      "overflow": false
+    },
+    {
+      "width": 1024,
+      "page": "POS",
+      "overflow": false
+    },
+    {
+      "width": 1024,
+      "page": "Pedidos",
+      "overflow": false
+    },
+    {
+      "width": 1024,
+      "page": "Caja",
+      "overflow": false
+    },
+    {
+      "width": 1024,
+      "page": "Vales",
+      "overflow": false
+    },
+    {
+      "width": 768,
+      "page": "Inicio",
+      "overflow": false
+    },
+    {
+      "width": 768,
+      "page": "POS",
+      "overflow": false
+    },
+    {
+      "width": 768,
+      "page": "Pedidos",
+      "overflow": false
+    },
+    {
+      "width": 768,
+      "page": "Caja",
+      "overflow": false
+    },
+    {
+      "width": 768,
+      "page": "Vales",
+      "overflow": false
+    },
+    {
+      "width": 390,
+      "page": "Inicio",
+      "overflow": false
+    },
+    {
+      "width": 390,
+      "page": "POS",
+      "overflow": false
+    },
+    {
+      "width": 390,
+      "page": "Pedidos",
+      "overflow": false
+    },
+    {
+      "width": 390,
+      "page": "Caja",
+      "overflow": false
+    },
+    {
+      "width": 390,
+      "page": "Vales",
+      "overflow": false
+    },
+    {
+      "width": 320,
+      "page": "Inicio",
+      "overflow": false
+    },
+    {
+      "width": 320,
+      "page": "POS",
+      "overflow": false
+    },
+    {
+      "width": 320,
+      "page": "Pedidos",
+      "overflow": false
+    },
+    {
+      "width": 320,
+      "page": "Caja",
+      "overflow": false
+    },
+    {
+      "width": 320,
+      "page": "Vales",
+      "overflow": false
+    }
+  ],
+  "pageErrors": []
+}

@@ -1,0 +1,119 @@
+[
+  {
+    "path": "/",
+    "origin": null,
+    "status": 200,
+    "contentType": "text/html; charset=utf-8",
+    "cacheControl": "public, max-age=0",
+    "isHTML": true
+  },
+  {
+    "bundle": "/assets/index-BJDeqQMI.js",
+    "sha256": "09d6bb1f18f0426665f5668a150d89b20baa543dd1bebab47cff7ad80cecf09d",
+    "hasExplorer": true
+  },
+  {
+    "path": "/orders",
+    "origin": null,
+    "status": 200,
+    "contentType": "text/html; charset=utf-8",
+    "cacheControl": "public, max-age=0",
+    "isHTML": true
+  },
+  {
+    "path": "/caja",
+    "origin": null,
+    "status": 200,
+    "contentType": "text/html; charset=utf-8",
+    "cacheControl": "public, max-age=0",
+    "isHTML": true
+  },
+  {
+    "path": "/vales",
+    "origin": null,
+    "status": 200,
+    "contentType": "text/html; charset=utf-8",
+    "cacheControl": "public, max-age=0",
+    "isHTML": true
+  },
+  {
+    "path": "/dashboard",
+    "origin": null,
+    "status": 200,
+    "contentType": "text/html; charset=utf-8",
+    "cacheControl": "public, max-age=0",
+    "isHTML": true
+  },
+  {
+    "path": "/api/access",
+    "origin": null,
+    "status": 401,
+    "contentType": "application/json; charset=utf-8",
+    "cacheControl": "no-store",
+    "isHTML": false
+  },
+  {
+    "path": "/api/status",
+    "origin": null,
+    "status": 401,
+    "contentType": "application/json; charset=utf-8",
+    "cacheControl": "no-store",
+    "isHTML": false
+  },
+  {
+    "path": "/api/sessions/current",
+    "origin": null,
+    "status": 401,
+    "contentType": "application/json; charset=utf-8",
+    "cacheControl": "no-store",
+    "isHTML": false
+  },
+  {
+    "path": "/api/vouchers",
+    "origin": null,
+    "status": 401,
+    "contentType": "application/json; charset=utf-8",
+    "cacheControl": "no-store",
+    "isHTML": false
+  },
+  {
+    "path": "/api/dashboard",
+    "origin": null,
+    "status": 401,
+    "contentType": "application/json; charset=utf-8",
+    "cacheControl": "no-store",
+    "isHTML": false
+  },
+  {
+    "path": "/api/operations/pending",
+    "origin": null,
+    "status": 401,
+    "contentType": "application/json; charset=utf-8",
+    "cacheControl": "no-store",
+    "isHTML": false
+  },
+  {
+    "path": "/api/access",
+    "origin": "https://example.org",
+    "status": 403,
+    "contentType": "application/json; charset=utf-8",
+    "cacheControl": null,
+    "isHTML": false
+  },
+  {
+    "path": "/api/access",
+    "origin": "https://posmml-production.up.railway.app",
+    "status": 401,
+    "contentType": "application/json; charset=utf-8",
+    "cacheControl": "no-store",
+    "isHTML": false
+  },
+  {
+    "path": "/.env",
+    "origin": null,
+    "status": 200,
+    "contentType": "text/html; charset=utf-8",
+    "cacheControl": "public, max-age=0",
+    "isHTML": true
+  }
+]

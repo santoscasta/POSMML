@@ -1,0 +1,252 @@
+{
+  "safety": "All Shopify calls intercepted; fake token; temporary POS_DATA_DIR; no remote mutations",
+  "missingClosingAmount": [
+    {
+      "label": "omitted",
+      "response": {
+        "status": 200,
+        "body": {
+          "id": "gid://shopify/Metaobject/1",
+          "status": "CLOSED",
+          "openingAmount": 50,
+          "closedAt": "2026-09-15T08:25:42.053Z",
+          "closingAmount": 0,
+          "expectedAmount": 50,
+          "difference": -50,
+          "openedAt": "2026-09-15T08:00:00Z",
+          "kpis": {
+            "totalOrders": 0,
+            "grossSales": 0,
+            "refunds": 0,
+            "cashSales": 0,
+            "cardSales": 0,
+            "bizumSales": 0,
+            "voucherSales": 0,
+            "refundsCash": 0,
+            "expectedCash": 50
+          },
+          "orderDetails": []
+        }
+      },
+      "mutations": [
+        {
+          "query": "mutation($id: ID!, $metaobject: MetaobjectUpdateInput!) {\n          metaobjectUpdate(id: $id, metaobject: $metaobject) {\n            metaobject { id updatedAt fields { key value } }\n            userErrors { field message }\n          }\n        }",
+          "variables": {
+            "id": "gid://shopify/Metaobject/1",
+            "metaobject": {
+              "fields": [
+                {
+                  "key": "status",
+                  "value": "CLOSED"
+                },
+                {
+                  "key": "closed_at",
+                  "value": "2026-09-15T08:25:42.053Z"
+                },
+                {
+                  "key": "closing_amount",
+                  "value": "0"
+                },
+                {
+                  "key": "expected_amount",
+                  "value": "50"
+                },
+                {
+                  "key": "difference",
+                  "value": "-50"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "label": "null",
+      "response": {
+        "status": 200,
+        "body": {
+          "id": "gid://shopify/Metaobject/1",
+          "status": "CLOSED",
+          "openingAmount": 50,
+          "closedAt": "2026-09-15T08:25:42.104Z",
+          "closingAmount": 0,
+          "expectedAmount": 50,
+          "difference": -50,
+          "openedAt": "2026-09-15T08:00:00Z",
+          "kpis": {
+            "totalOrders": 0,
+            "grossSales": 0,
+            "refunds": 0,
+            "cashSales": 0,
+            "cardSales": 0,
+            "bizumSales": 0,
+            "voucherSales": 0,
+            "refundsCash": 0,
+            "expectedCash": 50
+          },
+          "orderDetails": []
+        }
+      },
+      "mutations": [
+        {
+          "query": "mutation($id: ID!, $metaobject: MetaobjectUpdateInput!) {\n          metaobjectUpdate(id: $id, metaobject: $metaobject) {\n            metaobject { id updatedAt fields { key value } }\n            userErrors { field message }\n          }\n        }",
+          "variables": {
+            "id": "gid://shopify/Metaobject/1",
+            "metaobject": {
+              "fields": [
+                {
+                  "key": "status",
+                  "value": "CLOSED"
+                },
+                {
+                  "key": "closed_at",
+                  "value": "2026-09-15T08:25:42.104Z"
+                },
+                {
+                  "key": "closing_amount",
+                  "value": "0"
+                },
+                {
+                  "key": "expected_amount",
+                  "value": "50"
+                },
+                {
+                  "key": "difference",
+                  "value": "-50"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "label": "empty",
+      "response": {
+        "status": 200,
+        "body": {
+          "id": "gid://shopify/Metaobject/1",
+          "status": "CLOSED",
+          "openingAmount": 50,
+          "closedAt": "2026-09-15T08:25:42.167Z",
+          "closingAmount": 0,
+          "expectedAmount": 50,
+          "difference": -50,
+          "openedAt": "2026-09-15T08:00:00Z",
+          "kpis": {
+            "totalOrders": 0,
+            "grossSales": 0,
+            "refunds": 0,
+            "cashSales": 0,
+            "cardSales": 0,
+            "bizumSales": 0,
+            "voucherSales": 0,
+            "refundsCash": 0,
+            "expectedCash": 50
+          },
+          "orderDetails": []
+        }
+      },
+      "mutations": [
+        {
+          "query": "mutation($id: ID!, $metaobject: MetaobjectUpdateInput!) {\n          metaobjectUpdate(id: $id, metaobject: $metaobject) {\n            metaobject { id updatedAt fields { key value } }\n            userErrors { field message }\n          }\n        }",
+          "variables": {
+            "id": "gid://shopify/Metaobject/1",
+            "metaobject": {
+              "fields": [
+                {
+                  "key": "status",
+                  "value": "CLOSED"
+                },
+                {
+                  "key": "closed_at",
+                  "value": "2026-09-15T08:25:42.167Z"
+                },
+                {
+                  "key": "closing_amount",
+                  "value": "0"
+                },
+                {
+                  "key": "expected_amount",
+                  "value": "50"
+                },
+                {
+                  "key": "difference",
+                  "value": "-50"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "oldOpenSession": {
+    "current": {
+      "status": 200,
+      "body": null
+    },
+    "opened": {
+      "status": 200,
+      "body": {
+        "id": "gid://shopify/Metaobject/999",
+        "cashierName": "QA simulated",
+        "openingAmount": 20,
+        "closingAmount": 0,
+        "expectedAmount": 0,
+        "difference": 0,
+        "status": "OPEN",
+        "closedAt": "",
+        "notes": "",
+        "openedAt": "2026-09-15T08:00:00Z"
+      }
+    },
+    "openCount": 2,
+    "checkoutSessionError": "Hay varias sesiones abiertas. Cierra las sesiones sobrantes.",
+    "mutations": [
+      {
+        "query": "mutation($metaobject: MetaobjectCreateInput!) {\n          metaobjectCreate(metaobject: $metaobject) {\n            metaobject { id updatedAt fields { key value } }\n            userErrors { field message }\n          }\n        }",
+        "variables": {
+          "metaobject": {
+            "type": "$app:pos_session",
+            "fields": [
+              {
+                "key": "cashier_name",
+                "value": "QA simulated"
+              },
+              {
+                "key": "opening_amount",
+                "value": "20"
+              },
+              {
+                "key": "closing_amount",
+                "value": "0"
+              },
+              {
+                "key": "expected_amount",
+                "value": "0"
+              },
+              {
+                "key": "difference",
+                "value": "0"
+              },
+              {
+                "key": "status",
+                "value": "OPEN"
+              },
+              {
+                "key": "closed_at",
+                "value": ""
+              },
+              {
+                "key": "notes",
+                "value": ""
+              }
+            ]
+          }
+        }
+      }
+    ]
+  }
+}

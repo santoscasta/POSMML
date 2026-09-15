@@ -1,0 +1,16 @@
+{
+  "shopifyConnected": true,
+  "store": "miminileodev.myshopify.com",
+  "sessionOpen": true,
+  "sessionId": "gid://shopify/Metaobject/491724734841",
+  "todaySales": 0,
+  "todayOrders": 0,
+  "activeVouchers": 13,
+  "voucherBalance": 4573,
+  "paymentBreakdown": {
+    "cash": 0,
+    "card": 0,
+    "bizum": 0,
+    "mixed": 0
+  }
+}

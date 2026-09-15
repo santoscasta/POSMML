@@ -1,0 +1,117 @@
+[
+  {
+    "id": "gid://shopify/Metaobject/491724734841",
+    "cashierName": "Celia",
+    "openingAmount": 158.15,
+    "closingAmount": 0,
+    "expectedAmount": 0,
+    "difference": 0,
+    "status": "OPEN",
+    "closedAt": null,
+    "notes": null,
+    "openedAt": "2026-04-10T09:14:56Z",
+    "kpis": {
+      "totalOrders": 0,
+      "grossSales": 0,
+      "refunds": 0,
+      "cashSales": 0,
+      "cardSales": 0,
+      "bizumSales": 0,
+      "voucherSales": 0,
+      "refundsCash": 0,
+      "expectedCash": 158.15
+    }
+  },
+  {
+    "id": "gid://shopify/Metaobject/485588271481",
+    "cashierName": "Celia",
+    "openingAmount": 189.35,
+    "closingAmount": 189.35,
+    "expectedAmount": 189.35,
+    "difference": 0,
+    "status": "CLOSED",
+    "closedAt": "2026-04-10T09:14:08.746Z",
+    "notes": null,
+    "openedAt": null,
+    "kpis": {
+      "totalOrders": 0,
+      "grossSales": 0,
+      "refunds": 0,
+      "cashSales": 0,
+      "cardSales": 0,
+      "bizumSales": 0,
+      "voucherSales": 0,
+      "refundsCash": 0,
+      "expectedCash": 189.35
+    }
+  },
+  {
+    "id": "gid://shopify/Metaobject/484285710713",
+    "cashierName": "Celia",
+    "openingAmount": 100,
+    "closingAmount": 100,
+    "expectedAmount": 100,
+    "difference": 0,
+    "status": "CLOSED",
+    "closedAt": "2026-03-30T08:27:06.862Z",
+    "notes": null,
+    "openedAt": null,
+    "kpis": {
+      "totalOrders": 0,
+      "grossSales": 0,
+      "refunds": 0,
+      "cashSales": 0,
+      "cardSales": 0,
+      "bizumSales": 0,
+      "voucherSales": 0,
+      "refundsCash": 0,
+      "expectedCash": 100
+    }
+  },
+  {
+    "id": "gid://shopify/Metaobject/484079731065",
+    "cashierName": "Celia",
+    "openingAmount": 100,
+    "closingAmount": 100,
+    "expectedAmount": 100,
+    "difference": 0,
+    "status": "CLOSED",
+    "closedAt": "2026-03-25T16:58:38.005Z",
+    "notes": null,
+    "openedAt": null,
+    "kpis": {
+      "totalOrders": 0,
+      "grossSales": 0,
+      "refunds": 0,
+      "cashSales": 0,
+      "cardSales": 0,
+      "bizumSales": 0,
+      "voucherSales": 0,
+      "refundsCash": 0,
+      "expectedCash": 100
+    }
+  },
+  {
+    "id": "gid://shopify/Metaobject/483976544633",
+    "cashierName": "Celia",
+    "openingAmount": 150,
+    "closingAmount": 200,
+    "expectedAmount": 1035.95,
+    "difference": -835.95,
+    "status": "CLOSED",
+    "closedAt": "2026-03-25T08:09:28.250Z",
+    "notes": null,
+    "openedAt": null,
+    "kpis": {
+      "totalOrders": 0,
+      "grossSales": 0,
+      "refunds": 0,
+      "cashSales": 0,
+      "cardSales": 0,
+      "bizumSales": 0,
+      "voucherSales": 0,
+      "refundsCash": 0,
+      "expectedCash": 150
+    }
+  }
+]

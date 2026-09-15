@@ -304,10 +304,9 @@ test('temporarily locked payment resumes once Shopify confirms paid, without a s
   let paid = false;
   const f = fixture(t, {
     PosPaidRecovery: () => ({ order: { id: orderId, displayFinancialStatus: paid ? 'PAID' : 'PENDING' } }),
-    PosPaid: () => ({ orderMarkAsPaid: { order: null, userErrors: [{ message: 'Order is temporarily unavailable to be modified.' }] } }),
+    PosPaid: () => { paid = true; return ({ orderMarkAsPaid: { order: null, userErrors: [{ message: 'Order is temporarily unavailable to be modified.' }] } }); },
   });
-  await assert.rejects(f.service.checkout(key, checkoutInput), /temporarily unavailable/);
-  paid = true;
+  await f.service.checkout(key, checkoutInput);
   await createPosService(f.gql, createOperationStore(f.directory)).checkout(key, checkoutInput);
   assert.equal(count(f, 'PosDraft'), 1);
   assert.equal(count(f, 'PosPaid'), 1);
@@ -335,4 +334,31 @@ test('closing theoretical cash includes initial float, mixed cash and cash refun
   assert.equal(computeKPIs([], 100).expectedCash, 100);
   assert.equal(computeKPIs(movements, 100).expectedCash, 130.25);
   assert.equal(computeKPIs(movements, 0).expectedCash, 30.25);
+});
+
+test('temporary Shopify order lock retries the same payment without duplicating sale or voucher', async t => {
+  let tries = 0;
+  const f = fixture(t, { PosPaid: () => ++tries === 1
+    ? { orderMarkAsPaid: { order: null, userErrors: [{ message: 'Order is temporarily unavailable to be modified.' }] } }
+    : { orderMarkAsPaid: { order: { id: orderId }, userErrors: [] } } });
+  await f.service.checkout(key, { ...checkoutInput, payment: { method: 'VOUCHER', amount: 100, voucherCode: '1234' } });
+  assert.equal(count(f, 'PosPaid'), 2);
+  assert.equal(count(f, 'PosDraft'), 1);
+  assert.equal(count(f, 'PosComplete'), 1);
+  assert.equal(count(f, 'PosDebit'), 1);
+  assert.equal(f.store.read().movements.length, 1);
+});
+
+test('persistent temporary lock stops after bounded retries and can resume', async t => {
+  let locked = true;
+  const f = fixture(t, { PosPaid: () => locked
+    ? { orderMarkAsPaid: { order: null, userErrors: [{ message: 'Order is temporarily unavailable to be modified.' }] } }
+    : { orderMarkAsPaid: { order: { id: orderId }, userErrors: [] } } });
+  await assert.rejects(f.service.checkout(key, checkoutInput), /Reanudar cobro pendiente/);
+  assert.equal(count(f, 'PosPaid'), 4);
+  assert.equal(f.store.read().movements.length, 0);
+  locked = false;
+  await f.service.checkout(key, checkoutInput);
+  assert.equal(count(f, 'PosDraft'), 1);
+  assert.equal(f.store.read().movements.length, 1);
 });

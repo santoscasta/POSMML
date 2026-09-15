@@ -1,0 +1,594 @@
+{
+  "passed": 71,
+  "results": [
+    {
+      "methods": [
+        "CASH"
+      ],
+      "amount": 0.01,
+      "status": "pass"
+    },
+    {
+      "methods": [
+        "CASH"
+      ],
+      "amount": 1,
+      "status": "pass"
+    },
+    {
+      "methods": [
+        "CASH"
+      ],
+      "amount": 19.99,
+      "status": "pass"
+    },
+    {
+      "methods": [
+        "CASH"
+      ],
+      "amount": 100,
+      "status": "pass"
+    },
+    {
+      "methods": [
+        "CARD"
+      ],
+      "amount": 0.01,
+      "status": "pass"
+    },
+    {
+      "methods": [
+        "CARD"
+      ],
+      "amount": 1,
+      "status": "pass"
+    },
+    {
+      "methods": [
+        "CARD"
+      ],
+      "amount": 19.99,
+      "status": "pass"
+    },
+    {
+      "methods": [
+        "CARD"
+      ],
+      "amount": 100,
+      "status": "pass"
+    },
+    {
+      "methods": [
+        "CASH",
+        "CARD"
+      ],
+      "amount": 0.02,
+      "status": "pass"
+    },
+    {
+      "methods": [
+        "CASH",
+        "CARD"
+      ],
+      "amount": 2,
+      "status": "pass"
+    },
+    {
+      "methods": [
+        "CASH",
+        "CARD"
+      ],
+      "amount": 39.98,
+      "status": "pass"
+    },
+    {
+      "methods": [
+        "CASH",
+        "CARD"
+      ],
+      "amount": 200,
+      "status": "pass"
+    },
+    {
+      "methods": [
+        "BIZUM"
+      ],
+      "amount": 0.01,
+      "status": "pass"
+    },
+    {
+      "methods": [
+        "BIZUM"
+      ],
+      "amount": 1,
+      "status": "pass"
+    },
+    {
+      "methods": [
+        "BIZUM"
+      ],
+      "amount": 19.99,
+      "status": "pass"
+    },
+    {
+      "methods": [
+        "BIZUM"
+      ],
+      "amount": 100,
+      "status": "pass"
+    },
+    {
+      "methods": [
+        "CASH",
+        "BIZUM"
+      ],
+      "amount": 0.02,
+      "status": "pass"
+    },
+    {
+      "methods": [
+        "CASH",
+        "BIZUM"
+      ],
+      "amount": 2,
+      "status": "pass"
+    },
+    {
+      "methods": [
+        "CASH",
+        "BIZUM"
+      ],
+      "amount": 39.98,
+      "status": "pass"
+    },
+    {
+      "methods": [
+        "CASH",
+        "BIZUM"
+      ],
+      "amount": 200,
+      "status": "pass"
+    },
+    {
+      "methods": [
+        "CARD",
+        "BIZUM"
+      ],
+      "amount": 0.02,
+      "status": "pass"
+    },
+    {
+      "methods": [
+        "CARD",
+        "BIZUM"
+      ],
+      "amount": 2,
+      "status": "pass"
+    },
+    {
+      "methods": [
+        "CARD",
+        "BIZUM"
+      ],
+      "amount": 39.98,
+      "status": "pass"
+    },
+    {
+      "methods": [
+        "CARD",
+        "BIZUM"
+      ],
+      "amount": 200,
+      "status": "pass"
+    },
+    {
+      "methods": [
+        "CASH",
+        "CARD",
+        "BIZUM"
+      ],
+      "amount": 0.03,
+      "status": "pass"
+    },
+    {
+      "methods": [
+        "CASH",
+        "CARD",
+        "BIZUM"
+      ],
+      "amount": 3,
+      "status": "pass"
+    },
+    {
+      "methods": [
+        "CASH",
+        "CARD",
+        "BIZUM"
+      ],
+      "amount": 59.97,
+      "status": "pass"
+    },
+    {
+      "methods": [
+        "CASH",
+        "CARD",
+        "BIZUM"
+      ],
+      "amount": 300,
+      "status": "pass"
+    },
+    {
+      "methods": [
+        "VOUCHER"
+      ],
+      "amount": 0.01,
+      "status": "pass"
+    },
+    {
+      "methods": [
+        "VOUCHER"
+      ],
+      "amount": 1,
+      "status": "pass"
+    },
+    {
+      "methods": [
+        "VOUCHER"
+      ],
+      "amount": 19.99,
+      "status": "pass"
+    },
+    {
+      "methods": [
+        "VOUCHER"
+      ],
+      "amount": 100,
+      "status": "pass"
+    },
+    {
+      "methods": [
+        "CASH",
+        "VOUCHER"
+      ],
+      "amount": 0.02,
+      "status": "pass"
+    },
+    {
+      "methods": [
+        "CASH",
+        "VOUCHER"
+      ],
+      "amount": 2,
+      "status": "pass"
+    },
+    {
+      "methods": [
+        "CASH",
+        "VOUCHER"
+      ],
+      "amount": 39.98,
+      "status": "pass"
+    },
+    {
+      "methods": [
+        "CASH",
+        "VOUCHER"
+      ],
+      "amount": 200,
+      "status": "pass"
+    },
+    {
+      "methods": [
+        "CARD",
+        "VOUCHER"
+      ],
+      "amount": 0.02,
+      "status": "pass"
+    },
+    {
+      "methods": [
+        "CARD",
+        "VOUCHER"
+      ],
+      "amount": 2,
+      "status": "pass"
+    },
+    {
+      "methods": [
+        "CARD",
+        "VOUCHER"
+      ],
+      "amount": 39.98,
+      "status": "pass"
+    },
+    {
+      "methods": [
+        "CARD",
+        "VOUCHER"
+      ],
+      "amount": 200,
+      "status": "pass"
+    },
+    {
+      "methods": [
+        "CASH",
+        "CARD",
+        "VOUCHER"
+      ],
+      "amount": 0.03,
+      "status": "pass"
+    },
+    {
+      "methods": [
+        "CASH",
+        "CARD",
+        "VOUCHER"
+      ],
+      "amount": 3,
+      "status": "pass"
+    },
+    {
+      "methods": [
+        "CASH",
+        "CARD",
+        "VOUCHER"
+      ],
+      "amount": 59.97,
+      "status": "pass"
+    },
+    {
+      "methods": [
+        "CASH",
+        "CARD",
+        "VOUCHER"
+      ],
+      "amount": 300,
+      "status": "pass"
+    },
+    {
+      "methods": [
+        "BIZUM",
+        "VOUCHER"
+      ],
+      "amount": 0.02,
+      "status": "pass"
+    },
+    {
+      "methods": [
+        "BIZUM",
+        "VOUCHER"
+      ],
+      "amount": 2,
+      "status": "pass"
+    },
+    {
+      "methods": [
+        "BIZUM",
+        "VOUCHER"
+      ],
+      "amount": 39.98,
+      "status": "pass"
+    },
+    {
+      "methods": [
+        "BIZUM",
+        "VOUCHER"
+      ],
+      "amount": 200,
+      "status": "pass"
+    },
+    {
+      "methods": [
+        "CASH",
+        "BIZUM",
+        "VOUCHER"
+      ],
+      "amount": 0.03,
+      "status": "pass"
+    },
+    {
+      "methods": [
+        "CASH",
+        "BIZUM",
+        "VOUCHER"
+      ],
+      "amount": 3,
+      "status": "pass"
+    },
+    {
+      "methods": [
+        "CASH",
+        "BIZUM",
+        "VOUCHER"
+      ],
+      "amount": 59.97,
+      "status": "pass"
+    },
+    {
+      "methods": [
+        "CASH",
+        "BIZUM",
+        "VOUCHER"
+      ],
+      "amount": 300,
+      "status": "pass"
+    },
+    {
+      "methods": [
+        "CARD",
+        "BIZUM",
+        "VOUCHER"
+      ],
+      "amount": 0.03,
+      "status": "pass"
+    },
+    {
+      "methods": [
+        "CARD",
+        "BIZUM",
+        "VOUCHER"
+      ],
+      "amount": 3,
+      "status": "pass"
+    },
+    {
+      "methods": [
+        "CARD",
+        "BIZUM",
+        "VOUCHER"
+      ],
+      "amount": 59.97,
+      "status": "pass"
+    },
+    {
+      "methods": [
+        "CARD",
+        "BIZUM",
+        "VOUCHER"
+      ],
+      "amount": 300,
+      "status": "pass"
+    },
+    {
+      "methods": [
+        "CASH",
+        "CARD",
+        "BIZUM",
+        "VOUCHER"
+      ],
+      "amount": 0.04,
+      "status": "pass"
+    },
+    {
+      "methods": [
+        "CASH",
+        "CARD",
+        "BIZUM",
+        "VOUCHER"
+      ],
+      "amount": 4,
+      "status": "pass"
+    },
+    {
+      "methods": [
+        "CASH",
+        "CARD",
+        "BIZUM",
+        "VOUCHER"
+      ],
+      "amount": 79.96,
+      "status": "pass"
+    },
+    {
+      "methods": [
+        "CASH",
+        "CARD",
+        "BIZUM",
+        "VOUCHER"
+      ],
+      "amount": 400,
+      "status": "pass"
+    },
+    {
+      "case": "reject",
+      "payment": {
+        "method": "CASH",
+        "amount": 10,
+        "cashReceived": 9
+      },
+      "status": "pass"
+    },
+    {
+      "case": "reject",
+      "payment": {
+        "method": "CARD",
+        "amount": -1
+      },
+      "status": "pass"
+    },
+    {
+      "case": "reject",
+      "payment": {
+        "method": "CARD",
+        "amount": 1.001
+      },
+      "status": "pass"
+    },
+    {
+      "case": "reject",
+      "payment": {
+        "method": "OTHER",
+        "amount": 1
+      },
+      "status": "pass"
+    },
+    {
+      "case": "reject",
+      "payment": {
+        "method": "VOUCHER",
+        "amount": 1,
+        "voucherCode": ""
+      },
+      "status": "pass"
+    },
+    {
+      "case": "reject",
+      "payment": {
+        "method": "MIXED",
+        "amount": 10,
+        "mixedPayments": []
+      },
+      "status": "pass"
+    },
+    {
+      "case": "reject",
+      "payment": {
+        "method": "MIXED",
+        "amount": 10,
+        "mixedPayments": [
+          {
+            "method": "CASH",
+            "amount": 9
+          }
+        ]
+      },
+      "status": "pass"
+    },
+    {
+      "case": "reject",
+      "payment": {
+        "method": "MIXED",
+        "amount": 10,
+        "mixedPayments": [
+          {
+            "method": "CASH",
+            "amount": 0
+          },
+          {
+            "method": "CARD",
+            "amount": 10
+          }
+        ]
+      },
+      "status": "pass"
+    },
+    {
+      "case": "refund",
+      "method": "CASH",
+      "status": "pass"
+    },
+    {
+      "case": "refund",
+      "method": "CARD",
+      "status": "pass"
+    },
+    {
+      "case": "refund",
+      "method": "VOUCHER",
+      "status": "pass"
+    }
+  ],
+  "gaps": [
+    "Mixed cash accepts cashReceived=0 for cash portion=10"
+  ]
+}
