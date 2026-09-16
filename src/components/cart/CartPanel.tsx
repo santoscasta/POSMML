@@ -139,6 +139,25 @@ export function CartPanel() {
                 onApply={(discount) => dispatch({ type: 'SET_DISCOUNT', payload: discount })}
               />
 
+              <div className="space-y-1.5">
+                <label htmlFor="order-note" className="block text-sm font-medium">
+                  Nota del pedido (opcional)
+                </label>
+                <textarea
+                  id="order-note"
+                  rows={3}
+                  value={cart.note}
+                  onChange={(event) => dispatch({ type: 'SET_NOTE', payload: event.target.value })}
+                  disabled={!!pending || checkoutLoading || saleCompleted}
+                  placeholder="Escribe aquí cualquier indicación sobre el pedido…"
+                  aria-describedby="order-note-help"
+                  className="w-full resize-y rounded-lg border border-input bg-transparent px-3 py-2 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50"
+                />
+                <p id="order-note-help" className="text-xs text-muted-foreground">
+                  Se guardará en el pedido y podrás consultarla en Pedidos.
+                </p>
+              </div>
+
               <CartSummary
                 subtotal={subtotal}
                 discountAmount={discountAmount}
