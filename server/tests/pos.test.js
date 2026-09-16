@@ -426,3 +426,37 @@ test('held fulfillment orders never report a completed checkout', async t => {
   assert.equal(f.store.read().operations[key].result, undefined);
   assert.equal(f.store.read().movements.length, 1);
 });
+
+test('cash register counts only its session and reports unregistered orders without adding guessed payments', async t => {
+  const f = fixture(t);
+  const state = f.store.read();
+  state.movements.push(
+    { id: 'a', shopifyOrderId: 'order-a', shopifyOrderName: '#A', type: 'sale', method: 'CARD', amount: 17.45, sessionId: 'current', createdAt: '2026-09-16T08:00:00Z' },
+    { id: 'b', shopifyOrderId: 'order-b', shopifyOrderName: '#B', type: 'sale', method: 'CARD', amount: 24, sessionId: 'current', createdAt: '2026-09-16T09:00:00Z' },
+    { id: 'c', shopifyOrderId: 'order-c', shopifyOrderName: '#C', type: 'sale', method: 'CASH', amount: 35, sessionId: 'earlier', createdAt: '2026-09-16T07:00:00Z' },
+  );
+  f.store.write(state);
+  const remoteOrder = (id, fields = []) => ({ id, name: id, createdAt: '2026-09-16T08:00:00Z', displayFinancialStatus: 'PAID', totalPriceSet: { shopMoney: { amount: '100' } }, metafields: { nodes: fields } });
+  const gql = async query => {
+    assert.match(query, /tag:'POS MML'/);
+    return { orders: { nodes: [remoteOrder('order-a'), remoteOrder('unregistered'), remoteOrder('no-session', [{ key: 'payment_method', value: 'CARD' }])], pageInfo: { hasNextPage: false } } };
+  };
+  const diagnostics = [];
+  const payments = await getPayments(gql, f.store, { sessionId: 'current', diagnostics });
+  assert.equal(payments.length, 2);
+  const kpis = computeKPIs(payments, 271.30);
+  assert.equal(kpis.totalOrders, 2);
+  assert.equal(kpis.cardSales, 41.45);
+  assert.equal(kpis.expectedCash, 271.30);
+  assert.deepEqual(diagnostics.map(d => [d.id, d.reason]), [['unregistered', 'missing_payment'], ['no-session', 'missing_session']]);
+  assert.deepEqual(f.store.read().movements, state.movements);
+});
+
+test('today uses Madrid midnight in summer and winter, independent of server timezone', async () => {
+  const { isBusinessToday } = await import('../lib/businessTime.js');
+  assert.equal(isBusinessToday('2026-09-15T22:01:00Z', '2026-09-16T12:00:00Z'), true);
+  assert.equal(isBusinessToday('2026-09-15T21:59:59Z', '2026-09-16T12:00:00Z'), false);
+  assert.equal(isBusinessToday('2026-09-16T22:00:00Z', '2026-09-16T12:00:00Z'), false);
+  assert.equal(isBusinessToday('2026-01-15T23:01:00Z', '2026-01-16T12:00:00Z'), true);
+  assert.equal(isBusinessToday('2026-01-15T22:59:59Z', '2026-01-16T12:00:00Z'), false);
+});

@@ -3,6 +3,7 @@ import shopifyGQL from '../lib/shopifyGQL.js';
 import { getStore, PosError } from '../lib/operationStore.js';
 import { mutationResult, currentSession } from '../lib/posService.js';
 import { getPayments, computeKPIs, cents } from '../lib/accounting.js';
+import { isBusinessToday } from '../lib/businessTime.js';
 
 const router = Router();
 
@@ -58,24 +59,19 @@ function summarize(orders, openingAmount) {
 // Get current open session
 router.get('/sessions/current', async (req, res) => {
   try {
-    // Fetch recent sessions and filter in code (Shopify metaobject query filtering is unreliable)
-    const data = await shopifyGQL(
-      `{
-        metaobjects(type: "${SESSION_TYPE}", first: 10, sortKey: "updated_at", reverse: true) {
-          edges { node { id updatedAt fields { key value } } }
-        }
-      }`,
-    );
-
-    const openEdge = data.metaobjects.edges.find(e => {
-      const statusField = e.node.fields.find(f => f.key === 'status');
-      return statusField && statusField.value === 'OPEN';
+    let current;
+    try { current = await currentSession(shopifyGQL); }
+    catch (error) { if (error.message === 'No hay sesión de caja abierta') return res.json(null); throw error; }
+    const session = parseMetaobject(current);
+    const diagnostics = [];
+    const orders = await getPayments(shopifyGQL, getStore(), { sessionId: session.id, diagnostics });
+    res.json({ ...session, ...summarize(orders, session.openingAmount),
+      countedOrders: orders.filter(p => p.type === 'sale').map(p => ({
+        name: p.shopifyOrderName, amount: p.amount, method: p.method, createdAt: p.createdAt,
+      })),
+      unregisteredOrders: diagnostics.filter(p => isBusinessToday(p.createdAt) && ['PAID', 'PARTIALLY_REFUNDED', 'REFUNDED'].includes(p.financialStatus)),
+      refreshedAt: new Date().toISOString(),
     });
-    if (!openEdge) return res.json(null);
-
-    const session = parseMetaobject(openEdge.node);
-    const orders = await getSessionOrders(session.id);
-    res.json({ ...session, ...summarize(orders, session.openingAmount) });
   } catch (err) {
     console.error('GET /sessions/current error:', err);
     res.status(err.status || 500).json({ error: err.message, code: err.code });

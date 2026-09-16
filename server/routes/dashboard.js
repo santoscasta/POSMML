@@ -3,33 +3,23 @@ import { getAccessToken, SHOPIFY_STORE } from '../lib/shopify.js';
 import shopifyGQL from '../lib/shopifyGQL.js';
 import { getStore } from '../lib/operationStore.js';
 import { getPayments, computeKPIs } from '../lib/accounting.js';
+import { currentSession } from '../lib/posService.js';
+import { isBusinessToday } from '../lib/businessTime.js';
 
 const router = Router();
 
-const SESSION_TYPE = '$app:pos_session';
 
 router.get('/dashboard', async (req, res) => {
   try {
-    // Current session from metaobjects (filter in code — Shopify query unreliable)
-    const sessionData = await shopifyGQL(
-      `{
-        metaobjects(type: "${SESSION_TYPE}", first: 10, sortKey: "updated_at", reverse: true) {
-          edges { node { id fields { key value } } }
-        }
-      }`,
-    );
-    const sessionEdge = sessionData.metaobjects.edges.find(e =>
-      e.node.fields.find(f => f.key === 'status')?.value === 'OPEN'
-    );
-    const sessionOpen = !!sessionEdge;
-    const sessionId = sessionEdge?.node?.id || null;
-
-    // Today's orders tagged POS MML with their payment metafields
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    const payments = await getPayments(shopifyGQL, getStore());
-    const todayOrders = payments.filter(p => p.createdAt >= today.toISOString() && p.type === 'sale');
+    let session = null;
+    try { session = await currentSession(shopifyGQL); }
+    catch (error) { if (error.message !== 'No hay sesión de caja abierta') throw error; }
+    const sessionOpen = !!session;
+    const sessionId = session?.id || null;
+    const diagnostics = [];
+    const payments = await getPayments(shopifyGQL, getStore(), { diagnostics });
+    const now = Date.now();
+    const todayOrders = payments.filter(p => isBusinessToday(p.createdAt, now) && p.type === 'sale');
     const kpis = computeKPIs(todayOrders);
     const todaySales = kpis.grossSales;
 
@@ -62,6 +52,7 @@ router.get('/dashboard', async (req, res) => {
       sessionId,
       todaySales,
       todayOrders: todayOrders.length,
+      unregisteredOrders: diagnostics.filter(p => p.reason === 'missing_payment' && isBusinessToday(p.createdAt, now) && ['PAID', 'PARTIALLY_REFUNDED', 'REFUNDED'].includes(p.financialStatus)),
       activeVouchers,
       voucherBalance,
       paymentBreakdown: {

@@ -58,7 +58,7 @@ export function computeKPIs(movements, openingAmount = 0) {
   };
 }
 
-export async function getPayments(gql, store, { sessionId, orderId } = {}) {
+export async function getPayments(gql, store, { sessionId, orderId, diagnostics } = {}) {
   const local = store.read().movements;
   const managedSales = new Set(local.filter(p => p.type === 'sale').map(p => p.shopifyOrderId));
   const legacy = [];
@@ -66,7 +66,7 @@ export async function getPayments(gql, store, { sessionId, orderId } = {}) {
   do {
     const data = await gql(`query PosPaymentHistory($after: String) {
       orders(first: 100, after: $after, query: "tag:'POS MML'", sortKey: CREATED_AT, reverse: true) {
-        nodes { id name createdAt totalPriceSet { shopMoney { amount } }
+        nodes { id name createdAt displayFinancialStatus totalPriceSet { shopMoney { amount } }
           metafields(first: 50, namespace: "pos_mml") { nodes { key value } }
         }
         pageInfo { hasNextPage endCursor }
@@ -75,6 +75,11 @@ export async function getPayments(gql, store, { sessionId, orderId } = {}) {
     for (const order of data.orders.nodes) {
       if (managedSales.has(order.id)) continue;
       const mf = Object.fromEntries(order.metafields.nodes.map(f => [f.key, f.value]));
+      if (!mf.payment_method || !mf.session_id) diagnostics?.push({
+        id: order.id, name: order.name, createdAt: order.createdAt,
+        financialStatus: order.displayFinancialStatus,
+        reason: !mf.payment_method ? 'missing_payment' : 'missing_session',
+      });
       if (!mf.payment_method) continue;
       let mixedPayments;
       try { mixedPayments = mf.mixed_payments ? JSON.parse(mf.mixed_payments) : undefined; } catch { /* reported by KPIs */ }

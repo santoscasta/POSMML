@@ -91,11 +91,13 @@ export function DashboardPage({ onNavigate }: { onNavigate?: (path: string) => v
             {/* Today sales */}
             <Card>
               <CardHeader>
-                <CardTitle>Ventas de Hoy</CardTitle>
+                <CardTitle>Ventas del TPV de hoy</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">{formatCurrency(data.todaySales)}</div>
                 <p className="text-sm text-muted-foreground">{data.todayOrders} pedidos</p>
+                <p className="mt-2 text-xs text-muted-foreground">Ventas registradas en el TPV, de todas las sesiones. Día de Madrid (00:00–24:00). No incluye pedidos online.</p>
+                {!!data.unregisteredOrders?.length && <p role="alert" className="mt-2 text-sm text-destructive">Hay {data.unregisteredOrders.length} pedidos pagados del TPV de hoy sin registro de pago: {data.unregisteredOrders.map(order => order.name).join(', ')}. Requieren revisión y no están incluidos en el total.</p>}
               </CardContent>
             </Card>
 

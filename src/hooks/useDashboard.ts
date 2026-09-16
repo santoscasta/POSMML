@@ -8,6 +8,7 @@ export interface DashboardData {
   sessionId: string | null;
   todaySales: number;
   todayOrders: number;
+  unregisteredOrders?: { id: string; name: string; reason: string }[];
   activeVouchers: number;
   voucherBalance: number;
   paymentBreakdown: {

@@ -2,9 +2,8 @@ import { computeKPIs, getPayments } from '../accounting.js';
 import { message, closingMessage, money } from './templates.js';
 import { hash } from './service.js';
 
-export function localDate(value) {
-  return new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Madrid', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(value));
-}
+import { businessDate as localDate } from '../businessTime.js';
+export { localDate };
 const hour = value => Number(new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/Madrid', hour: '2-digit', hourCycle: 'h23' }).format(new Date(value)));
 const previousDay = date => new Date(Date.parse(`${date}T12:00:00Z`) - 86400000).toISOString().slice(0, 10);
 const nextDay = date => new Date(Date.parse(`${date}T12:00:00Z`) + 86400000).toISOString().slice(0, 10);

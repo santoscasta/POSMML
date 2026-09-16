@@ -19,11 +19,12 @@ import {
   TableCell,
 } from '@/components/ui/table';
 import { cn } from '@/lib/utils';
-import { Plus, X } from 'lucide-react';
+import { Plus, X, RefreshCw } from 'lucide-react';
 import type { CashSession } from '../types/session';
 
 export function SessionsPage() {
-  const { session, isOpen, loading } = useSession();
+  const { session, isOpen, loading, refresh } = useSession();
+  const [refreshing, setRefreshing] = useState(false);
   const [searchParams, setSearchParams] = useSearchParams();
   const [openModalVisible, setOpenModalVisible] = useState(false);
   const [closeModalVisible, setCloseModalVisible] = useState(false);
@@ -57,6 +58,13 @@ export function SessionsPage() {
     }
   }, [isOpen, searchParams, setSearchParams]);
 
+  useEffect(() => { void refresh(); }, [refresh]);
+
+  const refreshPage = async () => {
+    setRefreshing(true);
+    try { await refresh(); setHistoryAttempt(value => value + 1); }
+    finally { setRefreshing(false); }
+  };
   const kpis = session?.kpis;
 
   const formatDate = (dateStr: string | null) => {
@@ -90,7 +98,12 @@ export function SessionsPage() {
 
   return (
     <div className="p-3 sm:p-6">
-      <h1 className="mb-4 text-xl font-semibold sm:mb-6">{es.nav.cashRegister}</h1>
+      <div className="mb-4 flex items-center justify-between gap-2 sm:mb-6">
+        <h1 className="text-xl font-semibold">{es.nav.cashRegister}</h1>
+        <Button variant="outline" onClick={() => void refreshPage()} disabled={refreshing}>
+          <RefreshCw className={cn('size-4', refreshing && 'animate-spin')} />Actualizar
+        </Button>
+      </div>
 
       {isOpen && session ? (
         <Card className="mb-6">
@@ -126,9 +139,11 @@ export function SessionsPage() {
             {kpis && (
               <>
                 <Separator className="my-4" />
+                <p className="mb-3 text-sm text-muted-foreground">Solo ventas registradas en esta sesión de caja. El filtro es la sesión, no «hoy»: no incluye otras sesiones ni pedidos online.</p>
+                {session.refreshedAt && <p className="mb-3 text-xs text-muted-foreground">Actualizado: {new Date(session.refreshedAt).toLocaleTimeString('es-ES')}. Se actualiza automáticamente cada 30 segundos.</p>}
                 <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
                   {[
-                    { label: 'Pedidos', value: kpis.totalOrders.toString() },
+                    { label: 'Pedidos de esta sesión', value: kpis.totalOrders.toString() },
                     { label: 'Ventas brutas', value: formatCurrency(kpis.grossSales) },
                     { label: es.checkout.cash, value: formatCurrency(kpis.cashSales) },
                     { label: es.checkout.card, value: formatCurrency(kpis.cardSales) },
@@ -147,6 +162,19 @@ export function SessionsPage() {
               </>
             )}
 
+            {!!session.unregisteredOrders?.length && <div role="alert" className="mt-4 space-y-2 rounded border border-amber-400 bg-amber-50 p-3 text-sm">
+              <p className="font-medium">Hay {session.unregisteredOrders.length} {session.unregisteredOrders.length === 1 ? 'pedido pagado de hoy etiquetado' : 'pedidos pagados de hoy etiquetados'} POS MML sin registro completo de caja.</p>
+              <p>No se incluyen en esta sesión. Revisa estos pedidos antes del cierre; no vuelvas a cobrarlos.</p>
+              <ul className="list-inside list-disc">{session.unregisteredOrders.map(order => <li key={order.id}>{order.name}: {order.reason === 'missing_session' ? 'sin sesión asignada' : 'sin registro del método de pago'}</li>)}</ul>
+            </div>}
+            {session.countedOrders && <details className="mt-4 rounded-lg border p-3">
+              <summary className="cursor-pointer text-sm font-medium">Pedidos incluidos en esta sesión ({session.countedOrders.length})</summary>
+              {session.countedOrders.length === 0 ? <p className="mt-2 text-sm text-muted-foreground">No hay ventas registradas en esta sesión.</p> : <div className="mt-2 max-h-72 overflow-auto">
+                <Table><TableHeader><TableRow><TableHead>Pedido</TableHead><TableHead>Fecha</TableHead><TableHead>Pago</TableHead><TableHead>Importe</TableHead></TableRow></TableHeader>
+                  <TableBody>{session.countedOrders.map((order, index) => <TableRow key={`${order.name}-${index}`}><TableCell>{order.name}</TableCell><TableCell>{formatDate(order.createdAt)}</TableCell><TableCell>{{ CASH: 'Efectivo', CARD: 'Tarjeta', BIZUM: 'Bizum', VOUCHER: 'Vale', MIXED: 'Mixto' }[order.method] || order.method}</TableCell><TableCell>{formatCurrency(order.amount)}</TableCell></TableRow>)}</TableBody>
+                </Table>
+              </div>}
+            </details>}
             <div className="mt-4">
               <Button
                 variant="destructive"
