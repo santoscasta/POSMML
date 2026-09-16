@@ -24,6 +24,7 @@ function fixture(t, overrides = {}) {
     PosDraft: () => ({ draftOrderCreate: { draftOrder: { id: 'draft-1', totalPriceSet: { shopMoney: { amount: '100', currencyCode: 'EUR' } } }, userErrors: [] } }),
     PosComplete: () => ({ draftOrderComplete: { draftOrder: { order: { id: orderId, name: '#1' } }, userErrors: [] } }),
     PosPaidRecovery: () => ({ order: { id: orderId, displayFinancialStatus: 'PENDING' } }),
+    PosFulfillmentStatus: () => ({ order: { id: orderId, displayFulfillmentStatus: 'FULFILLED' } }),
     PosPaid: () => ({ orderMarkAsPaid: { order: { id: orderId }, userErrors: [] } }),
     PosVoucher: () => ({ giftCards: { nodes: [{ id: 'card-1', lastCharacters: '1234', enabled: true, balance: { amount: '100' } }], pageInfo: { hasNextPage: false } } }),
     PosDebit: () => ({ giftCardDebit: { giftCardDebitTransaction: { id: 'debit-1' }, userErrors: [] } }),
@@ -360,5 +361,68 @@ test('persistent temporary lock stops after bounded retries and can resume', asy
   locked = false;
   await f.service.checkout(key, checkoutInput);
   assert.equal(count(f, 'PosDraft'), 1);
+  assert.equal(f.store.read().movements.length, 1);
+});
+
+function fulfillmentFixture(t, { loseResponse = false, reject = false, hold = false } = {}) {
+  const closed = new Set();
+  let fail = reject;
+  const f = fixture(t, {
+    PosFulfillmentStatus: () => ({ order: { id: orderId, displayFulfillmentStatus: closed.size === 2 ? 'FULFILLED' : 'UNFULFILLED' } }),
+    PosFulfillmentOrders: ({ after }) => ({ order: { fulfillmentOrders: {
+      nodes: [{ id: after ? 'fo-2' : 'fo-1', status: hold ? 'ON_HOLD' : 'OPEN', supportedActions: hold ? [] : [{ action: 'CREATE_FULFILLMENT' }] }],
+      pageInfo: { hasNextPage: !after, endCursor: after ? null : 'page-2' },
+    } } }),
+    PosFulfillmentRecovery: ({ id }) => ({ fulfillmentOrder: { id, status: closed.has(id) ? 'CLOSED' : 'OPEN' } }),
+    PosFulfill: ({ fulfillment }) => {
+      const id = fulfillment.lineItemsByFulfillmentOrder[0].fulfillmentOrderId;
+      if (fail) { fail = false; return { fulfillmentCreate: { fulfillment: null, userErrors: [{ message: 'Temporarily locked' }] } }; }
+      closed.add(id);
+      if (loseResponse && id === 'fo-1') throw new Error('Lost response');
+      return { fulfillmentCreate: { fulfillment: { id: `fulfillment-${id}`, status: 'SUCCESS' }, userErrors: [] } };
+    },
+  });
+  return f;
+}
+
+test('checkout prepares every fulfillment order across pages after payment', async t => {
+  const f = fulfillmentFixture(t);
+  await f.service.checkout(key, checkoutInput);
+  assert.equal(count(f, 'PosFulfill'), 2);
+  assert.equal(count(f, 'PosFulfillmentOrders'), 2);
+  assert.ok(f.calls.findIndex(c => c.name === 'PosPaid') < f.calls.findIndex(c => c.name === 'PosFulfill'));
+  assert.ok(f.calls.filter(c => c.name === 'PosFulfill').every(c => c.variables.fulfillment.notifyCustomer === false));
+  await f.service.checkout(key, checkoutInput);
+  assert.equal(count(f, 'PosFulfill'), 2);
+  assert.equal(f.store.read().movements.length, 1);
+});
+
+test('lost fulfillment response resumes without repeating payment, voucher debit or preparation', async t => {
+  const f = fulfillmentFixture(t, { loseResponse: true });
+  const input = { ...checkoutInput, payment: { method: 'VOUCHER', amount: 100, voucherCode: '1234' } };
+  await assert.rejects(f.service.checkout(key, input), /ya cobrado/);
+  assert.equal(f.store.read().movements.length, 1);
+  assert.equal(f.store.read().operations[key].result, undefined);
+  await createPosService(f.gql, createOperationStore(f.directory)).checkout(key, input);
+  assert.equal(count(f, 'PosPaid'), 1);
+  assert.equal(count(f, 'PosDebit'), 1);
+  assert.equal(count(f, 'PosDraft'), 1);
+  assert.equal(count(f, 'PosFulfill'), 2);
+  assert.equal(f.store.read().movements.length, 1);
+});
+
+test('rejected fulfillment remains resumable after the sale is recorded', async t => {
+  const f = fulfillmentFixture(t, { reject: true });
+  await assert.rejects(f.service.checkout(key, checkoutInput), /ya cobrado/);
+  await f.service.checkout(key, checkoutInput);
+  assert.equal(count(f, 'PosPaid'), 1);
+  assert.equal(f.store.read().movements.length, 1);
+});
+
+test('held fulfillment orders never report a completed checkout', async t => {
+  const f = fulfillmentFixture(t, { hold: true });
+  await assert.rejects(f.service.checkout(key, checkoutInput), /ya cobrado/);
+  assert.equal(count(f, 'PosFulfill'), 0);
+  assert.equal(f.store.read().operations[key].result, undefined);
   assert.equal(f.store.read().movements.length, 1);
 });

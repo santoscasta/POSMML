@@ -1,6 +1,7 @@
 import { PosError } from './operationStore.js';
 import { cents, paymentSplits } from './accounting.js';
 import { randomBytes } from 'node:crypto';
+import { fulfillSale } from './fulfillSale.js';
 
 export function mutationResult(data, key, field) {
   const payload = data?.[key];
@@ -185,6 +186,12 @@ export function createPosService(gql, store) {
         ...(payment.method === 'MIXED' ? { mixedPayments: splits } : {}),
         voucherCode: payment.voucherCode || null,
       });
+      try {
+        await fulfillSale(gql, ctx, order.id);
+      } catch (error) {
+        error.message = `Pedido ${order.name} ya cobrado; falta confirmar la preparación. No vuelvas a cobrar. ${error.message}`;
+        throw error;
+      }
       return { success: true, ...entry, name: order.name };
     });
   }
