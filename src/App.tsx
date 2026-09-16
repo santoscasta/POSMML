@@ -6,6 +6,7 @@ import { OrdersPage } from './pages/OrdersPage';
 import { SessionsPage } from './pages/SessionsPage';
 import { VouchersPage } from './pages/VouchersPage';
 import { DashboardPage } from './pages/DashboardPage';
+import { MailPage } from './pages/MailPage';
 import { es } from './i18n/es';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
@@ -131,10 +132,11 @@ function AppContent() {
   const { isOpen, loading, error, refresh } = useSession();
   return (
     <div className="flex h-dvh w-full flex-col">
-      <header className="flex h-11 shrink-0 items-center justify-end gap-2 border-b bg-white px-3">
+      <header className="flex min-h-11 shrink-0 flex-wrap items-center justify-end gap-2 border-b bg-white px-3 py-1">
         {isOpen && <Button size="sm" variant="outline" onClick={() => navigate('/caja?cerrar=1')}>
           <Wallet className="size-4" />Cerrar caja
         </Button>}
+        <Button size="sm" variant="ghost" onClick={() => navigate('/correos')}>Correos</Button>
         <PendingOperations />
         <button className="px-2 text-xs text-muted-foreground hover:text-foreground" onClick={clearCredentials}>Salir</button>
       </header>
@@ -147,6 +149,7 @@ function AppContent() {
           <Route path="/orders" element={<OrdersPage />} />
           <Route path="/caja" element={<SessionsPage />} />
           <Route path="/vales" element={<VouchersPage />} />
+          <Route path="/correos" element={<MailPage />} />
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Routes>
       </main>

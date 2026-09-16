@@ -12,6 +12,10 @@ import dashboardRoutes from './routes/dashboard.js';
 import refundRoutes from './routes/refunds.js';
 import { requireAuth, checkOrigin } from './lib/auth.js';
 import { getStore } from './lib/operationStore.js';
+import mailRoutes from './routes/mail.js';
+import { getMailService } from './lib/mail/service.js';
+import { createMailMonitor } from './lib/mail/monitor.js';
+import shopifyGQL from './lib/shopifyGQL.js';
 
 dotenv.config();
 
@@ -39,6 +43,16 @@ app.use('/api', paymentRoutes);
 app.use('/api', voucherRoutes);
 app.use('/api', dashboardRoutes);
 app.use('/api', refundRoutes);
+app.use('/api', mailRoutes);
+
+const mailMonitor = createMailMonitor({ mail: getMailService(), posStore: getStore(), gql: shopifyGQL });
+const checkMail = () => void mailMonitor.tick().catch(() => console.error('No se pudo ejecutar el servicio de correo; revisa el almacenamiento persistente.'));
+setInterval(checkMail, 60000).unref();
+// Delivery has its own clock so a paginated Shopify scan cannot hold up tickets.
+const deliverMail = () => void getMailService().flush().catch(() => console.error('No se pudo procesar la cola de correo.'));
+setInterval(deliverMail, 15000).unref();
+deliverMail();
+checkMail();
 
 // Auth / status
 app.get('/auth', async (req, res) => {

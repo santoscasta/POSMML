@@ -90,6 +90,8 @@ export function CheckoutModal({
   const [successOrder, setSuccessOrder] = useState<string | null>(null);
   const [emailTo, setEmailTo] = useState(customerEmail || '');
   const [emailSent, setEmailSent] = useState(false);
+  const [emailKind, setEmailKind] = useState<'normal' | 'gift'>('normal');
+  const [emailResult, setEmailResult] = useState('');
   const [emailError, setEmailError] = useState<string | null>(null);
   const [emailSending, setEmailSending] = useState(false);
 
@@ -182,7 +184,7 @@ export function CheckoutModal({
   };
 
   const handleClose = () => {
-    if (loading) return;
+    if (loading || emailSending) return;
     setMethod(null);
     setCashReceived('');
     setMixedSplits([{ method: 'CASH', amount: '' }, { method: 'CARD', amount: '' }]);
@@ -298,13 +300,20 @@ export function CheckoutModal({
             </Button>
 
             {/* Email ticket */}
-            <p className="text-xs text-muted-foreground">Enviar documento del pedido mediante Shopify</p>
+            <p className="text-xs text-muted-foreground">Enviar documento por correo</p>
             {emailError && <p role="alert" className="text-sm text-destructive">{emailError}</p>}
             {!emailSent ? (
               <div className="space-y-2">
+                <label htmlFor="email-document" className="text-sm">Documento</label>
+                <select id="email-document" className="w-full rounded border p-2 text-sm" value={emailKind} disabled={emailSending} onChange={event => setEmailKind(event.target.value as 'normal' | 'gift')}>
+                  <option value="normal">Documento del pedido (Shopify)</option>
+                  <option value="gift">Ticket regalo sin precios (TPV)</option>
+                </select>
                 <div className="flex gap-2">
                   <Input
                     type="email"
+                    aria-label="Email del cliente"
+                    disabled={emailSending}
                     placeholder="Email del cliente"
                     value={emailTo}
                     onChange={(e) => setEmailTo(e.target.value)}
@@ -317,10 +326,17 @@ export function CheckoutModal({
                       setEmailSending(true);
                       setEmailError(null);
                       try {
-                        await apiPost('/send-receipt', { order: successOrder, email: emailTo.trim() });
+                        if (emailKind === 'gift') {
+                          const result = await apiPost<{ status: string }>('/send-gift-receipt', { order: successOrder, email: emailTo.trim() });
+                          if (['failed', 'unknown', 'cancelled'].includes(result.status)) throw new Error('Este envío requiere revisión en Correos. Comprueba su estado antes de reenviarlo.');
+                          setEmailResult(result.status === 'sent' ? 'Ticket regalo aceptado por el servidor de correo' : 'Ticket regalo en cola. Consulta su estado en Correos');
+                        } else {
+                          await apiPost('/send-receipt', { order: successOrder, email: emailTo.trim() });
+                          setEmailResult('Documento enviado mediante Shopify');
+                        }
                         setEmailSent(true);
-                      } catch {
-                        setEmailError('No se ha enviado el ticket. Puedes imprimirlo o volver a intentarlo.');
+                      } catch (error) {
+                        setEmailError(error instanceof Error ? error.message : 'No se pudo enviar el documento.');
                       } finally {
                         setEmailSending(false);
                       }
@@ -331,13 +347,16 @@ export function CheckoutModal({
                 </div>
               </div>
             ) : (
-              <div className="flex items-center gap-2 rounded-sm bg-success/10 px-3 py-2 text-sm text-success">
-                <Mail className="size-4" />
-                Ticket enviado a {emailTo}
+              <div className="space-y-2">
+                <div role="status" className="flex items-center gap-2 rounded-sm bg-success/10 px-3 py-2 text-sm text-success">
+                  <Mail className="size-4 shrink-0" />
+                  {emailResult}: {emailTo}
+                </div>
+                <Button variant="outline" size="sm" onClick={() => { setEmailSent(false); setEmailError(null); }}>Enviar otro documento</Button>
               </div>
             )}
 
-            <Button className="w-full" onClick={handleClose}>
+            <Button className="w-full" onClick={handleClose} disabled={emailSending}>
               <X className="size-4" />
               Cerrar y siguiente venta
             </Button>

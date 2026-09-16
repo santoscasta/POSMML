@@ -1,3 +1,4 @@
+import { recordDocumentFailure } from '../lib/mail/failures.js';
 import { Router } from 'express';
 import shopifyGQL from '../lib/shopifyGQL.js';
 import { getStore } from '../lib/operationStore.js';
@@ -117,6 +118,7 @@ router.post('/vouchers/send-email', async (req, res) => {
   try {
     res.json(await sendVoucherEmail(shopifyGQL, req.body));
   } catch (err) {
+    await recordDocumentFailure('Vale', req.body?.id);
     res.status(err.status || 500).json({ error: err.message });
   }
 });
