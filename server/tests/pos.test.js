@@ -460,3 +460,80 @@ test('today uses Madrid midnight in summer and winter, independent of server tim
   assert.equal(isBusinessToday('2026-01-15T23:01:00Z', '2026-01-16T12:00:00Z'), true);
   assert.equal(isBusinessToday('2026-01-15T22:59:59Z', '2026-01-16T12:00:00Z'), false);
 });
+
+test('voucher checkout debits exact balance once and counts a sale without increasing cash', async t => {
+  const f = fixture(t);
+  const input = { ...checkoutInput, payment: { method: 'VOUCHER', amount: 100, voucherCode: '****1234' } };
+  const result = await f.service.checkout(key, input);
+  assert.equal(result.success, true);
+  assert.equal(result.sessionId, 'session-A');
+  assert.deepEqual(f.calls.find(c => c.name === 'PosDebit').variables.input.debitAmount, { amount: '100.00', currencyCode: 'EUR' });
+  await createPosService(f.gql, createOperationStore(f.directory)).checkout(key, input);
+  assert.equal(count(f, 'PosDebit'), 1);
+  const totals = computeKPIs(f.store.read().movements, 271.30);
+  assert.equal(totals.totalOrders, 1);
+  assert.equal(totals.grossSales, 100);
+  assert.equal(totals.voucherSales, 100);
+  assert.equal(totals.expectedCash, 271.30);
+});
+
+for (const method of ['CASH', 'CARD', 'BIZUM']) {
+  test(`mixed voucher and ${method} debit only the voucher share and preserve register totals`, async t => {
+    const f = fixture(t);
+    const mixedPayments = [{ method: 'VOUCHER', amount: 24.95, voucherCode: '1234' }, { method, amount: 75.05 }];
+    await f.service.checkout(key, { ...checkoutInput, payment: { method: 'MIXED', amount: 100, mixedPayments } });
+    assert.equal(f.calls.find(c => c.name === 'PosDebit').variables.input.debitAmount.amount, '24.95');
+    assert.deepEqual(f.store.read().movements[0].mixedPayments, mixedPayments);
+    const totals = computeKPIs(f.store.read().movements, 50);
+    assert.equal(totals.totalOrders, 1);
+    assert.equal(totals.grossSales, 100);
+    assert.equal(totals.voucherSales, 24.95);
+    assert.equal(totals.cashSales, method === 'CASH' ? 75.05 : 0);
+    assert.equal(totals.cardSales, method === 'CARD' ? 75.05 : 0);
+    assert.equal(totals.bizumSales, method === 'BIZUM' ? 75.05 : 0);
+    assert.equal(totals.expectedCash, method === 'CASH' ? 125.05 : 50);
+  });
+}
+
+for (const [label, card] of [
+  ['disabled', { enabled: false }],
+  ['expired', { expiresOn: '2000-01-01' }],
+  ['empty', { balance: { amount: '0' } }],
+]) {
+  test(`${label} voucher cannot create an order or record a payment`, async t => {
+    const f = fixture(t, { PosVoucher: () => ({ giftCards: { nodes: [{ id: 'card-1', lastCharacters: '1234', enabled: true, balance: { amount: '100' }, ...card }], pageInfo: { hasNextPage: false } } }) });
+    await assert.rejects(f.service.checkout(key, { ...checkoutInput, payment: { method: 'VOUCHER', amount: 100, voucherCode: '1234' } }), /Vale desactivado o caducado|Saldo insuficiente/);
+    assert.equal(count(f, 'PosDraft'), 0);
+    assert.equal(count(f, 'PosDebit'), 0);
+    assert.equal(count(f, 'PosPaid'), 0);
+    assert.equal(f.store.read().movements.length, 0);
+  });
+}
+
+test('repeated voucher in mixed payment cannot exceed its combined available balance', async t => {
+  const f = fixture(t, { PosVoucher: () => ({ giftCards: { nodes: [{ id: 'card-1', lastCharacters: '1234', enabled: true, balance: { amount: '60' } }], pageInfo: { hasNextPage: false } } }) });
+  const payment = { method: 'MIXED', amount: 100, mixedPayments: [
+    { method: 'VOUCHER', amount: 50, voucherCode: '1234' },
+    { method: 'VOUCHER', amount: 50, voucherCode: '****1234' },
+  ] };
+  await assert.rejects(f.service.checkout(key, { ...checkoutInput, payment }), /Saldo insuficiente/);
+  assert.equal(count(f, 'PosDraft'), 0);
+  assert.equal(count(f, 'PosDebit'), 0);
+  assert.equal(f.store.read().movements.length, 0);
+});
+
+test('rejected voucher debit leaves order unpaid and retry records only one sale', async t => {
+  let attempts = 0;
+  const f = fixture(t, { PosDebit: () => ++attempts === 1
+    ? { giftCardDebit: { giftCardDebitTransaction: null, userErrors: [{ message: 'Saldo insuficiente' }] } }
+    : { giftCardDebit: { giftCardDebitTransaction: { id: 'debit-1' }, userErrors: [] } } });
+  const input = { ...checkoutInput, payment: { method: 'VOUCHER', amount: 100, voucherCode: '1234' } };
+  await assert.rejects(f.service.checkout(key, input), /Saldo insuficiente/);
+  assert.equal(count(f, 'PosPaid'), 0);
+  assert.equal(f.store.read().movements.length, 0);
+  await createPosService(f.gql, createOperationStore(f.directory)).checkout(key, input);
+  assert.equal(count(f, 'PosDraft'), 1);
+  assert.equal(count(f, 'PosComplete'), 1);
+  assert.equal(count(f, 'PosPaid'), 1);
+  assert.equal(f.store.read().movements.length, 1);
+});

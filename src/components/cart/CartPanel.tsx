@@ -204,7 +204,11 @@ export function CartPanel() {
           pending={!!pending}
           checkoutError={checkoutError}
           onResume={async () => { const name = await resume(); if (name) { await refresh(); setSaleCompleted(true); } return name; }}
-          onClose={() => { setShowCheckout(false); if (saleCompleted) clearCart(); }}
+          onClose={() => {
+            setShowCheckout(false);
+            if (saleCompleted) clearCart();
+            setSaleCompleted(false);
+          }}
         />
       )}
     </Card>
