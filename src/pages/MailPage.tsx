@@ -43,8 +43,8 @@ export function MailPage() {
     catch (err) { setError(err instanceof Error ? err.message : 'No se pudo completar la acción'); }
     finally { setBusy(false); }
   }
-  return <div className="mx-auto max-w-4xl space-y-6 p-4 sm:p-6">
-    <h1 className="text-xl font-semibold">Correos del TPV</h1>
+  return <div className="space-y-6">
+    <h2 className="text-lg font-semibold">Correos y avisos</h2>
     {error && <p role="alert" className="text-destructive">{error}</p>}
     {notice && <p role="status" className="text-success">{notice}</p>}
     {!info || !draft ? <p>Cargando configuración…</p> : <>

@@ -6,12 +6,12 @@ import { OrdersPage } from './pages/OrdersPage';
 import { SessionsPage } from './pages/SessionsPage';
 import { VouchersPage } from './pages/VouchersPage';
 import { DashboardPage } from './pages/DashboardPage';
-import { MailPage } from './pages/MailPage';
+import { SettingsPage } from './pages/SettingsPage';
 import { es } from './i18n/es';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
-import { Home, ShoppingCart, ClipboardList, Wallet, Ticket, CircleDot } from 'lucide-react';
+import { Home, ShoppingCart, ClipboardList, Wallet, Ticket, CircleDot, Settings } from 'lucide-react';
 import { AuthGate } from './components/AuthGate';
 import { PendingOperations } from './components/PendingOperations';
 import { clearCredentials } from './utils/auth';
@@ -23,6 +23,7 @@ const navItems = [
   { path: '/orders', label: es.nav.orders, icon: ClipboardList },
   { path: '/caja', label: es.nav.cashRegister, icon: Wallet },
   { path: '/vales', label: es.nav.vouchers, icon: Ticket },
+  { path: '/ajustes', label: 'Ajustes', icon: Settings },
 ];
 
 function Sidebar() {
@@ -136,7 +137,6 @@ function AppContent() {
         {isOpen && <Button size="sm" variant="outline" onClick={() => navigate('/caja?cerrar=1')}>
           <Wallet className="size-4" />Cerrar caja
         </Button>}
-        <Button size="sm" variant="ghost" onClick={() => navigate('/correos')}>Correos</Button>
         <PendingOperations />
         <button className="px-2 text-xs text-muted-foreground hover:text-foreground" onClick={clearCredentials}>Salir</button>
       </header>
@@ -149,7 +149,8 @@ function AppContent() {
           <Route path="/orders" element={<OrdersPage />} />
           <Route path="/caja" element={<SessionsPage />} />
           <Route path="/vales" element={<VouchersPage />} />
-          <Route path="/correos" element={<MailPage />} />
+          <Route path="/ajustes/*" element={<SettingsPage />} />
+          <Route path="/correos" element={<Navigate to="/ajustes/correos" replace />} />
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Routes>
       </main>

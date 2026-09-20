@@ -16,22 +16,12 @@ import { es } from '../i18n/es';
 import { cn } from '@/lib/utils';
 import { ShoppingCart, LayoutGrid } from 'lucide-react';
 
-type CatalogView = 'categories' | 'products' | 'explore';
-
-const SHOW_OUT_OF_STOCK_KEY = 'posmml.showOutOfStock';
-
-function getInitialShowOutOfStock() {
-  return localStorage.getItem(SHOW_OUT_OF_STOCK_KEY) !== 'false';
-}
+import { readCatalogSettings } from '../utils/catalogSettings';
 
 export function PosPage() {
-  const [showOutOfStock, setShowOutOfStock] = useState(getInitialShowOutOfStock);
+  const [{ showOutOfStock, catalogView }] = useState(readCatalogSettings);
   const catalog = useCategories();
   const [categoryPath, setCategoryPath] = useState<CatalogCategory[]>([]);
-  const [catalogView, setCatalogView] = useState<CatalogView>(() => {
-    const saved = localStorage.getItem('posmml.catalogView');
-    return saved === 'products' || saved === 'explore' ? saved : 'categories';
-  });
   const [searching, setSearching] = useState(false);
   const currentCategory = categoryPath.at(-1);
   const hasChildren = !currentCategory || childCategories(catalog.categories, currentCategory.id).length > 0;
@@ -42,13 +32,6 @@ export function PosPage() {
     const ids = descendantCategoryIds(currentCategory);
     return products.filter(product => product.categoryIds?.some(id => ids.has(id)));
   }, [products, catalogView, currentCategory]);
-  const changeView = (view: CatalogView) => {
-    setCatalogView(view);
-    localStorage.setItem('posmml.catalogView', view);
-    setCategoryPath([]);
-    setSearchQuery('');
-    setSearching(false);
-  };
   const navigateCategory = (path: CatalogCategory[]) => {
     setCategoryPath(path);
     setSearchQuery('');
@@ -148,31 +131,9 @@ export function PosPage() {
 
   useBarcodeScanner(handleBarcodeScan);
 
-  const handleShowOutOfStockChange = useCallback((checked: boolean) => {
-    setShowOutOfStock(checked);
-    localStorage.setItem(SHOW_OUT_OF_STOCK_KEY, String(checked));
-  }, []);
-
   const productsContent = (
     <div className="space-y-3 p-3 sm:p-4">
-      <fieldset className="flex flex-wrap items-center gap-2">
-        <legend className="mb-2 text-sm font-medium">Vista del catálogo</legend>
-        {([{ value: 'categories', label: 'Por categorías' }, { value: 'products', label: 'Todos los productos' }, { value: 'explore', label: 'Explorar categorías' }] as const).map(view => (
-          <button type="button" key={view.value} aria-pressed={catalogView === view.value} onClick={() => changeView(view.value)} className={cn('cursor-pointer rounded-lg border px-4 py-2.5 text-sm font-medium transition-colors focus-within:ring-2 focus-within:ring-primary', catalogView === view.value ? 'border-primary bg-primary text-primary-foreground' : 'bg-card hover:bg-muted')}>
-            {view.label}
-          </button>
-        ))}
-      </fieldset>
       {showProducts && <ProductSearch value={searchQuery} onChange={value => { setSearchQuery(value); setSearching(!!value.trim()); }} />}
-      <label className="flex w-fit cursor-pointer items-center gap-2 text-sm text-muted-foreground">
-        <input
-          type="checkbox"
-          checked={showOutOfStock}
-          onChange={(event) => handleShowOutOfStockChange(event.target.checked)}
-          className="size-4 accent-primary"
-        />
-        {es.pos.showOutOfStock}
-      </label>
       {catalogView !== 'products' && catalog.error && <div role="alert" className="rounded border border-destructive p-3 text-sm">No se han cargado las categorías: {catalog.error} <button className="underline" onClick={catalog.retry}>Reintentar categorías</button></div>}
       {catalogView === 'categories' && <label className="block space-y-1.5 text-sm font-medium">
         <span>Filtrar por categoría</span>
