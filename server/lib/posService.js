@@ -1,6 +1,7 @@
 import { PosError } from './operationStore.js';
 import { cents, paymentSplits } from './accounting.js';
 import { randomBytes } from 'node:crypto';
+import { resolveRefundCustomer } from './refundCustomer.js';
 import { fulfillSale } from './fulfillSale.js';
 
 export function mutationResult(data, key, field) {
@@ -222,6 +223,7 @@ export function createPosService(gql, store) {
         };
         ctx.save();
       }
+      const voucherCustomer = input.method === 'VOUCHER' ? await resolveRefundCustomer(gql, ctx, input) : null;
       // Refund first. If it is rejected, no spendable gift card has been created.
       let result = await ctx.step('refund-create', async () => mutationResult(await gql(`mutation PosRefund($input: RefundInput!) {
         refundCreate(input: $input) { refund { id transactions(first: 100) { nodes { status } } } userErrors { message } }
@@ -244,6 +246,7 @@ export function createPosService(gql, store) {
       const entry = movement(ctx, { shopifyOrderId: input.orderId, shopifyOrderName: ctx.op.orderName,
         sessionId, type: 'refund', method: input.method, amount: cents(input.amount) / 100, refundId: result.id });
       let voucherCode;
+      let voucherId;
       if (input.method === 'VOUCHER') {
         // Persist the code before creation so a lost Shopify response cannot
         // destroy the only copy of a customer's redeemable code.
@@ -252,7 +255,7 @@ export function createPosService(gql, store) {
         const card = await ctx.step('refund-voucher-create', async () => {
           const data = await gql(`mutation PosRefundVoucher($input: GiftCardCreateInput!) {
             giftCardCreate(input: $input) { giftCard { id } giftCardCode userErrors { message } }
-          }`, { input: { code: ctx.op.giftCardCode, initialValue: (cents(input.amount) / 100).toFixed(2), note: `Devolución ${ctx.op.orderName}, ${result.id}, POS ${key}${input.customerName ? ` - ${input.customerName}` : ''}` } });
+          }`, { input: { ...(voucherCustomer ? { customerId: voucherCustomer.id } : {}), code: ctx.op.giftCardCode, initialValue: (cents(input.amount) / 100).toFixed(2), note: `Devolución ${ctx.op.orderName}, ${result.id}, POS ${key}${input.customerName ? ` - ${input.customerName}` : ''}` } });
           const giftCard = mutationResult(data, 'giftCardCreate', 'giftCard');
           return { id: giftCard.id, code: ctx.op.giftCardCode };
         }, async () => {
@@ -264,10 +267,11 @@ export function createPosService(gql, store) {
           return matches.length === 1 ? { id: matches[0].id, code: ctx.op.giftCardCode } : null;
         });
         voucherCode = card.code;
+        voucherId = card.id;
         entry.voucherCode = voucherCode;
         ctx.save();
       }
-      return { success: true, refundId: result.id, ...(voucherCode ? { voucherCode } : {}) };
+      return { success: true, refundId: result.id, ...(voucherCode ? { voucherCode, voucherId, customer: voucherCustomer } : {}) };
     });
   }
   return { checkout, refund };

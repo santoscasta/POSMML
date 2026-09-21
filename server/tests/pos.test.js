@@ -537,3 +537,58 @@ test('rejected voucher debit leaves order unpaid and retry records only one sale
   assert.equal(count(f, 'PosPaid'), 1);
   assert.equal(f.store.read().movements.length, 1);
 });
+
+const refundCustomer = { id: 'gid://shopify/Customer/42', firstName: 'Ana', lastName: 'López', email: 'ana@example.com', phone: '+34607140250' };
+
+test('refund voucher links selected Shopify customer and returns their details', async t => {
+  const f = fixture(t, { RefundCustomer: () => ({ customer: refundCustomer }) });
+  const result = await f.service.refund(key, { ...refundInput, customerId: refundCustomer.id });
+  assert.deepEqual(result.customer, refundCustomer);
+  assert.equal(f.calls.find(c => c.name === 'PosRefundVoucher').variables.input.customerId, refundCustomer.id);
+  assert.ok(f.calls.findIndex(c => c.name === 'RefundCustomer') < f.calls.findIndex(c => c.name === 'PosRefund'));
+});
+
+test('registering a refund customer survives retries without another customer, refund or voucher', async t => {
+  const f = fixture(t, { RefundCustomerCreate: () => ({ customerCreate: { customer: refundCustomer, userErrors: [] } }) });
+  const input = { ...refundInput, newCustomer: { firstName: 'Ana', lastName: 'López', email: 'ana@example.com', phone: '+34607140250' } };
+  const result = await f.service.refund(key, input);
+  assert.deepEqual(await createPosService(f.gql, createOperationStore(f.directory)).refund(key, input), result);
+  for (const name of ['RefundCustomerCreate', 'PosRefund', 'PosRefundVoucher']) assert.equal(count(f, name), 1);
+  const created = f.calls.find(c => c.name === 'RefundCustomerCreate').variables.input;
+  assert.equal(created.phone, input.newCustomer.phone);
+  assert.equal(created.email, input.newCustomer.email);
+  assert.equal(f.calls.find(c => c.name === 'PosRefundVoucher').variables.input.customerId, refundCustomer.id);
+});
+
+test('lost customer creation response reconciles before refunding and never registers twice', async t => {
+  const f = fixture(t, {
+    RefundCustomerCreate: () => { throw new Error('connection lost'); },
+    RefundCustomerRecovery: () => ({ customers: { nodes: [{ ...refundCustomer, tags: [`pos-customer-${key}`] }] } }),
+  });
+  const input = { ...refundInput, newCustomer: { firstName: 'Ana', email: 'ana@example.com' } };
+  await assert.rejects(f.service.refund(key, input), { code: 'RECONCILIATION_REQUIRED' });
+  assert.equal(count(f, 'PosRefund'), 0);
+  await createPosService(f.gql, createOperationStore(f.directory)).refund(key, input);
+  assert.equal(count(f, 'RefundCustomerCreate'), 1);
+  assert.equal(count(f, 'PosRefund'), 1);
+  assert.equal(count(f, 'PosRefundVoucher'), 1);
+});
+
+test('duplicate or rejected customer registration does not refund or issue a voucher', async t => {
+  const f = fixture(t, { RefundCustomerCreate: () => ({ customerCreate: { customer: null, userErrors: [{ message: 'Email has already been taken' }] } }) });
+  await assert.rejects(f.service.refund(key, { ...refundInput, newCustomer: { firstName: 'Ana', email: 'ana@example.com' } }), error => error.safeToRestart === true && /already been taken/.test(error.message));
+  assert.equal(count(f, 'PosRefund'), 0);
+  assert.equal(count(f, 'PosRefundVoucher'), 0);
+  assert.equal(f.store.read().movements.length, 0);
+});
+
+test('invalid new customer and missing existing customer cannot start a refund', async t => {
+  const f = fixture(t, { RefundCustomer: () => ({ customer: null }) });
+  for (const details of [{ firstName: 'Ana' }, { firstName: 'Ana', email: 'invalid' }, { firstName: 'Ana', phone: '607140250' }]) {
+    await assert.rejects(f.service.refund(key, { ...refundInput, newCustomer: details }));
+  }
+  await assert.rejects(f.service.refund(key, { ...refundInput, customerId: refundCustomer.id }), /Cliente no encontrado/);
+  assert.equal(count(f, 'RefundCustomerCreate'), 0);
+  assert.equal(count(f, 'PosRefund'), 0);
+  assert.equal(count(f, 'PosRefundVoucher'), 0);
+});

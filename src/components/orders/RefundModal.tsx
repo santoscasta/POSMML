@@ -16,12 +16,17 @@ import { Input } from '@/components/ui/input';
 import type { OrderDetail, OrderLineItem } from '../../types/order';
 import { useSession } from '../../context/SessionContext';
 
+import { CustomerSearch } from '../customers/CustomerSearch';
+import type { Customer } from '../../types/customer';
+
 type RefundMethod = 'CASH' | 'CARD' | 'VOUCHER';
 interface PendingRefund {
   operationId: string;
   orderId: string;
   amount: number;
   method: RefundMethod;
+  customerId?: string;
+  newCustomer?: { firstName: string; lastName: string; email: string; phone: string };
   [key: string]: unknown;
 }
 
@@ -55,6 +60,9 @@ export function RefundModal({ order, open, onClose, onRefunded }: RefundModalPro
     const value = localStorage.getItem(storageKey);
     return value ? JSON.parse(value) : null;
   });
+  const [customer, setCustomer] = useState<Customer | null>(() => order.customer ? { ...order.customer, email: order.customer.email || '', phone: order.customer.phone || null } : null);
+  const [registerCustomer, setRegisterCustomer] = useState(!!pending?.newCustomer);
+  const [newCustomer, setNewCustomer] = useState(pending?.newCustomer || { firstName: '', lastName: '', email: '', phone: '' });
   const inFlight = useRef(false);
   const lineItems: OrderLineItem[] = order.lineItems.edges.map((e) => e.node);
 
@@ -76,11 +84,12 @@ export function RefundModal({ order, open, onClose, onRefunded }: RefundModalPro
 
   const [isTotal, setIsTotal] = useState(true);
   const [restock, setRestock] = useState(true);
-  const [method, setMethod] = useState<RefundMethod>('CASH');
+  const [method, setMethod] = useState<RefundMethod>(pending?.method || 'CASH');
   const [reason, setReason] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [voucherCode, setVoucherCode] = useState<string | null>(null);
+  const [voucherId, setVoucherId] = useState<string | null>(null);
   const [issuedAmount, setIssuedAmount] = useState<number | null>(null);
   const [voucherEmail, setVoucherEmail] = useState(order.customer?.email || '');
   const [voucherEmailSent, setVoucherEmailSent] = useState(false);
@@ -155,6 +164,10 @@ export function RefundModal({ order, open, onClose, onRefunded }: RefundModalPro
       return;
     }
 
+    if (!pending && method === 'VOUCHER' && registerCustomer && (!newCustomer.firstName.trim() || (!newCustomer.email.trim() && !newCustomer.phone.trim()))) {
+      setError('Indica el nombre y un email o teléfono del cliente');
+      return;
+    }
     try {
       inFlight.current = true;
       setSubmitting(true);
@@ -182,20 +195,21 @@ export function RefundModal({ order, open, onClose, onRefunded }: RefundModalPro
         method,
         orderName: order.name,
         amount: refundAmount,
-        customerName: order.customer
-          ? `${order.customer.firstName} ${order.customer.lastName}`.trim()
-          : undefined,
+        ...(method === 'VOUCHER' ? registerCustomer ? { newCustomer } : { customerId: customer?.id } : {}),
       };
 
       localStorage.setItem(storageKey, JSON.stringify(payload));
       setPending(payload);
-      const result = await apiPost<{ success: boolean; voucherCode?: string }>('/refunds', payload);
+      const result = await apiPost<{ success: boolean; voucherCode?: string; voucherId?: string; customer?: Customer | null }>('/refunds', payload);
       await refresh();
       localStorage.removeItem(storageKey);
       setPending(null);
       if (result.voucherCode) {
+        setCustomer(result.customer || null);
+        setVoucherEmail(result.customer?.email || '');
         setIssuedAmount(payload.amount);
         setVoucherCode(result.voucherCode);
+        setVoucherId(result.voucherId || null);
       } else {
         onRefunded();
       }
@@ -209,6 +223,8 @@ export function RefundModal({ order, open, onClose, onRefunded }: RefundModalPro
       setSubmitting(false);
     }
   };
+
+  const escapePrint = (value: string) => value.replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]!));
 
   return (
     <Dialog
@@ -239,6 +255,10 @@ export function RefundModal({ order, open, onClose, onRefunded }: RefundModalPro
               {voucherCode}
             </div>
             <div className="text-lg font-semibold">{formatCurrency(refundAmount, currencyCode)}</div>
+            <div className="w-full rounded border p-3 text-sm">
+              {customer ? <><p className="font-medium">Vale asociado a {customer.firstName} {customer.lastName}</p><p>{customer.email}</p><p>{customer.phone}</p></> : 'Vale sin cliente asociado.'}
+            </div>
+            <p className="text-xs text-muted-foreground">El envío utiliza el email de la ficha asociada. Para recibirlo por correo, selecciona o registra un cliente con email antes de confirmar la devolución.</p>
 
             <Button
               variant="outline"
@@ -265,8 +285,8 @@ export function RefundModal({ order, open, onClose, onRefunded }: RefundModalPro
                   <div class="label">Valor</div>
                   <div class="amount">${formatCurrency(refundAmount, currencyCode)}</div>
                   <div class="line"></div>
-                  <div class="info">Pedido original: ${order.name}</div>
-                  ${order.customer ? `<div class="info">Cliente: ${order.customer.firstName} ${order.customer.lastName}</div>` : ''}
+                  <div class="info">Pedido original: ${escapePrint(order.name)}</div>
+                  ${customer ? `<div class="info">Cliente: ${escapePrint(`${customer.firstName || ''} ${customer.lastName || ''}`)}</div>` : ''}
                   <div class="info">Fecha: ${new Date().toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' })}</div>
                   <div class="line"></div>
                   <div class="info">Presente este vale para canjearlo en tienda</div>
@@ -281,46 +301,43 @@ export function RefundModal({ order, open, onClose, onRefunded }: RefundModalPro
             </Button>
 
             {/* Email voucher */}
-            {!voucherEmailSent ? (
+            {customer?.email && voucherId && !voucherEmailSent ? (
               <div className="flex w-full gap-2">
                 <Input
                   type="email"
-                  placeholder="Email del cliente"
+                  aria-label="Email de envío del vale"
+                  readOnly
+                  disabled={voucherEmailSending}
+                  placeholder="Email de envío del vale"
                   value={voucherEmail}
                   onChange={(e) => setVoucherEmail(e.target.value)}
                 />
                 <Button
                   variant="outline"
+                  aria-label="Enviar vale por email"
                   disabled={!voucherEmail.includes('@') || voucherEmailSending}
                   onClick={async () => {
                     setVoucherEmailSending(true);
+                    setError(null);
                     try {
-                      await apiPost('/send-voucher', {
-                        email: voucherEmail,
-                        code: voucherCode,
-                        amount: refundAmount,
-                        orderName: order.name,
-                        customerName: order.customer
-                          ? `${order.customer.firstName} ${order.customer.lastName}`.trim()
-                          : undefined,
-                      });
-                    } catch {
-                      // TODO: implement email endpoint
+                      await apiPost('/vouchers/send-email', { id: voucherId, email: voucherEmail });
+                      setVoucherEmailSent(true);
+                    } catch (err) {
+                      setError(err instanceof Error ? err.message : 'No se ha podido enviar el vale');
                     } finally {
                       setVoucherEmailSending(false);
-                      setVoucherEmailSent(true);
                     }
                   }}
                 >
                   {voucherEmailSending ? <Loader2 className="size-4 animate-spin" /> : <Mail className="size-4" />}
                 </Button>
               </div>
-            ) : (
+            ) : voucherEmailSent ? (
               <div className="flex w-full items-center gap-2 rounded-sm bg-success/10 px-3 py-2 text-sm text-success">
                 <Mail className="size-4" />
-                Vale enviado a {voucherEmail}
+                Shopify ha aceptado el envío a {voucherEmail}
               </div>
-            )}
+            ) : <p className="text-sm text-muted-foreground">Puedes imprimir el vale. Para gestionar sus datos y el envío posteriormente, accede a Vales.</p>}
 
             <Button className="w-full" onClick={() => { setVoucherCode(null); setVoucherEmailSent(false); onRefunded(); }}>
               Cerrar
@@ -490,10 +507,24 @@ export function RefundModal({ order, open, onClose, onRefunded }: RefundModalPro
           </div>
           {method === 'VOUCHER' && (
             <div className="mt-2 rounded-lg border border-accent/50 bg-accent/10 px-3 py-2 text-xs text-foreground">
-              Se creará un vale (gift card) en Shopify por {formatCurrency(refundAmount, currencyCode)} a nombre del cliente.
+              Se creará un vale por {formatCurrency(refundAmount, currencyCode)}{registerCustomer ? ' y se registrará al nuevo cliente.' : customer ? ` asociado a ${customer.firstName} ${customer.lastName}.` : ' sin cliente asociado. Puedes seleccionar o registrar uno a continuación.'}
             </div>
           )}
         </div>
+
+        {method === 'VOUCHER' && <section className="space-y-3 rounded-lg border p-3">
+          <h3 className="text-sm font-semibold">Cliente del vale</h3>
+          {customer && !registerCustomer ? <div className="space-y-1 text-sm"><p>{customer.firstName} {customer.lastName}</p><p>{customer.email}</p><p>{customer.phone}</p><Button variant="outline" onClick={() => setCustomer(null)}>Cambiar cliente</Button></div> : <>
+            <div className="flex flex-wrap gap-2"><Button variant={registerCustomer ? 'outline' : 'default'} onClick={() => setRegisterCustomer(false)}>Buscar cliente</Button><Button variant={registerCustomer ? 'default' : 'outline'} onClick={() => setRegisterCustomer(true)}>Registrar cliente</Button></div>
+            {registerCustomer ? <div className="grid gap-3 sm:grid-cols-2">
+              {(['firstName', 'lastName', 'email', 'phone'] as const).map(key => <label key={key} className="space-y-1 text-sm">
+                <span>{{ firstName: 'Nombre', lastName: 'Apellidos', email: 'Email', phone: 'Teléfono' }[key]}</span>
+                <Input type={key === 'email' ? 'email' : key === 'phone' ? 'tel' : 'text'} value={newCustomer[key]} placeholder={key === 'phone' ? '+34607140250' : undefined} onChange={event => setNewCustomer({ ...newCustomer, [key]: event.target.value })} />
+              </label>)}
+              <p className="text-xs text-muted-foreground sm:col-span-2">Nombre y email o teléfono obligatorios. Se registrará al confirmar la devolución. Si ya existe, búscalo para seleccionarlo.</p>
+            </div> : <CustomerSearch onSelect={value => { setCustomer(value); setRegisterCustomer(false); }} />}
+          </>}
+        </section>}
 
         {/* Reason */}
         <div>
