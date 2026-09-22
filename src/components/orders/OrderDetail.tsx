@@ -1,3 +1,5 @@
+import { saleReceipt } from '../../utils/saleReceipt';
+import { printDocument } from '../../utils/print';
 import { useState, useEffect, useCallback } from 'react';
 import { shopifyGraphQL } from '../../utils/graphqlClient';
 import { ORDER_DETAIL } from '../../graphql/orders';
@@ -97,6 +99,16 @@ export function OrderDetailModal({ orderId, open, onClose, onUpdate }: OrderDeta
         shopifyGraphQL<OrderDetailResponse>(ORDER_DETAIL, { id }),
         apiGet<PosPayment[]>(`/payments/order/${encodeURIComponent(id)}`),
       ]);
+      const cursors = new Set<string>();
+      let pageInfo = data.order?.lineItems.pageInfo;
+      while (pageInfo?.hasNextPage) {
+        const after = pageInfo.endCursor;
+        if (!after || cursors.has(after)) throw new Error('No se han podido cargar todos los artículos del pedido');
+        cursors.add(after);
+        const next = await shopifyGraphQL<OrderDetailResponse>(ORDER_DETAIL, { id, after });
+        data.order.lineItems.edges.push(...next.order.lineItems.edges);
+        pageInfo = next.order.lineItems.pageInfo;
+      }
       setOrder(data.order);
       setPayments(movements);
     } catch (err) {
@@ -471,6 +483,19 @@ export function OrderDetailModal({ orderId, open, onClose, onUpdate }: OrderDeta
               {/* Actions */}
               <DialogFooter>
                 <div className="flex flex-wrap gap-2 w-full justify-end">
+                  <Button variant="outline" onClick={() => {
+                    const methods: Record<string, string> = { CASH: 'Efectivo', CARD: 'Tarjeta', BIZUM: 'Bizum', VOUCHER: 'Vale', MIXED: 'Mixto' };
+                    const printed = printDocument(saleReceipt({
+                      order: order.name,
+                      date: new Date(order.createdAt).toLocaleString('es-ES'),
+                      method: methods[posPaymentMethod] || 'No indicado',
+                      items: order.lineItems.edges.map(({ node }) => ({ title: node.title, variantTitle: node.variant?.title || '', quantity: node.quantity, price: 0 })),
+                      subtotal: 0, discountAmount: 0, taxAmount: 0, total: 0,
+                    }, true));
+                    if (!printed) setError('Permite las ventanas emergentes para imprimir el ticket regalo.');
+                  }}>
+                    <Ticket className="size-4" />Imprimir ticket regalo
+                  </Button>
                   {canMarkPaid && (
                     <Button
                       variant="default"

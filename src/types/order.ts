@@ -77,7 +77,7 @@ export interface OrderDetail {
     country: string;
     zip: string;
   };
-  lineItems: { edges: { node: OrderLineItem }[] };
+  lineItems: { edges: { node: OrderLineItem }[]; pageInfo?: { hasNextPage: boolean; endCursor: string | null } };
   refunds: OrderRefund[];
   transactions: {
     id: string;

@@ -167,7 +167,7 @@ export const ORDER_CANCEL = `
 `;
 
 export const ORDER_DETAIL = `
-  query OrderDetail($id: ID!) {
+  query OrderDetail($id: ID!, $after: String) {
     order(id: $id) {
       id name createdAt cancelledAt note tags
       displayFinancialStatus displayFulfillmentStatus
@@ -178,7 +178,8 @@ export const ORDER_DETAIL = `
       totalRefundedSet { shopMoney { amount currencyCode } }
       customer { id firstName lastName email phone }
       shippingAddress { address1 city province country zip }
-      lineItems(first: 50) {
+      lineItems(first: 50, after: $after) {
+        pageInfo { hasNextPage endCursor }
         edges {
           node {
             id title quantity
