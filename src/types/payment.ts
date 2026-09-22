@@ -10,6 +10,9 @@ export interface PosPayment {
   id: string;
   shopifyOrderId: string;
   shopifyOrderName: string;
+  exchangeId?: string;
+  originalOrderName?: string;
+  replacementOrderName?: string;
   method: PaymentMethod;
   amount: number;
   cashReceived?: number;

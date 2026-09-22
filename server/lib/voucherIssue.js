@@ -14,7 +14,7 @@ export async function issueVoucher(gql, store, operationId, input, fields) {
     const note = `${notes || `Vale POS MML${customerName ? ` - ${customerName}` : ''}`}\n---POS_META---\n${JSON.stringify(metadata)}`;
     const card = await ctx.step('voucher-create', async () => mutationResult(await gql(`mutation IssuePosVoucher($input: GiftCardCreateInput!) {
       giftCardCreate(input: $input) { giftCard { ${fields} } userErrors { message } }
-    }`, { input: { code: ctx.op.giftCardCode, initialValue: (cents(amount) / 100).toFixed(2), note } }), 'giftCardCreate', 'giftCard'), async () => {
+    }`, { input: { ...(input.customerId ? { customerId: input.customerId } : {}), code: ctx.op.giftCardCode, initialValue: (cents(amount) / 100).toFixed(2), note } }), 'giftCardCreate', 'giftCard'), async () => {
       let after = null;
       const cursors = new Set();
       const matches = [];

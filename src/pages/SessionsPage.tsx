@@ -145,6 +145,8 @@ export function SessionsPage() {
                   {[
                     { label: 'Pedidos de esta sesión', value: kpis.totalOrders.toString() },
                     { label: 'Ventas brutas', value: formatCurrency(kpis.grossSales) },
+                    { label: 'Devoluciones', value: formatCurrency(kpis.refunds) },
+                    { label: 'Aplicado en cambios', value: formatCurrency(kpis.exchangeSales || 0) },
                     { label: es.checkout.cash, value: formatCurrency(kpis.cashSales) },
                     { label: es.checkout.card, value: formatCurrency(kpis.cardSales) },
                     { label: es.checkout.bizum, value: formatCurrency(kpis.bizumSales) },
@@ -171,7 +173,7 @@ export function SessionsPage() {
               <summary className="cursor-pointer text-sm font-medium">Pedidos incluidos en esta sesión ({session.countedOrders.length})</summary>
               {session.countedOrders.length === 0 ? <p className="mt-2 text-sm text-muted-foreground">No hay ventas registradas en esta sesión.</p> : <div className="mt-2 max-h-72 overflow-auto">
                 <Table><TableHeader><TableRow><TableHead>Pedido</TableHead><TableHead>Fecha</TableHead><TableHead>Pago</TableHead><TableHead>Importe</TableHead></TableRow></TableHeader>
-                  <TableBody>{session.countedOrders.map((order, index) => <TableRow key={`${order.name}-${index}`}><TableCell>{order.name}</TableCell><TableCell>{formatDate(order.createdAt)}</TableCell><TableCell>{{ CASH: 'Efectivo', CARD: 'Tarjeta', BIZUM: 'Bizum', VOUCHER: 'Vale', MIXED: 'Mixto' }[order.method] || order.method}</TableCell><TableCell>{formatCurrency(order.amount)}</TableCell></TableRow>)}</TableBody>
+                  <TableBody>{session.countedOrders.map((order, index) => <TableRow key={`${order.name}-${index}`}><TableCell>{order.name}</TableCell><TableCell>{formatDate(order.createdAt)}</TableCell><TableCell>{{ CASH: 'Efectivo', CARD: 'Tarjeta', BIZUM: 'Bizum', VOUCHER: 'Vale', MIXED: 'Mixto', EXCHANGE: 'Cambio de artículos' }[order.method] || order.method}</TableCell><TableCell>{formatCurrency(order.amount)}</TableCell></TableRow>)}</TableBody>
                 </Table>
               </div>}
             </details>}

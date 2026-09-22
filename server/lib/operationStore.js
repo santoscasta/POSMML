@@ -59,8 +59,8 @@ export function createOperationStore(directory) {
       }
       if (op?.result) return op.result;
       // Do not let a new refund key bypass a previous incomplete refund.
-      const pending = Object.values(state.operations).find(o => !o.result && o.kind === 'refund' && o.input.orderId === input.orderId && o.key !== key);
-      if (kind === 'refund' && pending) throw new PosError(`Reanuda la devolución pendiente ${pending.key}`, 409, 'PENDING');
+      const pending = Object.values(state.operations).find(o => !o.result && ['refund', 'exchange'].includes(o.kind) && (o.input.orderId === input.orderId || Object.values(o.children || {}).some(child => child.steps?.['draft-complete']?.value?.order?.id === input.orderId)) && o.key !== key);
+      if (['refund', 'exchange'].includes(kind) && pending) throw new PosError(`Reanuda la devolución pendiente ${pending.key}`, 409, 'PENDING');
       if (kind === 'voucher_issue' && Object.values(state.operations).some(o => o.kind === kind && !o.result && o.key !== key)) {
         throw new PosError('Reanuda la emisión de vale pendiente desde Operaciones pendientes.', 409, 'PENDING');
       }

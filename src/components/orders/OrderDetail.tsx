@@ -6,6 +6,7 @@ import { ORDER_DETAIL } from '../../graphql/orders';
 import { apiGet, apiPost } from '../../utils/apiClient';
 import type { PosPayment } from '../../types/payment';
 import { formatCurrency } from '../../utils/currency';
+import { ExchangeModal } from './ExchangeModal';
 import { RefundModal } from './RefundModal';
 import {
   Dialog,
@@ -88,6 +89,7 @@ export function OrderDetailModal({ orderId, open, onClose, onUpdate }: OrderDeta
   const [loading, setLoading] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [exchangeOpen, setExchangeOpen] = useState(false);
   const [refundOpen, setRefundOpen] = useState(false);
   const [payments, setPayments] = useState<PosPayment[]>([]);
 
@@ -281,7 +283,7 @@ export function OrderDetailModal({ orderId, open, onClose, onUpdate }: OrderDeta
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Método de pago</span>
                       <span className="font-medium">
-                        {posPaymentMethod === 'CASH' ? 'Efectivo' : posPaymentMethod === 'CARD' ? 'Tarjeta' : posPaymentMethod === 'BIZUM' ? 'Bizum' : posPaymentMethod === 'VOUCHER' ? 'Vale' : posPaymentMethod === 'MIXED' ? 'Mixto' : posPaymentMethod}
+                        {posPaymentMethod === 'CASH' ? 'Efectivo' : posPaymentMethod === 'CARD' ? 'Tarjeta' : posPaymentMethod === 'BIZUM' ? 'Bizum' : posPaymentMethod === 'VOUCHER' ? 'Vale' : posPaymentMethod === 'MIXED' ? 'Mixto' : posPaymentMethod === 'EXCHANGE' ? 'Cambio de artículos' : posPaymentMethod}
                       </span>
                     </div>
                     {posVoucherCode && (
@@ -297,7 +299,7 @@ export function OrderDetailModal({ orderId, open, onClose, onUpdate }: OrderDeta
                       <div className="flex justify-between">
                         <span className="text-muted-foreground">Método reembolso</span>
                         <span className="font-medium">
-                          {posRefundMethod === 'CASH' ? 'Efectivo' : posRefundMethod === 'CARD' ? 'Tarjeta' : posRefundMethod === 'VOUCHER' ? 'Vale' : posRefundMethod}
+                          {posRefundMethod === 'CASH' ? 'Efectivo' : posRefundMethod === 'CARD' ? 'Tarjeta' : posRefundMethod === 'VOUCHER' ? 'Vale' : posRefundMethod === 'EXCHANGE' ? 'Cambio de artículos' : posRefundMethod}
                         </span>
                       </div>
                     )}
@@ -480,11 +482,15 @@ export function OrderDetailModal({ orderId, open, onClose, onUpdate }: OrderDeta
                 </div>
               )}
 
+              {payments.some(p => p.exchangeId) && <section className="space-y-2 rounded border p-3 text-sm">
+                <h3 className="font-semibold">Cambios vinculados</h3>
+                {Array.from(new Map(payments.filter(p => p.exchangeId).map(p => [p.exchangeId, p])).values()).map(p => <p key={p.exchangeId}>Pedido original {p.originalOrderName} → Nuevo pedido {p.replacementOrderName}</p>)}
+              </section>}
               {/* Actions */}
               <DialogFooter>
                 <div className="flex flex-wrap gap-2 w-full justify-end">
                   <Button variant="outline" onClick={() => {
-                    const methods: Record<string, string> = { CASH: 'Efectivo', CARD: 'Tarjeta', BIZUM: 'Bizum', VOUCHER: 'Vale', MIXED: 'Mixto' };
+                    const methods: Record<string, string> = { CASH: 'Efectivo', CARD: 'Tarjeta', BIZUM: 'Bizum', VOUCHER: 'Vale', MIXED: 'Mixto', EXCHANGE: 'Cambio de artículos' };
                     const printed = printDocument(saleReceipt({
                       order: order.name,
                       date: new Date(order.createdAt).toLocaleString('es-ES'),
@@ -516,6 +522,7 @@ export function OrderDetailModal({ orderId, open, onClose, onUpdate }: OrderDeta
                       Marcar como enviado
                     </Button>
                   )}
+                  {canRefund && <Button variant="outline" disabled={actionLoading} onClick={() => setExchangeOpen(true)}>Cambiar artículos</Button>}
                   {canRefund && (
                     <Button
                       variant="destructive"
@@ -543,6 +550,7 @@ export function OrderDetailModal({ orderId, open, onClose, onUpdate }: OrderDeta
         </DialogContent>
       </Dialog>
 
+      {exchangeOpen && order && <ExchangeModal order={order} onClose={() => setExchangeOpen(false)} onDone={() => { setExchangeOpen(false); onUpdate(); }} />}
       {refundOpen && order && (
         <RefundModal
           order={order}

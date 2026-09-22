@@ -41,7 +41,7 @@ function movement(ctx, value) {
   return entry;
 }
 
-export function createPosService(gql, store) {
+export function createPosService(gql, store, { exchange = false } = {}) {
   const operationTag = key => `pos-op-${key.replaceAll('-', '').slice(0, 24)}`;
   async function session(ctx) {
     if (!ctx.op.sessionId) {
@@ -106,7 +106,7 @@ export function createPosService(gql, store) {
   async function checkout(key, input) {
     return store.operation(key, 'checkout', input, async ctx => {
       const { cart, payment } = input;
-      const splits = paymentSplits(payment);
+      const splits = paymentSplits(payment, exchange);
       if (!cart?.items?.length || cart.items.some(i => !/^gid:\/\/shopify\/ProductVariant\/\d+$/.test(i.variantId) || !Number.isInteger(i.quantity) || i.quantity <= 0 || !Number.isFinite(i.price) || i.price < 0)) throw new PosError('Carrito inválido');
       cart.items.forEach(i => cents(i.price));
       const sessionId = await session(ctx);
@@ -199,7 +199,7 @@ export function createPosService(gql, store) {
 
   async function refund(key, input) {
     return store.operation(key, 'refund', input, async ctx => {
-      if (!/^gid:\/\/shopify\/Order\/\d+$/.test(input.orderId) || !['CASH', 'CARD', 'VOUCHER'].includes(input.method) || cents(input.amount) <= 0) throw new PosError('Devolución inválida');
+      if (!/^gid:\/\/shopify\/Order\/\d+$/.test(input.orderId) || !['CASH', 'CARD', 'VOUCHER', ...(exchange ? ['EXCHANGE'] : [])].includes(input.method) || cents(input.amount) <= 0) throw new PosError('Devolución inválida');
       const sessionId = await session(ctx);
       if (!ctx.op.refundInput) {
         const data = await gql(`query PosRefundOrder($id: ID!) {

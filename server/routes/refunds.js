@@ -4,7 +4,15 @@ import { getStore, PosError } from '../lib/operationStore.js';
 import { createPosService } from '../lib/posService.js';
 import { sendOperationError } from './payments.js';
 
+import { quoteExchange, exchangeItems } from '../lib/exchange.js';
+
 const router = Router();
+router.post('/exchanges/quote', async (req, res) => {
+  try { res.json(await quoteExchange(shopifyGQL, req.body)); } catch (error) { sendOperationError(res, error); }
+});
+router.post('/exchanges', async (req, res) => {
+  try { const { operationId, ...input } = req.body; res.json(await exchangeItems(shopifyGQL, getStore(), operationId, input)); } catch (error) { sendOperationError(res, error); }
+});
 router.post('/refunds', async (req, res) => {
   try {
     const { operationId, ...input } = req.body;
@@ -29,7 +37,7 @@ router.get('/locations', async (req, res) => {
 
 function assertOrderIdle(orderId) {
   const pending = Object.values(getStore().read().operations).find(op => !op.result &&
-    (op.input.orderId === orderId || op.steps['draft-complete']?.value?.order?.id === orderId));
+    (op.input.orderId === orderId || op.steps['draft-complete']?.value?.order?.id === orderId || Object.values(op.children || {}).some(child => child.steps?.['draft-complete']?.value?.order?.id === orderId)));
   if (pending) throw new PosError(`Reanuda primero la operación pendiente ${pending.key}`, 409);
 }
 

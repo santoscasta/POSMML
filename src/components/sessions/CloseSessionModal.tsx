@@ -27,6 +27,7 @@ function methodLabel(m: string) {
     case 'BIZUM': return 'Bizum';
     case 'VOUCHER': return 'Vale';
     case 'MIXED': return 'Mixto';
+    case 'EXCHANGE': return 'Cambio de artículos';
     default: return m;
   }
 }
@@ -124,6 +125,7 @@ export function CloseSessionModal({ open, onClose }: CloseSessionModalProps) {
       <div class="row"><span>Ventas en efectivo</span><span>${formatCurrency(rKpis.cashSales || 0)}</span></div>
       <div class="row"><span>Ventas con tarjeta</span><span>${formatCurrency(rKpis.cardSales || 0)}</span></div>
       <div class="row"><span>Ventas Bizum</span><span>${formatCurrency(rKpis.bizumSales || 0)}</span></div>
+      <div class="row"><span>Aplicado en cambios</span><span>${formatCurrency(rKpis.exchangeSales || 0)}</span></div>
       <div class="row"><span>Ventas con vale</span><span>${formatCurrency(rKpis.voucherSales || 0)}</span></div>
       <div class="line"></div>
       <div class="row bold"><span>Ventas brutas</span><span>${formatCurrency(rKpis.grossSales || 0)}</span></div>

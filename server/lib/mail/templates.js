@@ -9,7 +9,7 @@ export function closingMessage(session, kpis) {
   return message(`Cierre de caja · ${session.cashierName || 'Tienda'}`, [
     `Caja: ${session.id}`, `Apertura: ${session.openedAt || 'No registrada'}`, `Cierre: ${session.closedAt}`,
     `Fondo inicial: ${money(session.openingAmount)}`, `Ventas: ${kpis.totalOrders} · ${money(kpis.grossSales)}`,
-    `Efectivo: ${money(kpis.cashSales)} · Tarjeta: ${money(kpis.cardSales)} · Bizum: ${money(kpis.bizumSales)} · Vale: ${money(kpis.voucherSales)}`,
+    `Efectivo: ${money(kpis.cashSales)} · Tarjeta: ${money(kpis.cardSales)} · Bizum: ${money(kpis.bizumSales)} · Vale: ${money(kpis.voucherSales)} · Aplicado en cambios: ${money(kpis.exchangeSales || 0)}`,
     `Devoluciones: ${money(kpis.refunds)} (efectivo: ${money(kpis.refundsCash)})`,
     `Efectivo esperado: ${money(kpis.expectedCash)}`,
     forced ? 'Cierre forzado: no se ha registrado un recuento de efectivo.' : `Efectivo contado: ${money(session.closingAmount)} · Diferencia: ${money(Number(session.closingAmount) - kpis.expectedCash)}`,

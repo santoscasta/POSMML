@@ -9,8 +9,9 @@ export function cents(value) {
   return Math.round(number * 100);
 }
 
-export function paymentSplits(payment) {
+export function paymentSplits(payment, allowExchange = false) {
   const methods = ['CASH', 'CARD', 'BIZUM', 'VOUCHER'];
+  if (allowExchange) methods.push('EXCHANGE');
   const amount = cents(payment.amount);
   const splits = payment.method === 'MIXED' ? payment.mixedPayments : [{ method: payment.method, amount: payment.amount, voucherCode: payment.voucherCode }];
   if (!Array.isArray(splits) || !splits.length) throw new PosError('Falta el desglose del pago mixto');
@@ -28,7 +29,7 @@ export function paymentSplits(payment) {
 }
 
 export function computeKPIs(movements, openingAmount = 0) {
-  const totals = { CASH: 0, CARD: 0, BIZUM: 0, VOUCHER: 0 };
+  const totals = { CASH: 0, CARD: 0, BIZUM: 0, VOUCHER: 0, EXCHANGE: 0 };
   let gross = 0, refunds = 0, refundsCash = 0, totalOrders = 0;
   for (const movement of movements) {
     if (movement.accountingError) throw new PosError(movement.accountingError, 409, 'LEGACY_RECONCILIATION_REQUIRED');
@@ -53,6 +54,7 @@ export function computeKPIs(movements, openingAmount = 0) {
     totalOrders, grossSales: gross / 100, refunds: refunds / 100,
     cashSales: totals.CASH / 100, cardSales: totals.CARD / 100,
     bizumSales: totals.BIZUM / 100, voucherSales: totals.VOUCHER / 100,
+    ...(totals.EXCHANGE ? { exchangeSales: totals.EXCHANGE / 100 } : {}),
     refundsCash: refundsCash / 100,
     expectedCash: (cents(openingAmount || 0) + totals.CASH - refundsCash) / 100,
   };

@@ -25,6 +25,7 @@ export interface SessionKPIs {
   cardSales: number;
   bizumSales: number;
   voucherSales: number;
+  exchangeSales?: number;
   refunds: number;
   refundsCash: number;
   expectedCash: number;
