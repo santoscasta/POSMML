@@ -400,6 +400,7 @@ Please change the parent <Route path="${g}"> to <Route path="${g==="/"?"*":`${g}
   * { box-sizing: border-box; color: #000 !important; }
   body { width: 72mm; max-width: 100%; margin: 0 auto; padding: 3mm; font: 14px/1.35 Arial, sans-serif; }
   .center, .footer { text-align: center; }
+  .receipt-logo { display: block; width: 52mm; max-width: 100%; height: auto; margin: 0 auto 2mm; filter: grayscale(1) brightness(0.7) contrast(10); }
   .brand, .total { font-size: 18px; font-weight: bold; }
   .line { border-top: 1px dashed #000; margin: 8px 0; }
   .row { display: flex; justify-content: space-between; gap: 8px; padding: 2px 0; }
@@ -409,10 +410,9 @@ Please change the parent <Route path="${g}"> to <Route path="${g==="/"?"*":`${g}
   .footer { margin-top: 12px; font-size: 12px; }
   .code { font: bold 18px monospace; overflow-wrap: anywhere; }
   @media screen { body { padding-top: 16px; } }
-`;function _c(e){const t=window.open("","_blank","width=400,height=700");return t?(t.document.open(),t.document.write(e),t.document.close(),t.document.fonts.ready.then(()=>{t.closed||(t.focus(),t.print())}),!0):!1}function jv(e,t=!1){const n=(a,l)=>`<div class="row"><span>${a}</span><span>${l}</span></div>`;return`<!DOCTYPE html><html lang="es"><head><title>Ticket${t?" regalo":""} ${Wn(e.order)}</title>
+`;function _c(e){const t=window.open("","_blank","width=400,height=700");if(!t)return!1;t.document.open(),t.document.write(e),t.document.close();const n=Array.from(t.document.images).map(async a=>{try{await a.decode()}catch{const l=t.document.createElement("div");l.className="center brand",l.textContent=a.alt,a.replaceWith(l)}});return Promise.all([t.document.fonts.ready,...n]).then(()=>{t.closed||(t.focus(),t.print())}),!0}function jv(e,t=!1){const n=(a,l)=>`<div class="row"><span>${a}</span><span>${l}</span></div>`;return`<!DOCTYPE html><html lang="es"><head><title>Ticket${t?" regalo":""} ${Wn(e.order)}</title>
     <style>${Yh}</style></head><body>
-    <div class="center brand">My mini Leo</div>
-    <div class="center">Clothes for your baby</div>
+    <div class="center"><img class="receipt-logo" src="/logo-myminileo.jpg" alt="My mini Leo" /></div>
     <div class="line"></div>
     <div>Calle Asunción 38A<br/>41011 Sevilla<br/>España<br/>Teléfono: 607140250<br/>Instagram: @myminileo</div>
     <div class="line"></div>

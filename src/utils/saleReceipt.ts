@@ -17,8 +17,7 @@ export function saleReceipt(data: ReceiptData, gift = false) {
   const row = (label: string, value: string) => `<div class="row"><span>${label}</span><span>${value}</span></div>`;
   return `<!DOCTYPE html><html lang="es"><head><title>Ticket${gift ? ' regalo' : ''} ${escapeHtml(data.order)}</title>
     <style>${thermalStyles}</style></head><body>
-    <div class="center brand">My mini Leo</div>
-    <div class="center">Clothes for your baby</div>
+    <div class="center"><img class="receipt-logo" src="/logo-myminileo.jpg" alt="My mini Leo" /></div>
     <div class="line"></div>
     <div>Calle Asunción 38A<br/>41011 Sevilla<br/>España<br/>Teléfono: 607140250<br/>Instagram: @myminileo</div>
     <div class="line"></div>

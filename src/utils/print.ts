@@ -5,6 +5,7 @@ export const thermalStyles = `
   * { box-sizing: border-box; color: #000 !important; }
   body { width: 72mm; max-width: 100%; margin: 0 auto; padding: 3mm; font: 14px/1.35 Arial, sans-serif; }
   .center, .footer { text-align: center; }
+  .receipt-logo { display: block; width: 52mm; max-width: 100%; height: auto; margin: 0 auto 2mm; filter: grayscale(1) brightness(0.7) contrast(10); }
   .brand, .total { font-size: 18px; font-weight: bold; }
   .line { border-top: 1px dashed #000; margin: 8px 0; }
   .row { display: flex; justify-content: space-between; gap: 8px; padding: 2px 0; }
@@ -22,8 +23,17 @@ export function printDocument(html: string) {
   popup.document.open();
   popup.document.write(html);
   popup.document.close();
-  // Wait for the document and fonts before opening the browser print dialog.
-  void popup.document.fonts.ready.then(() => {
+  // Image decoding must finish before printing, including on a cold cache.
+  const imagesReady = Array.from(popup.document.images).map(async image => {
+    try { await image.decode(); }
+    catch {
+      const fallback = popup.document.createElement('div');
+      fallback.className = 'center brand';
+      fallback.textContent = image.alt;
+      image.replaceWith(fallback);
+    }
+  });
+  void Promise.all([popup.document.fonts.ready, ...imagesReady]).then(() => {
     if (!popup.closed) { popup.focus(); popup.print(); }
   });
   return true;
