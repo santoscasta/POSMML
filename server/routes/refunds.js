@@ -4,7 +4,7 @@ import { getStore, PosError } from '../lib/operationStore.js';
 import { createPosService } from '../lib/posService.js';
 import { sendOperationError } from './payments.js';
 
-import { quoteExchange, exchangeItems } from '../lib/exchange.js';
+import { quoteExchange, exchangeItems, getExchangeReceipt } from '../lib/exchange.js';
 
 const router = Router();
 router.post('/exchanges/quote', async (req, res) => {
@@ -12,6 +12,9 @@ router.post('/exchanges/quote', async (req, res) => {
 });
 router.post('/exchanges', async (req, res) => {
   try { const { operationId, ...input } = req.body; res.json(await exchangeItems(shopifyGQL, getStore(), operationId, input)); } catch (error) { sendOperationError(res, error); }
+});
+router.get('/exchanges/:exchangeId/receipt', async (req, res) => {
+  try { res.json(await getExchangeReceipt(shopifyGQL, getStore(), req.params.exchangeId)); } catch (error) { sendOperationError(res, error); }
 });
 router.post('/refunds', async (req, res) => {
   try {

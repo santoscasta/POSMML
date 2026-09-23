@@ -4,7 +4,10 @@ import type { Product } from '../../types/product';
 import { useProducts } from '../../hooks/useProducts';
 import { apiGet, apiPost, ApiError } from '../../utils/apiClient';
 import { formatCurrency } from '../../utils/currency';
-import { printDocument, escapeHtml, thermalStyles } from '../../utils/print';
+import { printDocument } from '../../utils/print';
+import { exchangeReceipt, exchangeVoucherReceipt, type ExchangeReceiptData } from '../../utils/exchangeReceipt';
+import { CustomerSearch } from '../customers/CustomerSearch';
+import type { Customer } from '../../types/customer';
 import { useSession } from '../../context/SessionContext';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../ui/dialog';
 import { Button } from '../ui/button';
@@ -12,8 +15,9 @@ import { Input } from '../ui/input';
 
 interface Item { variantId: string; quantity: number; title: string }
 interface Quote { token: string; credit: number; total: number; due: number; voucher: number }
-interface Attempt { operationId: string; orderId: string; refundLineItems: { lineItemId: string; quantity: number }[]; items: { variantId: string; quantity: number }[]; restock: boolean; locationId?: string; quoteToken: string; method: string; cashReceived?: number }
-interface Result { name: string; due: number; change: number; voucher?: { id: string; code: string; amount: number } }
+interface NewCustomer { firstName: string; lastName: string; email: string; phone: string }
+interface Attempt { operationId: string; orderId: string; refundLineItems: { lineItemId: string; quantity: number }[]; items: { variantId: string; quantity: number }[]; restock: boolean; locationId?: string; quoteToken: string; method: string; cashReceived?: number; customerId?: string; newCustomer?: NewCustomer }
+interface Result { name: string; due: number; change: number; receipt: ExchangeReceiptData; voucher?: { id: string; code: string; amount: number } }
 export function ExchangeModal({ order, onClose, onDone }: { order: OrderDetail; onClose: () => void; onDone: () => void }) {
   const storageKey = `pos.pending-exchange.v1:${order.id}`;
   const [pending, setPending] = useState<Attempt | null>(() => { const saved = localStorage.getItem(storageKey); return saved ? JSON.parse(saved) : null; });
@@ -29,6 +33,11 @@ export function ExchangeModal({ order, onClose, onDone }: { order: OrderDetail; 
   const active = useRef(false);
   const [error, setError] = useState('');
   const [result, setResult] = useState<Result | null>(null);
+  const [customer, setCustomer] = useState<Customer | null>(() => order.customer ? {
+    ...order.customer, email: order.customer.email || '', phone: order.customer.phone || null,
+  } : null);
+  const [registerCustomer, setRegisterCustomer] = useState(false);
+  const [newCustomer, setNewCustomer] = useState<NewCustomer>({ firstName: '', lastName: '', email: '', phone: '' });
   const { refresh } = useSession();
   const { products, loading, error: productError, setSearchQuery, searchQuery, retry } = useProducts(false);
   useEffect(() => { let alive = true; void apiGet<{ id: string; name: string }[]>('/locations').then(rows => { if (alive) { setLocations(rows); setLocationId(rows[0]?.id || ''); } }).catch(() => { if (alive) setError('No se han podido cargar las ubicaciones de reposición'); }); return () => { alive = false; }; }, []);
@@ -47,7 +56,13 @@ export function ExchangeModal({ order, onClose, onDone }: { order: OrderDetail; 
     if (active.current || (!pending && !quote)) return;
     active.current = true; setBusy(true); setError('');
     try {
-      const attempt: Attempt = pending || { ...selection, operationId: crypto.randomUUID(), quoteToken: quote!.token, method, ...(method === 'CASH' ? { cashReceived: Number(cashReceived) } : {}) };
+      if (!pending && quote!.voucher > 0 && !customer && !registerCustomer) throw new Error('Selecciona o registra el cliente al que se asociará el vale');
+      if (!pending && quote!.voucher > 0 && registerCustomer && (!newCustomer.firstName.trim() || (!newCustomer.email.trim() && !newCustomer.phone.trim()))) throw new Error('Indica el nombre y un email o teléfono del cliente');
+      const attempt: Attempt = pending || {
+        ...selection, operationId: crypto.randomUUID(), quoteToken: quote!.token, method,
+        ...(method === 'CASH' ? { cashReceived: Number(cashReceived) } : {}),
+        ...(quote!.voucher > 0 ? registerCustomer ? { newCustomer } : customer ? { customerId: customer.id } : {} : {}),
+      };
       localStorage.setItem(storageKey, JSON.stringify(attempt)); setPending(attempt);
       const completed = await apiPost<Result>('/exchanges', attempt);
       localStorage.removeItem(storageKey); setPending(null); setResult(completed);
@@ -65,8 +80,9 @@ export function ExchangeModal({ order, onClose, onDone }: { order: OrderDetail; 
         <p role="status">Cambio completado. Nuevo pedido {result.name}.</p>
         <p>{result.due > 0 ? `Diferencia cobrada: ${formatCurrency(result.due)}` : 'Sin cobro adicional.'}</p>
         {result.change > 0 && <p>Cambio en efectivo: {formatCurrency(result.change)}</p>}
-        {result.voucher && <div className="space-y-2 rounded border p-3"><p>Vale por la diferencia: {formatCurrency(result.voucher.amount)}</p><p className="break-all font-mono font-bold">{result.voucher.code}</p>
-          <Button variant="outline" onClick={() => { const v = result.voucher!; if (!printDocument(`<html lang="es"><head><title>Vale de cambio</title><style>${thermalStyles}</style></head><body><img class="receipt-logo" src="/logo-myminileo.jpg" alt="My mini Leo"/><h2>Vale de cambio</h2><p class="code">${escapeHtml(v.code)}</p><p>${formatCurrency(v.amount)}</p><p>Pedido original: ${escapeHtml(order.name)}</p><p>Nuevo pedido: ${escapeHtml(result.name)}</p></body></html>`)) setError('Permite las ventanas emergentes para imprimir'); }}>Imprimir vale</Button>
+        <Button className="w-full" onClick={() => { if (!printDocument(exchangeReceipt(result.receipt))) setError('Permite las ventanas emergentes para imprimir el ticket del cambio'); }}>Imprimir ticket del cambio</Button>
+        {result.voucher && <div className="space-y-2 rounded border p-3"><p>Vale asociado a {result.receipt.customer ? `${result.receipt.customer.firstName || ''} ${result.receipt.customer.lastName || ''}`.trim() : 'cliente'}</p><p>Importe: {formatCurrency(result.voucher.amount)}</p><p className="break-all font-mono font-bold">{result.voucher.code}</p>
+          <Button variant="outline" onClick={() => { if (!printDocument(exchangeVoucherReceipt(result.receipt))) setError('Permite las ventanas emergentes para imprimir el vale'); }}>Imprimir vale completo</Button>
         </div>}
         <Button onClick={onDone}>Cerrar</Button>
       </div> : pending ? <div className="space-y-3"><p role="status">Hay un cambio pendiente. Reanudar conserva los artículos y el pago originales. No vuelvas a cobrar la diferencia.</p><Button disabled={busy} onClick={confirm}>{busy ? 'Procesando…' : 'Reanudar cambio'}</Button></div> : <>
@@ -85,8 +101,15 @@ export function ExchangeModal({ order, onClose, onDone }: { order: OrderDetail; 
           </section>
           <Button variant="outline" disabled={!selectedReturns.length || !items.length || (restock && !locationId)} onClick={calculate}>Calcular diferencia</Button>
           {quote && <section className="space-y-3 rounded border bg-muted/30 p-3"><h3 className="font-semibold">3. Confirmar el cambio</h3><p>Valor de la devolución: {formatCurrency(quote.credit)}</p><p>Nuevos artículos: {formatCurrency(quote.total)}</p><p className="font-semibold">{quote.due > 0 ? `A cobrar: ${formatCurrency(quote.due)}` : quote.voucher > 0 ? `Vale a emitir: ${formatCurrency(quote.voucher)}` : 'Mismo importe: sin cobro y sin vale'}</p>
+            {quote.voucher > 0 && <div className="space-y-3 rounded border bg-white p-3">
+              <h4 className="font-semibold">Cliente del vale</h4>
+              {customer && !registerCustomer ? <div className="space-y-1 text-sm"><p>{customer.firstName} {customer.lastName}</p>{customer.email && <p>{customer.email}</p>}{customer.phone && <p>{customer.phone}</p>}<Button variant="outline" onClick={() => setCustomer(null)}>Cambiar cliente</Button></div> : <>
+                <div className="flex flex-wrap gap-2"><Button variant={registerCustomer ? 'outline' : 'default'} onClick={() => setRegisterCustomer(false)}>Buscar cliente</Button><Button variant={registerCustomer ? 'default' : 'outline'} onClick={() => setRegisterCustomer(true)}>Registrar cliente</Button></div>
+                {registerCustomer ? <div className="grid gap-3 sm:grid-cols-2">{(['firstName', 'lastName', 'email', 'phone'] as const).map(key => <label key={key} className="space-y-1 text-sm"><span>{{ firstName: 'Nombre', lastName: 'Apellidos', email: 'Email', phone: 'Teléfono' }[key]}</span><Input type={key === 'email' ? 'email' : key === 'phone' ? 'tel' : 'text'} value={newCustomer[key]} placeholder={key === 'phone' ? '+34607140250' : undefined} onChange={event => setNewCustomer({ ...newCustomer, [key]: event.target.value })} /></label>)}<p className="text-xs text-muted-foreground sm:col-span-2">Nombre y email o teléfono obligatorios. El vale quedará asociado a su ficha.</p></div> : <CustomerSearch onSelect={selected => { setCustomer(selected); setRegisterCustomer(false); }} />}
+              </>}
+            </div>}
             {quote.due > 0 && <><label className="block text-sm">Método de pago<select className="mt-1 w-full rounded border p-2" value={method} onChange={e => setMethod(e.target.value)}><option value="CARD">Tarjeta</option><option value="CASH">Efectivo</option><option value="BIZUM">Bizum</option></select></label>{method === 'CASH' ? <label className="block text-sm">Efectivo recibido<Input type="number" min={quote.due} step="0.01" value={cashReceived} onChange={e => setCashReceived(e.target.value)} /></label> : <p className="text-sm">Confirma después de cobrar la diferencia por {method === 'CARD' ? 'tarjeta' : 'Bizum'}.</p>}</>}
-            <Button disabled={quote.due > 0 && method === 'CASH' && Number(cashReceived) < quote.due} onClick={confirm}>Confirmar cambio</Button>
+            <Button disabled={(quote.due > 0 && method === 'CASH' && Number(cashReceived) < quote.due) || (quote.voucher > 0 && !customer && !registerCustomer)} onClick={confirm}>Confirmar cambio</Button>
           </section>}
         </fieldset>
       </>}

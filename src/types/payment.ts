@@ -13,6 +13,7 @@ export interface PosPayment {
   exchangeId?: string;
   originalOrderName?: string;
   replacementOrderName?: string;
+  exchangeReceipt?: import('../utils/exchangeReceipt').ExchangeReceiptData;
   method: PaymentMethod;
   amount: number;
   cashReceived?: number;

@@ -3,9 +3,10 @@ export const escapeHtml = (value: string) => value.replace(/[&<>"']/g, c => ({ '
 export const thermalStyles = `
   @page { margin: 0; }
   * { box-sizing: border-box; color: #000 !important; }
-  body { width: 72mm; max-width: 100%; margin: 0 auto; padding: 3mm; font: 14px/1.35 Arial, sans-serif; }
+  /* Rollos de 70 mm: dejamos 3 mm de margen a cada lado para evitar recortes. */
+  body { width: 70mm; max-width: 100%; margin: 0 auto; padding: 3mm; font: 14px/1.35 Arial, sans-serif; }
   .center, .footer { text-align: center; }
-  .receipt-logo { display: block; width: 52mm; max-width: 100%; height: auto; margin: 0 auto 2mm; filter: grayscale(1) brightness(0.7) contrast(10); }
+  .receipt-logo { display: block; width: 64mm; max-width: 100%; height: auto; margin: 0 auto 2mm; filter: grayscale(1) brightness(0.7) contrast(10); }
   .brand, .total { font-size: 18px; font-weight: bold; }
   .line { border-top: 1px dashed #000; margin: 8px 0; }
   .row { display: flex; justify-content: space-between; gap: 8px; padding: 2px 0; }

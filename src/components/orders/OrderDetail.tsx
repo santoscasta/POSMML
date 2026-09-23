@@ -1,5 +1,6 @@
 import { saleReceipt } from '../../utils/saleReceipt';
 import { printDocument } from '../../utils/print';
+import { exchangeReceipt, exchangeVoucherReceipt } from '../../utils/exchangeReceipt';
 import { useState, useEffect, useCallback } from 'react';
 import { shopifyGraphQL } from '../../utils/graphqlClient';
 import { ORDER_DETAIL } from '../../graphql/orders';
@@ -45,6 +46,8 @@ interface OrderDetailModalProps {
   onClose: () => void;
   onUpdate: () => void;
 }
+
+type ExchangeReceiptData = import('../../utils/exchangeReceipt').ExchangeReceiptData;
 
 function financialBadgeVariant(status: string) {
   switch (status) {
@@ -112,7 +115,16 @@ export function OrderDetailModal({ orderId, open, onClose, onUpdate }: OrderDeta
         pageInfo = next.order.lineItems.pageInfo;
       }
       setOrder(data.order);
-      setPayments(movements);
+      const receiptByExchange = new Map<string, ExchangeReceiptData>();
+      for (const movement of movements) if (movement.exchangeId && movement.exchangeReceipt) receiptByExchange.set(movement.exchangeId, movement.exchangeReceipt);
+      const missing = [...new Set(movements.filter(movement => movement.exchangeId && !receiptByExchange.has(movement.exchangeId)).map(movement => movement.exchangeId!))];
+      await Promise.all(missing.map(async exchangeId => {
+        try { receiptByExchange.set(exchangeId, await apiGet<ExchangeReceiptData>(`/exchanges/${encodeURIComponent(exchangeId)}/receipt`)); }
+        catch { /* The buttons keep a retry path and display the server error. */ }
+      }));
+      setPayments(movements.map(movement => movement.exchangeId && receiptByExchange.has(movement.exchangeId)
+        ? { ...movement, exchangeReceipt: receiptByExchange.get(movement.exchangeId) }
+        : movement));
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error al cargar el pedido');
     } finally {
@@ -484,7 +496,24 @@ export function OrderDetailModal({ orderId, open, onClose, onUpdate }: OrderDeta
 
               {payments.some(p => p.exchangeId) && <section className="space-y-2 rounded border p-3 text-sm">
                 <h3 className="font-semibold">Cambios vinculados</h3>
-                {Array.from(new Map(payments.filter(p => p.exchangeId).map(p => [p.exchangeId, p])).values()).map(p => <p key={p.exchangeId}>Pedido original {p.originalOrderName} → Nuevo pedido {p.replacementOrderName}</p>)}
+                {Array.from(new Map(payments.filter(p => p.exchangeId).map(p => [p.exchangeId, p])).values()).map(p => {
+                  const loadReceipt = async (): Promise<ExchangeReceiptData | null> => {
+                    try { return p.exchangeReceipt || await apiGet<ExchangeReceiptData>(`/exchanges/${encodeURIComponent(p.exchangeId!)}/receipt`); }
+                    catch (cause) { setError(cause instanceof Error ? cause.message : 'No se ha podido recuperar el ticket del cambio'); return null; }
+                  };
+                  return <div className="space-y-2" key={p.exchangeId}>
+                    <p>Pedido original {p.originalOrderName} → Nuevo pedido {p.replacementOrderName}</p>
+                    <div className="flex flex-wrap gap-2">
+                      <Button variant="outline" onClick={async () => { const receipt = await loadReceipt(); if (receipt && !printDocument(exchangeReceipt(receipt))) setError('Permite las ventanas emergentes para imprimir el ticket del cambio'); }}>Imprimir ticket del cambio</Button>
+                      <Button variant="outline" onClick={async () => {
+                        const receipt = await loadReceipt();
+                        if (!receipt) return;
+                        if (!receipt.voucher) { setError('Este cambio no generó ningún vale'); return; }
+                        if (!printDocument(exchangeVoucherReceipt(receipt))) setError('Permite las ventanas emergentes para imprimir el vale');
+                      }}>Imprimir vale del cambio</Button>
+                    </div>
+                  </div>;
+                })}
               </section>}
               {/* Actions */}
               <DialogFooter>

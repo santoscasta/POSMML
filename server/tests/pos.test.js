@@ -593,11 +593,11 @@ test('invalid new customer and missing existing customer cannot start a refund',
   assert.equal(count(f, 'PosRefundVoucher'), 0);
 });
 
-const { quoteExchange, exchangeItems } = await import('../lib/exchange.js');
+const { quoteExchange, exchangeItems, getExchangeReceipt } = await import('../lib/exchange.js');
 const exchangeInput = { orderId, refundLineItems: [{ lineItemId: 'gid://shopify/LineItem/1', quantity: 1 }], items: [{ variantId: 'gid://shopify/ProductVariant/2', quantity: 1 }], restock: true, locationId: 'gid://shopify/Location/1' };
 function exchangeFixture(t, total, overrides = {}) {
   return fixture(t, {
-    ExchangeQuote: () => ({ order: { id: orderId, name: '#1', customer: refundCustomer, cancelledAt: null, transactions: [{ kind: 'SALE', status: 'SUCCESS', gateway: 'manual' }], suggestedRefund: { amountSet: { shopMoney: { amount: '100', currencyCode: 'EUR' } }, refundLineItems: [{ quantity: 1, lineItem: { id: 'gid://shopify/LineItem/1', refundableQuantity: 1 } }] } }, nodes: [{ id: 'gid://shopify/ProductVariant/2', title: 'Talla 2', price: String(total), inventoryPolicy: 'DENY', inventoryQuantity: 3, product: { title: 'Nuevo artículo', status: 'ACTIVE' } }] }),
+    ExchangeQuote: () => ({ order: { id: orderId, name: '#1', customer: refundCustomer, cancelledAt: null, transactions: [{ kind: 'SALE', status: 'SUCCESS', gateway: 'manual' }], suggestedRefund: { amountSet: { shopMoney: { amount: '100', currencyCode: 'EUR' } }, refundLineItems: [{ quantity: 1, subtotalSet: { shopMoney: { amount: '82.64', currencyCode: 'EUR' } }, totalTaxSet: { shopMoney: { amount: '17.36', currencyCode: 'EUR' } }, lineItem: { id: 'gid://shopify/LineItem/1', title: 'Artículo original', refundableQuantity: 1, variant: { title: 'Talla 1' } } }] } }, nodes: [{ id: 'gid://shopify/ProductVariant/2', title: 'Talla 2', price: String(total), inventoryPolicy: 'DENY', inventoryQuantity: 3, product: { title: 'Nuevo artículo', status: 'ACTIVE' } }] }),
     ExchangeCalculate: () => ({ draftOrderCalculate: { calculatedDraftOrder: { totalPriceSet: { shopMoney: { amount: String(total), currencyCode: 'EUR' } } }, userErrors: [] } }),
     PosDraft: () => ({ draftOrderCreate: { draftOrder: { id: 'draft-2', totalPriceSet: { shopMoney: { amount: String(total), currencyCode: 'EUR' } } }, userErrors: [] } }),
     PosComplete: () => ({ draftOrderComplete: { draftOrder: { order: { id: 'gid://shopify/Order/2', name: '#2' } }, userErrors: [] } }),
@@ -614,6 +614,12 @@ for (const [total, method, expectedCash, expectedVoucher] of [[100, 'CARD', 50, 
     assert.equal(result.due, Math.max(total - 100, 0));
     assert.equal(result.voucher?.amount || 0, expectedVoucher);
     assert.equal(result.change, total > 100 && method === 'CASH' ? 10 : 0);
+    assert.equal(result.receipt.originalOrderName, '#1');
+    assert.equal(result.receipt.replacementOrderName, '#2');
+    assert.equal(result.receipt.returnedItems[0].title, 'Artículo original');
+    assert.equal(result.receipt.returnedItems[0].amount, 100);
+    assert.equal(result.receipt.replacementItems[0].title, 'Nuevo artículo');
+    assert.equal(result.receipt.customer.id, refundCustomer.id);
     assert.equal(count(f, 'PosDebit'), 0);
     assert.equal(count(f, 'PosRefundVoucher'), 0);
     assert.equal(count(f, 'IssuePosVoucher'), expectedVoucher ? 1 : 0);
@@ -637,8 +643,53 @@ for (const [total, method, expectedCash, expectedVoucher] of [[100, 'CARD', 50, 
     assert.equal(count(f, 'PosRefund'), 1);
     assert.equal(count(f, 'PosComplete'), 1);
     assert.equal(f.store.read().movements.length, 2);
+    assert.ok(f.store.read().movements.every(m => m.exchangeReceipt?.replacementOrderName === '#2'));
   });
 }
+
+test('residual exchange voucher requires and associates an existing customer before refunding', async t => {
+  const f = exchangeFixture(t, 80, {
+    ExchangeQuote: () => ({ order: { id: orderId, name: '#1', customer: null, cancelledAt: null, transactions: [{ kind: 'SALE', status: 'SUCCESS', gateway: 'manual' }], suggestedRefund: { amountSet: { shopMoney: { amount: '100', currencyCode: 'EUR' } }, refundLineItems: [{ quantity: 1, subtotalSet: { shopMoney: { amount: '100' } }, totalTaxSet: { shopMoney: { amount: '0' } }, lineItem: { id: 'gid://shopify/LineItem/1', title: 'Original', refundableQuantity: 1, variant: { title: 'Única' } } }] } }, nodes: [{ id: 'gid://shopify/ProductVariant/2', title: 'Única', price: '80', inventoryPolicy: 'DENY', inventoryQuantity: 3, product: { title: 'Nuevo', status: 'ACTIVE' } }] }),
+    RefundCustomer: () => ({ customer: refundCustomer }),
+  });
+  const quote = await quoteExchange(f.gql, exchangeInput);
+  await assert.rejects(exchangeItems(f.gql, f.store, key, { ...exchangeInput, quoteToken: quote.token, method: 'CARD' }), /Selecciona o registra/);
+  assert.equal(count(f, 'PosRefund'), 0);
+  const result = await exchangeItems(f.gql, f.store, key, { ...exchangeInput, quoteToken: quote.token, method: 'CARD', customerId: refundCustomer.id });
+  assert.equal(f.calls.find(c => c.name === 'IssuePosVoucher').variables.input.customerId, refundCustomer.id);
+  assert.equal(result.receipt.customer.email, refundCustomer.email);
+  assert.equal(result.receipt.voucher.amount, 20);
+});
+
+test('residual exchange voucher can register a complete customer before refunding', async t => {
+  const created = { ...refundCustomer, id: 'gid://shopify/Customer/9', firstName: 'Celia' };
+  const f = exchangeFixture(t, 80, {
+    ExchangeQuote: () => ({ order: { id: orderId, name: '#1', customer: null, cancelledAt: null, transactions: [{ kind: 'SALE', status: 'SUCCESS', gateway: 'manual' }], suggestedRefund: { amountSet: { shopMoney: { amount: '100', currencyCode: 'EUR' } }, refundLineItems: [{ quantity: 1, subtotalSet: { shopMoney: { amount: '100' } }, totalTaxSet: { shopMoney: { amount: '0' } }, lineItem: { id: 'gid://shopify/LineItem/1', title: 'Original', refundableQuantity: 1, variant: { title: 'Única' } } }] } }, nodes: [{ id: 'gid://shopify/ProductVariant/2', title: 'Única', price: '80', inventoryPolicy: 'DENY', inventoryQuantity: 3, product: { title: 'Nuevo', status: 'ACTIVE' } }] }),
+    RefundCustomerCreate: () => ({ customerCreate: { customer: created, userErrors: [] } }),
+  });
+  const quote = await quoteExchange(f.gql, exchangeInput);
+  const result = await exchangeItems(f.gql, f.store, key, { ...exchangeInput, quoteToken: quote.token, method: 'CARD', newCustomer: { firstName: 'Celia', email: 'celia@example.com', phone: '+34607140250' } });
+  assert.equal(count(f, 'RefundCustomerCreate'), 1);
+  assert.equal(f.calls.find(c => c.name === 'IssuePosVoucher').variables.input.customerId, created.id);
+  assert.equal(result.receipt.customer.firstName, 'Celia');
+});
+
+test('completed legacy exchange reconstructs and persists a full receipt', async t => {
+  const f = exchangeFixture(t, 80, {
+    ExchangeReceiptRecovery: () => ({ order: { refunds: [{ id: 'refund-1', createdAt: '2026-09-23T08:00:00Z', refundLineItems: { edges: [{ node: { quantity: 1, subtotalSet: { shopMoney: { amount: '82.64' } }, totalTaxSet: { shopMoney: { amount: '17.36' } }, lineItem: { id: 'gid://shopify/LineItem/1', title: 'Artículo antiguo', variant: { title: '3 años' } } } }] } }] } }),
+  });
+  const quote = await quoteExchange(f.gql, exchangeInput);
+  await exchangeItems(f.gql, f.store, key, { ...exchangeInput, quoteToken: quote.token, method: 'CARD' });
+  const state = f.store.read();
+  delete state.operations[key].quote.returnedItems;
+  for (const movement of state.movements) delete movement.exchangeReceipt;
+  f.store.write(state);
+  const receipt = await getExchangeReceipt(f.gql, createOperationStore(f.directory), key);
+  assert.equal(receipt.returnedItems[0].title, 'Artículo antiguo');
+  assert.equal(receipt.returnedItems[0].amount, 100);
+  assert.equal(receipt.voucher.amount, 20);
+  assert.ok(f.store.read().movements.every(m => m.exchangeReceipt?.returnedItems[0].variantTitle === '3 años'));
+});
 
 test('exchange resumes after payment rejection without another refund or replacement order', async t => {
   let attempts = 0;
@@ -698,7 +749,7 @@ test('lost residual voucher response reconciles without repeating the exchange',
 
 test('exchange uses Shopify discounted return value and rejects unavailable returned quantities', async t => {
   let refundable = 1;
-  const f = exchangeFixture(t, 80, { ExchangeQuote: () => ({ order: { id: orderId, name: '#1', customer: null, transactions: [{ kind: 'SALE', status: 'SUCCESS', gateway: 'manual' }], suggestedRefund: { amountSet: { shopMoney: { amount: '64.95', currencyCode: 'EUR' } }, refundLineItems: [{ quantity: 1, lineItem: { id: 'gid://shopify/LineItem/1', refundableQuantity: refundable } }] } }, nodes: [{ id: 'gid://shopify/ProductVariant/2', title: 'Default Title', price: '80', inventoryPolicy: 'DENY', inventoryQuantity: 1, product: { title: 'Nuevo', status: 'ACTIVE' } }] }) });
+  const f = exchangeFixture(t, 80, { ExchangeQuote: () => ({ order: { id: orderId, name: '#1', customer: null, transactions: [{ kind: 'SALE', status: 'SUCCESS', gateway: 'manual' }], suggestedRefund: { amountSet: { shopMoney: { amount: '64.95', currencyCode: 'EUR' } }, refundLineItems: [{ quantity: 1, subtotalSet: { shopMoney: { amount: '53.68' } }, totalTaxSet: { shopMoney: { amount: '11.27' } }, lineItem: { id: 'gid://shopify/LineItem/1', title: 'Original', variant: { title: 'Única' }, refundableQuantity: refundable } }] } }, nodes: [{ id: 'gid://shopify/ProductVariant/2', title: 'Default Title', price: '80', inventoryPolicy: 'DENY', inventoryQuantity: 1, product: { title: 'Nuevo', status: 'ACTIVE' } }] }) });
   const quote = await quoteExchange(f.gql, exchangeInput);
   assert.equal(quote.credit, 64.95);
   assert.equal(quote.due, 15.05);
@@ -718,7 +769,7 @@ test('rejected exchange refund never creates a replacement sale or voucher', asy
 
 test('exchange quotation rejects stock shortage and a non-manual payment without mutations', async t => {
   let gateway = 'manual';
-  const f = exchangeFixture(t, 100, { ExchangeQuote: () => ({ order: { id: orderId, name: '#1', transactions: [{ kind: 'SALE', status: 'SUCCESS', gateway }], suggestedRefund: { amountSet: { shopMoney: { amount: '100', currencyCode: 'EUR' } }, refundLineItems: [{ quantity: 1, lineItem: { id: 'gid://shopify/LineItem/1', refundableQuantity: 1 } }] } }, nodes: [{ id: 'gid://shopify/ProductVariant/2', title: 'Default Title', price: '100', inventoryPolicy: 'DENY', inventoryQuantity: 0, product: { title: 'Nuevo', status: 'ACTIVE' } }] }) });
+  const f = exchangeFixture(t, 100, { ExchangeQuote: () => ({ order: { id: orderId, name: '#1', transactions: [{ kind: 'SALE', status: 'SUCCESS', gateway }], suggestedRefund: { amountSet: { shopMoney: { amount: '100', currencyCode: 'EUR' } }, refundLineItems: [{ quantity: 1, subtotalSet: { shopMoney: { amount: '100' } }, totalTaxSet: { shopMoney: { amount: '0' } }, lineItem: { id: 'gid://shopify/LineItem/1', title: 'Original', variant: { title: 'Única' }, refundableQuantity: 1 } }] } }, nodes: [{ id: 'gid://shopify/ProductVariant/2', title: 'Default Title', price: '100', inventoryPolicy: 'DENY', inventoryQuantity: 0, product: { title: 'Nuevo', status: 'ACTIVE' } }] }) });
   await assert.rejects(quoteExchange(f.gql, exchangeInput), /Stock insuficiente/);
   gateway = 'shopify_payments';
   await assert.rejects(quoteExchange(f.gql, exchangeInput), /pago manual compatible/);
