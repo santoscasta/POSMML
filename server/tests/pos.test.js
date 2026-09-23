@@ -635,6 +635,7 @@ for (const [total, method, expectedCash, expectedVoucher] of [[100, 'CARD', 50, 
     assert.equal(kpis.expectedCash, expectedCash);
     assert.equal(kpis.grossSales, Math.max(total - 100, 0));
     assert.equal(kpis.refunds, 0);
+    assert.equal(kpis.exchangeSales, Math.min(total, 100));
     assert.equal(kpis.voucherSales, 0);
     assert.equal(kpis.cardSales, method === 'CARD' ? Math.max(total - 100, 0) : 0);
     assert.equal(kpis.bizumSales, method === 'BIZUM' ? Math.max(total - 100, 0) : 0);

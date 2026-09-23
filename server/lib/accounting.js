@@ -56,7 +56,10 @@ export function computeKPIs(movements, openingAmount = 0) {
       }
       for (const split of splits) {
         if (!(split.method in totals)) throw new PosError('Método desconocido en el historial');
-        if (split.method !== 'EXCHANGE') totals[split.method] += cents(split.amount);
+        totals[split.method] += cents(split.amount);
+      }
+      if (movement.exchangeId && !splits.some(split => split.method === 'EXCHANGE' && cents(split.amount) > 0) && movement.exchangeReceipt) {
+        totals.EXCHANGE += cents(Math.min(movement.exchangeReceipt.credit, movement.exchangeReceipt.total));
       }
     }
   }
