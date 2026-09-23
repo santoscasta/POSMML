@@ -5,18 +5,24 @@ import { createPosService, currentSession } from './posService.js';
 import { issueVoucher } from './voucherIssue.js';
 import { resolveRefundCustomer } from './refundCustomer.js';
 
-export async function quoteExchange(gql, input) {
+export async function quoteExchange(gql, input, store) {
   if (!/^gid:\/\/shopify\/Order\/\d+$/.test(input.orderId)) throw new PosError('Pedido inválido');
   const returns = input.refundLineItems;
   const items = input.items;
   const valid = (rows, field, resource) => Array.isArray(rows) && rows.length > 0 && rows.length <= 100 && new Set(rows.map(r => r[field])).size === rows.length && rows.every(r => new RegExp(`^gid://shopify/${resource}/\\d+$`).test(r[field]) && Number.isInteger(r.quantity) && r.quantity > 0);
   if (!valid(returns, 'lineItemId', 'LineItem') || !valid(items, 'variantId', 'ProductVariant')) throw new PosError('Selecciona artículos para devolver y para entregar');
   if (input.restock && !/^gid:\/\/shopify\/Location\/\d+$/.test(input.locationId || '')) throw new PosError('Selecciona la ubicación de reposición');
+  if (input.restock) {
+    const installation = await gql(`query ExchangeScopes { currentAppInstallation { accessScopes { handle } } }`);
+    if (!installation.currentAppInstallation?.accessScopes?.some(scope => scope.handle === 'write_inventory')) {
+      throw new PosError('La aplicación necesita permiso de inventario para reponer los artículos. Actualiza los permisos de Shopify antes de confirmar el cambio.', 409, 'MISSING_INVENTORY_SCOPE');
+    }
+  }
   const data = await gql(`query ExchangeQuote($id: ID!, $lines: [RefundLineItemInput!]!, $variants: [ID!]!) {
     order(id: $id) { id name cancelledAt customer { id firstName lastName email phone }
       transactions(first: 100) { kind status gateway }
       suggestedRefund(refundLineItems: $lines, refundShipping: false) { amountSet { shopMoney { amount currencyCode } }
-        refundLineItems { quantity subtotalSet { shopMoney { amount currencyCode } } totalTaxSet { shopMoney { amount currencyCode } } lineItem { id title refundableQuantity variant { title } } } }
+        refundLineItems { quantity subtotalSet { shopMoney { amount currencyCode } } totalTaxSet { shopMoney { amount currencyCode } } lineItem { id title refundableQuantity variant { title inventoryItem { id tracked } } } } }
     }
     nodes(ids: $variants) { ... on ProductVariant { id title price inventoryQuantity inventoryPolicy product { title status } } }
   }`, { id: input.orderId, lines: returns.map(r => ({ ...r, restockType: 'NO_RESTOCK' })), variants: items.map(i => i.variantId) });
@@ -28,6 +34,9 @@ export async function quoteExchange(gql, input) {
   for (const r of returns) {
     const line = suggestion.refundLineItems.find(l => l.lineItem.id === r.lineItemId);
     if (!line || line.quantity !== r.quantity || line.lineItem.refundableQuantity < r.quantity) throw new PosError('Hay artículos que ya se han devuelto o una cantidad no válida');
+    const alreadyExchanged = store?.read().movements.filter(m => m.exchangeId && m.type === 'sale' && m.originalOrderId === input.orderId)
+      .reduce((sum, movement) => sum + (movement.exchangeReceipt?.returnedItems || []).filter(item => item.lineItemId === r.lineItemId).reduce((count, item) => count + item.quantity, 0), 0) || 0;
+    if (alreadyExchanged + r.quantity > line.lineItem.refundableQuantity) throw new PosError('El artículo ya se ha cambiado o la cantidad supera la disponible');
   }
   const credit = cents(suggestion.amountSet.shopMoney.amount);
   if (credit <= 0) throw new PosError('Los artículos seleccionados no tienen importe disponible para el cambio');
@@ -39,6 +48,7 @@ export async function quoteExchange(gql, input) {
   });
   const returnedItems = suggestion.refundLineItems.map(item => ({
     lineItemId: item.lineItem.id, title: item.lineItem.title,
+    inventoryItemId: item.lineItem.variant?.inventoryItem?.tracked ? item.lineItem.variant.inventoryItem.id : null,
     variantTitle: item.lineItem.variant?.title || '', quantity: item.quantity,
     amount: (cents(item.subtotalSet.shopMoney.amount) + cents(item.totalTaxSet?.shopMoney?.amount || 0)) / 100,
   }));
@@ -51,7 +61,14 @@ export async function quoteExchange(gql, input) {
   if (money.currencyCode !== 'EUR') throw new PosError('Moneda no compatible');
   const total = cents(money.amount);
   if (total <= 0) throw new PosError('Los artículos de entrega deben tener un importe mayor que cero');
-  const quote = { orderName: order.name, customer: order.customer, returnedItems, items: cartItems, credit: credit / 100, total: total / 100, due: Math.max(0, total - credit) / 100, voucher: Math.max(0, credit - total) / 100 };
+  const discount = Math.min(total, credit) / 100;
+  const netCalculated = await gql(`mutation ExchangeNetCalculate($input: DraftOrderInput!) {
+    draftOrderCalculate(input: $input) { calculatedDraftOrder { totalPriceSet { shopMoney { amount currencyCode } } } userErrors { message } }
+  }`, { input: { ...(order.customer ? { customerId: order.customer.id } : {}), lineItems: cartItems.map(i => ({ variantId: i.variantId, quantity: i.quantity, priceOverride: { amount: i.price.toFixed(2), currencyCode: 'EUR' } })), appliedDiscount: { valueType: 'FIXED_AMOUNT', value: discount } } });
+  const net = netCalculated.draftOrderCalculate;
+  if (net.userErrors?.length || net.calculatedDraftOrder?.totalPriceSet.shopMoney.currencyCode !== 'EUR') throw new PosError(net.userErrors?.map(e => e.message).join(', ') || 'No se ha podido calcular la diferencia');
+  const due = cents(net.calculatedDraftOrder.totalPriceSet.shopMoney.amount);
+  const quote = { accountingVersion: 2, orderName: order.name, customer: order.customer, returnedItems, items: cartItems, credit: credit / 100, total: total / 100, due: due / 100, voucher: Math.max(0, credit - total) / 100 };
   const token = createHash('sha256').update(JSON.stringify({ input: { orderId: input.orderId, returns, items, restock: !!input.restock, locationId: input.locationId || '' }, quote })).digest('hex');
   return { ...quote, token };
 }
@@ -79,7 +96,7 @@ function childStore(ctx) {
 export async function exchangeItems(gql, store, operationId, input) {
   return store.operation(operationId, 'exchange', input, async ctx => {
     if (!ctx.op.quote) {
-      const quote = await quoteExchange(gql, input);
+      const quote = await quoteExchange(gql, input, store);
       if (quote.token !== input.quoteToken) throw new PosError('El importe o el stock ha cambiado. Calcula de nuevo el cambio');
       if (quote.due > 0 && !['CASH', 'CARD', 'BIZUM'].includes(input.method)) throw new PosError('Selecciona cómo cobrar la diferencia');
       if (quote.due > 0 && input.method === 'CASH' && cents(input.cashReceived) < cents(quote.due)) throw new PosError('Efectivo insuficiente');
@@ -98,6 +115,58 @@ export async function exchangeItems(gql, store, operationId, input) {
       ctx.op.exchangeCustomer = selected;
       q.customer = selected;
       ctx.save();
+    }
+    if (q.accountingVersion === 2) {
+      const nested = childStore(ctx);
+      if (input.restock) {
+        const changes = q.returnedItems.filter(item => item.inventoryItemId).map(item => ({ inventoryItemId: item.inventoryItemId, locationId: input.locationId, delta: item.quantity }));
+        if (changes.length) await ctx.step('exchange-restock', async () => {
+          const data = await gql(`mutation ExchangeRestock($input: InventoryAdjustQuantitiesInput!) {
+            inventoryAdjustQuantities(input: $input) { inventoryAdjustmentGroup { createdAt } userErrors { message } }
+          }`, { input: { name: 'available', reason: 'correction', referenceDocumentUri: `posmml://exchange/${operationId}`, changes } });
+          const response = data.inventoryAdjustQuantities;
+          if (response?.userErrors?.length) {
+            const error = new PosError(response.userErrors.map(item => item.message).join(', '));
+            error.definiteRejection = true;
+            throw error;
+          }
+          if (!response?.inventoryAdjustmentGroup) throw new Error('Respuesta incompleta de reposición');
+          return response.inventoryAdjustmentGroup;
+        });
+      }
+      const usedCredit = Math.min(q.credit, q.total);
+      const payment = q.due > 0
+        ? { method: input.method, amount: q.due, ...(input.method === 'CASH' ? { cashReceived: input.cashReceived } : {}) }
+        : { method: 'EXCHANGE', amount: 0 };
+      const sale = await createPosService(gql, nested, { exchange: true }).checkout(`${operationId}-sale`, {
+        cart: { items: q.items, customer: q.customer, discount: { type: 'fixed', value: usedCredit }, note: `Cambio del pedido ${q.orderName}. POS ${operationId}. Valor aplicado: ${usedCredit.toFixed(2)} EUR. Sin devolución monetaria.` },
+        payment,
+      });
+      let voucher;
+      if (q.voucher > 0) {
+        const issued = await issueVoucher(gql, nested, `${operationId}-voucher`, { amount: q.voucher, customerId: q.customer.id, customerName: `${q.customer.firstName || ''} ${q.customer.lastName || ''}`.trim(), customerEmail: q.customer.email, notes: `Diferencia del cambio ${q.orderName} por ${sale.name}. POS ${operationId}` }, 'id lastCharacters note initialValue { amount }');
+        voucher = { id: issued.card.id, code: issued.fullCode, amount: q.voucher };
+      }
+      const receipt = {
+        originalOrderName: q.orderName, replacementOrderName: sale.name,
+        createdAt: new Date().toISOString(), customer: q.customer,
+        returnedItems: q.returnedItems, replacementItems: q.items,
+        credit: q.credit, total: q.total, due: q.due,
+        change: input.method === 'CASH' && q.due > 0 ? (cents(input.cashReceived) - cents(q.due)) / 100 : 0,
+        ...(q.due > 0 ? { paymentMethod: input.method } : {}),
+        ...(input.method === 'CASH' && q.due > 0 ? { cashReceived: cents(input.cashReceived) / 100 } : {}),
+        ...(voucher ? { voucher: { code: voucher.code, amount: voucher.amount } } : {}),
+      };
+      const saleMovement = ctx.state.movements.find(m => m.id === `${operationId}-sale`);
+      Object.assign(saleMovement, { originalOrderName: q.orderName, replacementOrderName: sale.name, exchangeId: operationId, originalOrderId: input.orderId, replacementOrderId: sale.shopifyOrderId, exchangeReceipt: receipt });
+      if (!ctx.state.movements.some(m => m.id === `${operationId}-return`)) ctx.state.movements.push({
+        id: `${operationId}-return`, createdAt: receipt.createdAt, shopifyOrderId: input.orderId, shopifyOrderName: q.orderName,
+        sessionId: ctx.op.sessionId, type: 'exchange_return', method: 'EXCHANGE', amount: 0,
+        exchangeId: operationId, originalOrderId: input.orderId, replacementOrderId: sale.shopifyOrderId,
+        originalOrderName: q.orderName, replacementOrderName: sale.name, exchangeReceipt: receipt,
+      });
+      ctx.save();
+      return { success: true, name: sale.name, orderId: sale.shopifyOrderId, due: q.due, credit: q.credit, total: q.total, change: receipt.change, receipt, ...(voucher ? { voucher, voucherCode: voucher.code } : {}) };
     }
     const nested = childStore(ctx);
     const service = createPosService(gql, nested, { exchange: true });

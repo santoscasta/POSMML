@@ -8,7 +8,7 @@ import { quoteExchange, exchangeItems, getExchangeReceipt } from '../lib/exchang
 
 const router = Router();
 router.post('/exchanges/quote', async (req, res) => {
-  try { res.json(await quoteExchange(shopifyGQL, req.body)); } catch (error) { sendOperationError(res, error); }
+  try { res.json(await quoteExchange(shopifyGQL, req.body, getStore())); } catch (error) { sendOperationError(res, error); }
 });
 router.post('/exchanges', async (req, res) => {
   try { const { operationId, ...input } = req.body; res.json(await exchangeItems(shopifyGQL, getStore(), operationId, input)); } catch (error) { sendOperationError(res, error); }

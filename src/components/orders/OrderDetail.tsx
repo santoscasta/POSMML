@@ -197,6 +197,12 @@ export function OrderDetailModal({ orderId, open, onClose, onUpdate }: OrderDeta
 
   const lineItems = order?.lineItems.edges.map((e) => e.node) ?? [];
   const refunds = order?.refunds ?? [];
+  const exchangedQuantities = payments.filter(p => p.type === 'exchange_return')
+    .flatMap(p => p.exchangeReceipt?.returnedItems || [])
+    .reduce<Record<string, number>>((quantities, item) => {
+      if (item.lineItemId) quantities[item.lineItemId] = (quantities[item.lineItemId] || 0) + item.quantity;
+      return quantities;
+    }, {});
 
   // Extract POS metafields
   const posMetafields = (() => {
@@ -579,7 +585,7 @@ export function OrderDetailModal({ orderId, open, onClose, onUpdate }: OrderDeta
         </DialogContent>
       </Dialog>
 
-      {exchangeOpen && order && <ExchangeModal order={order} onClose={() => setExchangeOpen(false)} onDone={() => { setExchangeOpen(false); onUpdate(); }} />}
+      {exchangeOpen && order && <ExchangeModal order={order} exchangedQuantities={exchangedQuantities} onClose={() => setExchangeOpen(false)} onDone={() => { setExchangeOpen(false); onUpdate(); }} />}
       {refundOpen && order && (
         <RefundModal
           order={order}

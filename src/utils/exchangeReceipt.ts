@@ -6,7 +6,7 @@ export interface ExchangeReceiptData {
   replacementOrderName: string;
   createdAt: string;
   customer?: { firstName?: string; lastName?: string; email?: string; phone?: string } | null;
-  returnedItems: { title: string; variantTitle?: string; quantity: number; amount: number }[];
+  returnedItems: { lineItemId?: string; title: string; variantTitle?: string; quantity: number; amount: number }[];
   replacementItems: { title: string; variantTitle?: string; quantity: number; price: number }[];
   credit: number;
   total: number;

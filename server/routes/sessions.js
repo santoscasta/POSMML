@@ -2,7 +2,7 @@ import { Router } from 'express';
 import shopifyGQL from '../lib/shopifyGQL.js';
 import { getStore, PosError } from '../lib/operationStore.js';
 import { mutationResult, currentSession } from '../lib/posService.js';
-import { getPayments, computeKPIs, cents } from '../lib/accounting.js';
+import { getPayments, computeKPIs, collectedSaleAmount, cents } from '../lib/accounting.js';
 import { isBusinessToday } from '../lib/businessTime.js';
 
 const router = Router();
@@ -67,7 +67,7 @@ router.get('/sessions/current', async (req, res) => {
     const orders = await getPayments(shopifyGQL, getStore(), { sessionId: session.id, diagnostics });
     res.json({ ...session, ...summarize(orders, session.openingAmount),
       countedOrders: orders.filter(p => p.type === 'sale').map(p => ({
-        name: p.shopifyOrderName, amount: p.amount, method: p.method, createdAt: p.createdAt,
+        name: p.shopifyOrderName, amount: collectedSaleAmount(p), method: p.exchangeId ? 'EXCHANGE' : p.method, createdAt: p.createdAt,
       })),
       unregisteredOrders: diagnostics.filter(p => isBusinessToday(p.createdAt) && ['PAID', 'PARTIALLY_REFUNDED', 'REFUNDED'].includes(p.financialStatus)),
       refreshedAt: new Date().toISOString(),
@@ -227,7 +227,8 @@ router.post('/sessions/close', async (req, res) => {
       const updated = parseMetaobject(updateData.metaobjectUpdate.metaobject);
 
       // Build detailed order list for the closing report
-      const orderDetails = orders.map(p => ({ ...p, name: p.shopifyOrderName }));
+      const orderDetails = orders.filter(p => p.type !== 'exchange_return' && !(p.exchangeId && p.type === 'refund'))
+        .map(p => ({ ...p, name: p.shopifyOrderName, amount: p.type === 'sale' ? collectedSaleAmount(p) : p.amount }));
 
       res.json({ ...updated, kpis, orderDetails });
     });

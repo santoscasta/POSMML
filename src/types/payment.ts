@@ -1,4 +1,4 @@
-export type PaymentMethod = 'CASH' | 'CARD' | 'BIZUM' | 'MIXED' | 'VOUCHER';
+export type PaymentMethod = 'CASH' | 'CARD' | 'BIZUM' | 'MIXED' | 'VOUCHER' | 'EXCHANGE';
 
 export interface MixedPaymentSplit {
   method: Exclude<PaymentMethod, 'MIXED'>;
@@ -19,7 +19,7 @@ export interface PosPayment {
   cashReceived?: number;
   changeGiven?: number;
   sessionId: string;
-  type: 'sale' | 'refund';
+  type: 'sale' | 'refund' | 'exchange_return';
   notes?: string;
   createdAt: string;
   mixedPayments?: MixedPaymentSplit[];

@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { getAccessToken, SHOPIFY_STORE } from '../lib/shopify.js';
 import shopifyGQL from '../lib/shopifyGQL.js';
 import { getStore } from '../lib/operationStore.js';
-import { getPayments, computeKPIs } from '../lib/accounting.js';
+import { getPayments, computeKPIs, collectedSaleAmount } from '../lib/accounting.js';
 import { currentSession } from '../lib/posService.js';
 import { isBusinessToday } from '../lib/businessTime.js';
 
@@ -59,7 +59,7 @@ router.get('/dashboard', async (req, res) => {
         cash: kpis.cashSales,
         card: kpis.cardSales,
         bizum: kpis.bizumSales,
-        mixed: todayOrders.filter(p => p.method === 'MIXED').reduce((s, p) => s + p.amount, 0),
+        mixed: todayOrders.filter(p => p.method === 'MIXED').reduce((s, p) => s + collectedSaleAmount(p), 0),
       },
     });
   } catch (error) {

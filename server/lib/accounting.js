@@ -28,25 +28,35 @@ export function paymentSplits(payment, allowExchange = false) {
   return splits.map(s => ({ ...s, amount: cents(s.amount) / 100 }));
 }
 
+// An exchange moves previously paid value to a replacement item. Only the
+// additional cash/card/Bizum payment belongs to the day of the exchange.
+export function collectedSaleAmount(movement) {
+  if (!movement.exchangeId || movement.type !== 'sale') return cents(movement.amount) / 100;
+  const splits = movement.method === 'MIXED' ? movement.mixedPayments : [{ method: movement.method, amount: movement.amount }];
+  if (!splits?.length) throw new PosError(`Falta el desglose del cambio ${movement.shopifyOrderName}`, 409, 'LEGACY_RECONCILIATION_REQUIRED');
+  return splits.filter(split => split.method !== 'EXCHANGE').reduce((sum, split) => sum + cents(split.amount), 0) / 100;
+}
+
 export function computeKPIs(movements, openingAmount = 0) {
   const totals = { CASH: 0, CARD: 0, BIZUM: 0, VOUCHER: 0, EXCHANGE: 0 };
   let gross = 0, refunds = 0, refundsCash = 0, totalOrders = 0;
   for (const movement of movements) {
     if (movement.accountingError) throw new PosError(movement.accountingError, 409, 'LEGACY_RECONCILIATION_REQUIRED');
+    if (movement.type === 'exchange_return' || (movement.exchangeId && movement.type === 'refund')) continue;
     const amount = cents(movement.amount);
     if (movement.type === 'refund') {
       refunds += amount;
       if (movement.method === 'CASH') refundsCash += amount;
     } else {
       totalOrders++;
-      gross += amount;
+      gross += cents(collectedSaleAmount(movement));
       const splits = movement.method === 'MIXED' ? movement.mixedPayments : [{ method: movement.method, amount: movement.amount }];
       if (!splits?.length || splits.reduce((sum, s) => sum + cents(s.amount), 0) !== amount) {
         throw new PosError(`Falta el desglose del pedido ${movement.shopifyOrderName}. Revisa ese movimiento antes de cerrar caja.`, 409, 'LEGACY_RECONCILIATION_REQUIRED');
       }
       for (const split of splits) {
         if (!(split.method in totals)) throw new PosError('Método desconocido en el historial');
-        totals[split.method] += cents(split.amount);
+        if (split.method !== 'EXCHANGE') totals[split.method] += cents(split.amount);
       }
     }
   }
