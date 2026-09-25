@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Tu vale My mini Leo</title>
+    <style>
+      @media only screen and (max-width: 620px) {
+        .mml-shell { width: 100% !important; }
+        .mml-pad { padding-left: 22px !important; padding-right: 22px !important; }
+        .mml-code { font-size: 22px !important; letter-spacing: 2px !important; }
+        .mml-logo { width: 100% !important; max-width: 370px !important; }
+      }
+    </style>
+  </head>
+  <body style="margin:0;padding:0;background-color:#f4f6f8;font-family:Arial,Helvetica,sans-serif;color:#333333;">
+    {% assign mml_logo_url = shop.email_logo_url %}
+    {% if mml_logo_url == blank %}
+      {% assign mml_logo_url = 'https://www.myminileo.com/wp-content/uploads/2020/07/cropped-banner-cabecera-web-1.jpg' %}
+    {% endif %}
+    <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse;background-color:#f4f6f8;">
+      <tr><td align="center" style="padding:28px 12px 36px;">
+        <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="600" class="mml-shell" style="width:600px;max-width:600px;border-collapse:collapse;background-color:#ffffff;">
+          <tr><td align="center" class="mml-pad" style="padding:34px 40px 25px;border-top:6px solid #91a1bb;">
+            <img class="mml-logo" src="{{ mml_logo_url }}" width="430" alt="My mini Leo · Clothes for your baby" style="display:block;width:430px;max-width:100%;height:auto;border:0;">
+          </td></tr>
+          <tr><td align="center" class="mml-pad" style="padding:0 40px 10px;">
+            <p style="margin:0 0 12px;color:#91a1bb;font-size:12px;font-weight:bold;letter-spacing:2px;text-transform:uppercase;">Un detalle para ti</p>
+            <h1 style="margin:0;color:#333333;font-size:30px;line-height:1.2;font-weight:normal;">Tu vale My mini Leo</h1>
+          </td></tr>
+          <tr><td align="center" class="mml-pad" style="padding:16px 40px 0;">
+            <p style="margin:0;color:#6d6d6d;font-size:15px;line-height:1.6;">Disfruta eligiendo algo especial. Conserva este correo y presenta el código al pagar en nuestra tienda.</p>
+          </td></tr>
+          <tr><td align="center" class="mml-pad" style="padding:27px 40px 28px;">
+            <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse;background-color:#eef2f6;border:1px solid #dce3ec;">
+              <tr><td align="center" style="padding:25px 18px 8px;color:#66758b;font-size:12px;font-weight:bold;letter-spacing:1.5px;text-transform:uppercase;">Saldo disponible</td></tr>
+              <tr><td align="center" style="padding:0 18px 18px;color:#333333;font-size:37px;font-weight:bold;line-height:1.2;">{{ gift_card.balance | money }}</td></tr>
+              <tr><td align="center" style="padding:0 18px 9px;color:#66758b;font-size:12px;font-weight:bold;letter-spacing:1.5px;text-transform:uppercase;">Código del vale</td></tr>
+              <tr><td align="center" class="mml-code" style="padding:0 12px 26px;color:#333333;font-size:27px;font-weight:bold;letter-spacing:3px;line-height:1.35;word-break:break-word;">{{ gift_card.code | escape }}</td></tr>
+            </table>
+          </td></tr>
+          <tr><td align="center" class="mml-pad" style="padding:0 40px 28px;">
+            {% if gift_card.url != blank %}
+              <a href="{{ gift_card.url }}" style="display:inline-block;padding:13px 22px;background-color:#91a1bb;color:#ffffff;text-decoration:none;font-size:14px;font-weight:bold;">Consultar saldo</a>
+              <p style="margin:12px 0 0;color:#6d6d6d;font-size:12px;line-height:1.5;">Este enlace muestra los datos del vale; no tramita una compra.</p>
+            {% endif %}
+          </td></tr>
+          <tr><td class="mml-pad" style="padding:0 40px 26px;">
+            <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse;border-top:1px solid #dce3ec;">
+              <tr><td style="padding-top:24px;color:#333333;font-size:14px;font-weight:bold;">¿Dónde puedes utilizarlo?</td></tr>
+              <tr><td style="padding-top:8px;color:#6d6d6d;font-size:14px;line-height:1.6;">En nuestra tienda física: Calle Asunción 38A, 41011 Sevilla. La tienda online myminileo.com todavía no admite este vale.</td></tr>
+              {% if gift_card.expires_on != blank %}
+                <tr><td style="padding-top:12px;color:#6d6d6d;font-size:13px;line-height:1.5;">Válido hasta el {{ gift_card.expires_on | date: '%d/%m/%Y' }}.</td></tr>
+              {% endif %}
+            </table>
+          </td></tr>
+          <tr><td align="center" class="mml-pad" style="padding:24px 40px 30px;background-color:#f7f8fa;color:#6d6d6d;font-size:13px;line-height:1.7;">
+            <strong style="color:#333333;">My mini Leo</strong><br>
+            Calle Asunción 38A · 41011 Sevilla<br>
+            <a href="tel:+34607140250" style="color:#91a1bb;text-decoration:underline;">607 140 250</a> ·
+            <a href="mailto:info@myminileo.com" style="color:#91a1bb;text-decoration:underline;">info@myminileo.com</a><br>
+            <a href="https://www.myminileo.com/" style="color:#91a1bb;text-decoration:underline;">myminileo.com</a>
+          </td></tr>
+        </table>
+      </td></tr>
+    </table>
+  </body>
+</html>
