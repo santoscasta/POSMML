@@ -22,8 +22,9 @@ export function requireAuth(req, res, next) {
 export function checkOrigin(req, res, next) {
   const allowed = (process.env.ALLOWED_ORIGINS || 'http://localhost:3000,http://localhost:5173').split(',').map(v => v.trim());
   const origin = req.headers.origin;
-  // Reject cross-site requests even though browsers may reuse Basic credentials.
-  if (origin ? !allowed.includes(origin) : req.headers['sec-fetch-site'] === 'cross-site') {
+  const appNavigation = req.path === '/' && (req.method === 'GET' || req.method === 'HEAD') && !origin;
+  // Allow the read-only app entry page from Shopify; protect API requests using Basic credentials.
+  if (origin ? !allowed.includes(origin) : req.headers['sec-fetch-site'] === 'cross-site' && !appNavigation) {
     return res.status(403).json({ error: 'Origen no autorizado' });
   }
   next();

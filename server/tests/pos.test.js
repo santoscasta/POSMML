@@ -225,6 +225,7 @@ test('every protected endpoint requires valid credentials and an allowed origin'
   });
   const app = express();
   app.use(checkOrigin);
+  app.get('/', (req, res) => res.send('POS MML'));
   app.use('/api', requireAuth);
   app.all('/api/{*path}', (req, res) => res.json({ ok: true }));
   const server = app.listen(0, '127.0.0.1');
@@ -238,6 +239,11 @@ test('every protected endpoint requires valid credentials and an allowed origin'
     assert.equal((await fetch(`${base}/api/${route}`, { method: 'POST', headers: { authorization, origin: 'https://evil.example' } })).status, 403);
   }
   assert.equal((await fetch(`${base}/api/graphql`, { headers: { authorization, origin: 'https://pos.example' } })).status, 200);
+  const navigationHeaders = { 'sec-fetch-site': 'cross-site', 'sec-fetch-mode': 'navigate', 'sec-fetch-dest': 'document' };
+  assert.equal((await fetch(base, { headers: navigationHeaders })).status, 200);
+  assert.equal((await fetch(base, { headers: { ...navigationHeaders, origin: 'https://evil.example' } })).status, 403);
+  assert.equal((await fetch(base, { method: 'POST', headers: navigationHeaders })).status, 403);
+  assert.equal((await fetch(`${base}/api/graphql`, { headers: { ...navigationHeaders, authorization } })).status, 403);
   delete process.env.POS_PASSWORD;
   assert.equal((await fetch(`${base}/api/graphql`, { headers: { authorization } })).status, 503);
 });
