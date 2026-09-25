@@ -56,3 +56,18 @@ test('creates an email-only customer when needed, then assigns and sends the exi
   await sendVoucherEmail(gql, { id, email });
   assert.equal(calls.length, 5);
 });
+
+test('new customer receives the name saved when the voucher was issued', async () => {
+  const note = 'Vale POS MML - Celia Lledó Burdiel\n---POS_META---\n{"customerName":"Celia Lledó Burdiel"}';
+  const gql = async (query, variables) => {
+    if (query.includes('query PosEmailVoucher')) return { giftCard: { id, enabled: true, note, customer: null } };
+    if (query.includes('query PosEmailCustomer')) return { customers: { nodes: [] } };
+    if (query.includes('PosEmailCustomerCreate')) {
+      assert.deepEqual(variables.input, { email, firstName: 'Celia', lastName: 'Lledó Burdiel' });
+      return { customerCreate: { customer: { id: 'new' } } };
+    }
+    if (query.includes('PosEmailVoucherAssign')) return { giftCardUpdate: { giftCard: { id } } };
+    return { giftCardSendNotificationToCustomer: { giftCard: { id } } };
+  };
+  await sendVoucherEmail(gql, { id, email });
+});

@@ -51,6 +51,7 @@ interface CheckoutModalProps {
   ) => Promise<string | null>;
   onClose: () => void;
   pending?: boolean;
+  pendingPayment?: { method: PaymentMethod; amount: number; mixedPayments?: MixedPaymentSplit[] };
   checkoutError?: string | null;
   onResume?: () => Promise<string | null>;
 }
@@ -67,6 +68,7 @@ export function CheckoutModal({
   onConfirm,
   onClose,
   pending,
+  pendingPayment,
   checkoutError,
   onResume,
 }: CheckoutModalProps) {
@@ -82,12 +84,14 @@ export function CheckoutModal({
   // Voucher state
   const [voucherCode, setVoucherCode] = useState('');
   const [voucherInfo, setVoucherInfo] = useState<VoucherInfo | null>(null);
+  const [remainderMethod, setRemainderMethod] = useState<'CASH' | 'CARD' | 'BIZUM' | null>(null);
   const [voucherLoading, setVoucherLoading] = useState(false);
   const [voucherError, setVoucherError] = useState<string | null>(null);
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successOrder, setSuccessOrder] = useState<string | null>(null);
+  const [receiptPayments, setReceiptPayments] = useState<{ method: PaymentMethod; amount: number }[] | null>(null);
   const [emailTo, setEmailTo] = useState(customerEmail || '');
   const [emailSent, setEmailSent] = useState(false);
   const [emailKind, setEmailKind] = useState<'normal' | 'gift'>('normal');
@@ -107,13 +111,15 @@ export function CheckoutModal({
   const mixedValid = Math.round(mixedTotal * 100) === Math.round(total * 100)
     && mixedSplits.every(s => Number(s.amount) > 0 && (s.method !== 'VOUCHER' || !!s.voucherCode?.trim()));
 
-  const voucherCoversTotal = voucherInfo ? voucherInfo.currentBalance >= total : false;
+  const voucherAmount = voucherInfo ? Math.min(Math.round(voucherInfo.currentBalance * 100), Math.round(total * 100)) / 100 : 0;
+  const remainderAmount = (Math.round(total * 100) - Math.round(voucherAmount * 100)) / 100;
+  const voucherCoversTotal = !!voucherInfo && remainderAmount === 0;
 
   const canConfirm = (() => {
     if (!method || loading || pending) return false;
     if (method === 'CASH') return cashReceivedNum >= total;
     if (method === 'MIXED') return mixedValid;
-    if (method === 'VOUCHER') return voucherInfo !== null && voucherInfo.status === 'ACTIVE' && voucherInfo.currentBalance > 0;
+    if (method === 'VOUCHER') return voucherInfo !== null && voucherInfo.status === 'ACTIVE' && voucherAmount > 0 && (voucherCoversTotal || remainderMethod !== null);
     return true;
   })();
 
@@ -122,6 +128,7 @@ export function CheckoutModal({
     setVoucherLoading(true);
     setVoucherError(null);
     setVoucherInfo(null);
+    setRemainderMethod(null);
     try {
       const info = await apiGet<VoucherInfo>(`/vouchers/${voucherCode.trim()}`);
       if (info.status !== 'ACTIVE') {
@@ -139,7 +146,7 @@ export function CheckoutModal({
   };
 
   const handleConfirm = async () => {
-    if (!method || loading || pending) return;
+    if (!canConfirm || !method) return;
     setLoading(true);
     setError(null);
 
@@ -152,15 +159,16 @@ export function CheckoutModal({
       }));
     }
 
-    // For voucher: if balance doesn't cover total, create a mixed payment (voucher + cash)
-    if (method === 'VOUCHER' && voucherInfo && !voucherCoversTotal) {
+    // The cashier chooses how to collect the amount left after the voucher.
+    if (method === 'VOUCHER' && voucherInfo && !voucherCoversTotal && remainderMethod) {
       splits = [
-        { method: 'VOUCHER', amount: voucherInfo.currentBalance, voucherCode: voucherInfo.code } as MixedPaymentSplit & { voucherCode: string },
-        { method: 'CASH', amount: total - voucherInfo.currentBalance },
+        { method: 'VOUCHER', amount: voucherAmount, voucherCode: voucherInfo.code },
+        { method: remainderMethod, amount: remainderAmount },
       ];
       const orderName = await onConfirm('MIXED', undefined, splits, voucherInfo.code);
       setLoading(false);
       if (orderName) {
+        setReceiptPayments(splits);
         setSuccessOrder(orderName);
       } else {
         setError('Error al procesar el pago');
@@ -177,6 +185,7 @@ export function CheckoutModal({
 
     setLoading(false);
     if (orderName) {
+      setReceiptPayments(splits || [{ method, amount: total }]);
       setSuccessOrder(orderName);
     } else {
       setError('Error al procesar el pago');
@@ -190,9 +199,11 @@ export function CheckoutModal({
     setMixedSplits([{ method: 'CASH', amount: '' }, { method: 'CARD', amount: '' }]);
     setVoucherCode('');
     setVoucherInfo(null);
+    setRemainderMethod(null);
     setVoucherError(null);
     setError(null);
     setSuccessOrder(null);
+    setReceiptPayments(null);
     onClose();
   };
 
@@ -211,6 +222,14 @@ export function CheckoutModal({
     { key: 'VOUCHER', label: 'Vale', icon: Ticket },
     { key: 'MIXED', label: 'Mixto', icon: Shuffle },
   ];
+  const confirmedMethod = receiptPayments?.length === 1 ? receiptPayments[0].method : 'MIXED';
+  const confirmedMethodLabel = receiptPayments?.length === 1
+    ? methodButtons.find(button => button.key === confirmedMethod)?.label || 'Mixto'
+    : 'Mixto';
+  const voucherPaid = receiptPayments?.some(payment => payment.method === 'VOUCHER') ?? false;
+  const remainingAfterPayment = voucherPaid
+    ? (Math.round(total * 100) - receiptPayments!.reduce((sum, payment) => sum + Math.round(payment.amount * 100), 0)) / 100
+    : total;
 
   const mixedMethodOptions: { value: MixedMethod; label: string }[] = [
     { value: 'CASH', label: 'Efectivo' },
@@ -229,7 +248,10 @@ export function CheckoutModal({
             if (!onResume) return;
             setLoading(true);
             const name = await onResume();
-            if (name) { setSuccessOrder(name); setError(null); }
+            if (name) {
+              setReceiptPayments(pendingPayment?.mixedPayments || (pendingPayment ? [{ method: pendingPayment.method, amount: pendingPayment.amount }] : null));
+              setSuccessOrder(name); setError(null);
+            }
             setLoading(false);
           }}>Reanudar cobro pendiente</Button>
         </div>}
@@ -249,12 +271,19 @@ export function CheckoutModal({
             {/* Order summary */}
             <div className="rounded-lg bg-muted/50 px-4 py-3 text-sm">
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Total</span>
+                <span className="text-muted-foreground">{voucherPaid ? 'Total compra' : 'Total'}</span>
                 <span className="font-semibold">{formatCurrency(total)}</span>
               </div>
+              {voucherPaid && <>
+                {receiptPayments!.map((payment, index) => <div className="flex justify-between" key={index}>
+                  <span className="text-muted-foreground">{methodButtons.find(button => button.key === payment.method)?.label || payment.method}</span>
+                  <span>-{formatCurrency(payment.amount)}</span>
+                </div>)}
+                <div className="flex justify-between font-semibold"><span>TOTAL</span><span>{formatCurrency(remainingAfterPayment)}</span></div>
+              </>}
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Método</span>
-                <span>{method === 'CASH' ? 'Efectivo' : method === 'CARD' ? 'Tarjeta' : method === 'BIZUM' ? 'Bizum' : method === 'VOUCHER' ? 'Vale' : 'Mixto'}</span>
+                <span>{confirmedMethodLabel}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Artículos</span>
@@ -271,10 +300,10 @@ export function CheckoutModal({
               onClick={() => {
                 const now = new Date();
                 const dateStr = now.toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
-                const methodLabel = method === 'CASH' ? 'Efectivo' : method === 'CARD' ? 'Tarjeta' : method === 'BIZUM' ? 'Bizum' : method === 'VOUCHER' ? 'Vale' : 'Mixto';
                 const printed = printDocument(saleReceipt({ order: successOrder, date: dateStr,
-                  method: methodLabel, items, subtotal, discountAmount, taxAmount, total,
-                  cashReceived: method === 'CASH' ? cashReceivedNum : undefined }));
+                  method: confirmedMethodLabel, items, subtotal, discountAmount, taxAmount, total,
+                  cashReceived: method === 'CASH' ? cashReceivedNum : undefined,
+                  payments: receiptPayments || undefined }));
                 if (!printed) window.alert('Permite las ventanas emergentes para imprimir el ticket.');
               }}
             >
@@ -290,7 +319,7 @@ export function CheckoutModal({
                 const now = new Date();
                 const dateStr = now.toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
                 const printed = printDocument(saleReceipt({ order: successOrder, date: dateStr,
-                  method: methodButtons.find(button => button.key === method)?.label || 'Mixto',
+                  method: confirmedMethodLabel,
                   items, subtotal, discountAmount, taxAmount, total }, true));
                 if (!printed) window.alert('Permite las ventanas emergentes para imprimir el ticket.');
               }}
@@ -399,6 +428,7 @@ export function CheckoutModal({
                         onClick={() => {
                           setMethod(btn.key);
                           setVoucherInfo(null);
+                          setRemainderMethod(null);
                           setVoucherError(null);
                           setVoucherCode('');
                         }}
@@ -444,7 +474,7 @@ export function CheckoutModal({
                   <div className="flex gap-2">
                     <Input
                       value={voucherCode}
-                      onChange={(e) => setVoucherCode(e.target.value)}
+                      onChange={(e) => { setVoucherCode(e.target.value); setVoucherInfo(null); setRemainderMethod(null); }}
                       placeholder="Últimos 4 caracteres"
                       onKeyDown={(e) => e.key === 'Enter' && handleCheckVoucher()}
                       autoFocus
@@ -478,10 +508,21 @@ export function CheckoutModal({
                       </div>
                       {!voucherCoversTotal && (
                         <div className="rounded-sm bg-accent/10 px-3 py-2 text-xs text-foreground">
-                          El vale cubre {formatCurrency(voucherInfo.currentBalance)} de {formatCurrency(total)}.
-                          Resto a pagar en efectivo: {formatCurrency(total - voucherInfo.currentBalance)}
+                          El vale cubre {formatCurrency(voucherAmount)} de {formatCurrency(total)}.
+                          Resto a pagar: {formatCurrency(remainderAmount)}
                         </div>
                       )}
+                      {!voucherCoversTotal && <div className="space-y-2">
+                        <p className="text-sm font-medium">¿Cómo se pagan los {formatCurrency(remainderAmount)} restantes?</p>
+                        <div className="grid grid-cols-3 gap-2">
+                          {(['CASH', 'CARD', 'BIZUM'] as const).map(paymentMethod => <Button
+                            key={paymentMethod}
+                            type="button"
+                            variant={remainderMethod === paymentMethod ? 'default' : 'outline'}
+                            onClick={() => setRemainderMethod(paymentMethod)}
+                          >{{ CASH: 'Efectivo', CARD: 'Tarjeta', BIZUM: 'Bizum' }[paymentMethod]}</Button>)}
+                        </div>
+                      </div>}
                       {voucherCoversTotal && (
                         <div className="rounded-sm bg-success/10 px-3 py-2 text-xs text-success">
                           El vale cubre el total del pedido

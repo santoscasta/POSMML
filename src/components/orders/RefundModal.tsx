@@ -1,6 +1,8 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
 import { apiGet, apiPost, ApiError } from '../../utils/apiClient';
 import { formatCurrency } from '../../utils/currency';
+import { printDocument } from '../../utils/print';
+import { voucherReceipt } from '../../utils/voucherReceipt';
 import {
   Dialog,
   DialogContent,
@@ -224,8 +226,6 @@ export function RefundModal({ order, open, onClose, onRefunded }: RefundModalPro
     }
   };
 
-  const escapePrint = (value: string) => value.replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]!));
-
   return (
     <Dialog
       open={open}
@@ -264,36 +264,14 @@ export function RefundModal({ order, open, onClose, onRefunded }: RefundModalPro
               variant="outline"
               className="w-full gap-2"
               onClick={() => {
-                const w = window.open('', '_blank', 'width=400,height=600');
-                if (!w) return;
-                w.document.write(`<!DOCTYPE html><html><head><title>Vale</title>
-                  <style>
-                    body { font-family: 'Courier New', monospace; width: 280px; margin: 0 auto; padding: 20px 0; font-size: 12px; color: #333; text-align: center; }
-                    .brand { font-size: 16px; margin-bottom: 2px; }
-                    .sub { font-size: 10px; color: #999; }
-                    .line { border-top: 1px dashed #999; margin: 10px 0; }
-                    .code { font-size: 22px; font-weight: bold; letter-spacing: 2px; margin: 12px 0; }
-                    .amount { font-size: 20px; font-weight: bold; margin: 8px 0; }
-                    .label { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: #999; }
-                    .info { font-size: 11px; color: #666; margin-top: 8px; }
-                  </style></head><body>
-                  <div class="brand">My mini Leo</div>
-                  <div class="sub">Clothes for your baby</div>
-                  <div class="line"></div>
-                  <div class="label">Vale de Devolución</div>
-                  <div class="code">${voucherCode}</div>
-                  <div class="label">Valor</div>
-                  <div class="amount">${formatCurrency(refundAmount, currencyCode)}</div>
-                  <div class="line"></div>
-                  <div class="info">Pedido original: ${escapePrint(order.name)}</div>
-                  ${customer ? `<div class="info">Cliente: ${escapePrint(`${customer.firstName || ''} ${customer.lastName || ''}`)}</div>` : ''}
-                  <div class="info">Fecha: ${new Date().toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' })}</div>
-                  <div class="line"></div>
-                  <div class="info">Presente este vale para canjearlo en tienda</div>
-                  <div class="info" style="margin-top:4px">myminileo.com</div>
-                </body></html>`);
-                w.document.close();
-                w.print();
+                const printed = printDocument(voucherReceipt({
+                  title: 'VALE DE DEVOLUCIÓN', code: voucherCode,
+                  amount: refundAmount, currencyCode,
+                  orderName: order.name,
+                  customerName: customer ? `${customer.firstName || ''} ${customer.lastName || ''}`.trim() : undefined,
+                  date: new Date().toLocaleDateString('es-ES'),
+                }));
+                if (!printed) setError('Permite las ventanas emergentes para imprimir el vale.');
               }}
             >
               <Printer className="size-4" />

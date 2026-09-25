@@ -1,5 +1,6 @@
 import { escapeHtml, thermalStyles } from './print';
 import { formatCurrency } from './currency';
+import { receiptFooter, receiptHeader } from './receiptBranding';
 
 export interface ExchangeReceiptData {
   originalOrderName: string;
@@ -28,10 +29,7 @@ export function exchangeReceipt(data: ExchangeReceiptData) {
     : '';
   return `<!DOCTYPE html><html lang="es"><head><title>Ticket de cambio ${escapeHtml(data.replacementOrderName)}</title>
     <style>${thermalStyles}</style></head><body>
-    <div class="center"><img class="receipt-logo" src="/logo-myminileo.jpg" alt="My mini Leo" /></div>
-    <div class="line"></div>
-    <div>Calle Asunción 38A<br/>41011 Sevilla<br/>España<br/>Teléfono: 607140250<br/>Instagram: @myminileo</div>
-    <div class="line"></div>
+    ${receiptHeader}
     <div class="center brand">TICKET DE CAMBIO</div>
     ${row('Pedido original:', escapeHtml(data.originalOrderName))}
     ${row('Nuevo pedido:', escapeHtml(data.replacementOrderName))}
@@ -52,8 +50,7 @@ export function exchangeReceipt(data: ExchangeReceiptData) {
       : data.voucher ? `<div class="total">${row('VALE GENERADO', formatCurrency(data.voucher.amount))}</div><div class="center code">${escapeHtml(data.voucher.code)}</div>`
       : '<div class="center bold">CAMBIO SIN DIFERENCIA</div>'}
     <div class="line"></div>
-    <div class="footer">El plazo para realizar cualquier cambio es de 15 días, podrá ser por otra prenda o un vale. Las prendas han de estar en perfectas condiciones y debidamente etiquetadas. Las prendas de outlet no podrán ser cambiadas ni se devolverá el dinero. Los chupetes, mordedores, chupeteros, botellas y cajitas no tendrán posibilidad de cambio por higiene.</div>
-    <div class="footer">Gracias por su compra<br/>myminileo.com</div>
+    ${receiptFooter}
     </body></html>`;
 }
 
@@ -63,7 +60,7 @@ export function exchangeVoucherReceipt(data: ExchangeReceiptData) {
     ? `${data.customer.firstName || ''} ${data.customer.lastName || ''}`.trim()
     : '';
   return `<!DOCTYPE html><html lang="es"><head><title>Vale de cambio</title><style>${thermalStyles}</style></head><body>
-    <div class="center"><img class="receipt-logo" src="/logo-myminileo.jpg" alt="My mini Leo" /></div>
+    ${receiptHeader}
     <div class="center brand">VALE DE CAMBIO</div><div class="line"></div>
     <div class="center code">${escapeHtml(data.voucher.code)}</div>
     <div class="center total">${formatCurrency(data.voucher.amount)}</div>
@@ -73,6 +70,7 @@ export function exchangeVoucherReceipt(data: ExchangeReceiptData) {
     ${row('Pedido original:', escapeHtml(data.originalOrderName))}
     ${row('Nuevo pedido:', escapeHtml(data.replacementOrderName))}
     ${row('Fecha:', escapeHtml(new Date(data.createdAt).toLocaleString('es-ES')))}
-    <div class="line"></div><div class="footer">Presente este vale para canjearlo en tienda.<br/>myminileo.com</div>
+    <div class="line"></div><div class="footer">Presente este vale para canjearlo en tienda.</div>
+    ${receiptFooter}
     </body></html>`;
 }

@@ -13,6 +13,7 @@ export interface SessionCloseResult extends SessionWithKPIs {
     method: string;
     type: string;
     voucherCode?: string;
+    mixedPayments?: { method: string; amount: number }[];
   }[];
 }
 

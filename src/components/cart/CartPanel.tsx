@@ -169,12 +169,18 @@ export function CartPanel() {
 
               <div className="space-y-2 pb-2">
                 <Button
-                  className="w-full bg-primary hover:bg-primary/90"
+                  className="h-auto min-h-16 w-full justify-between bg-primary px-4 py-3 text-left hover:bg-primary/90"
                   size="lg"
                   onClick={() => { setSaleCompleted(false); setShowCheckout(true); }}
                   disabled={!!sessionError || !sessionOpen || cart.items.length === 0 || !!pending || checkoutLoading}
                 >
-                  {`${es.pos.createOrder} — ${formatCurrency(total)}`}
+                  <span className="flex flex-col gap-1">
+                    <span>{es.pos.createOrder}</span>
+                    <span className="text-xs font-normal opacity-85">
+                      {itemCount} {itemCount === 1 ? 'artículo' : 'artículos'}
+                    </span>
+                  </span>
+                  <span className="text-lg font-semibold">{formatCurrency(total)}</span>
                 </Button>
                 <Button
                   variant="outline"
@@ -202,6 +208,7 @@ export function CartPanel() {
           customerEmail={cart.customer?.email}
           onConfirm={handleCheckout}
           pending={!!pending}
+          pendingPayment={pending?.payment}
           checkoutError={checkoutError}
           onResume={async () => { const name = await resume(); if (name) { await refresh(); setSaleCompleted(true); } return name; }}
           onClose={() => {

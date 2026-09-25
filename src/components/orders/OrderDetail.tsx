@@ -7,6 +7,7 @@ import { ORDER_DETAIL } from '../../graphql/orders';
 import { apiGet, apiPost } from '../../utils/apiClient';
 import type { PosPayment } from '../../types/payment';
 import { formatCurrency } from '../../utils/currency';
+import { paymentSummary } from '../../utils/paymentDisplay';
 import { ExchangeModal } from './ExchangeModal';
 import { RefundModal } from './RefundModal';
 import {
@@ -33,6 +34,7 @@ import {
   Ban,
   Undo2,
   Ticket,
+  Printer,
 } from 'lucide-react';
 import type { OrderDetail } from '../../types/order';
 
@@ -213,7 +215,8 @@ export function OrderDetailModal({ orderId, open, onClose, onUpdate }: OrderDeta
     }
     return map;
   })();
-  const posPaymentMethod = payments.find(p => p.type === 'sale')?.method || posMetafields.payment_method;
+  const salePayment = payments.find(p => p.type === 'sale' && !p.exchangeId);
+  const posPaymentMethod = salePayment?.method || payments.find(p => p.type === 'sale')?.method || posMetafields.payment_method;
   const posVoucherCode = payments.find(p => p.voucherCode)?.voucherCode || posMetafields.voucher_code;
   const posRefundMethod = payments.find(p => p.type === 'refund')?.method || posMetafields.refund_method;
 
@@ -301,7 +304,7 @@ export function OrderDetailModal({ orderId, open, onClose, onUpdate }: OrderDeta
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Método de pago</span>
                       <span className="font-medium">
-                        {posPaymentMethod === 'CASH' ? 'Efectivo' : posPaymentMethod === 'CARD' ? 'Tarjeta' : posPaymentMethod === 'BIZUM' ? 'Bizum' : posPaymentMethod === 'VOUCHER' ? 'Vale' : posPaymentMethod === 'MIXED' ? 'Mixto' : posPaymentMethod === 'EXCHANGE' ? 'Cambio de artículos' : posPaymentMethod}
+                        {salePayment ? paymentSummary(salePayment) : posPaymentMethod === 'CASH' ? 'Efectivo' : posPaymentMethod === 'CARD' ? 'Tarjeta' : posPaymentMethod === 'BIZUM' ? 'Bizum' : posPaymentMethod === 'VOUCHER' ? 'Vale' : posPaymentMethod === 'MIXED' ? 'Mixto' : posPaymentMethod === 'EXCHANGE' ? 'Cambio de artículos' : posPaymentMethod}
                       </span>
                     </div>
                     {posVoucherCode && (
@@ -524,6 +527,22 @@ export function OrderDetailModal({ orderId, open, onClose, onUpdate }: OrderDeta
               {/* Actions */}
               <DialogFooter>
                 <div className="flex flex-wrap gap-2 w-full justify-end">
+                  {salePayment && <Button variant="outline" onClick={() => {
+                    if (salePayment.method === 'MIXED' && !salePayment.mixedPayments?.length) {
+                      setError('Falta el desglose del pago mixto. No se puede reimprimir un ticket correcto.');
+                      return;
+                    }
+                    const printed = printDocument(saleReceipt({
+                      order: order.name,
+                      date: new Date(order.createdAt).toLocaleString('es-ES'),
+                      method: paymentSummary(salePayment),
+                      items: order.lineItems.edges.map(({ node }) => ({ title: node.title, variantTitle: node.variant?.title || '', quantity: node.quantity, price: Number(node.originalUnitPriceSet.shopMoney.amount) })),
+                      subtotal, discountAmount: discounts, taxAmount: tax, total,
+                      cashReceived: salePayment.method === 'CASH' ? salePayment.cashReceived : undefined,
+                      payments: salePayment.method === 'MIXED' ? salePayment.mixedPayments : [{ method: salePayment.method, amount: salePayment.amount }],
+                    }));
+                    if (!printed) setError('Permite las ventanas emergentes para reimprimir el ticket.');
+                  }}><Printer className="size-4" />Reimprimir ticket</Button>}
                   <Button variant="outline" onClick={() => {
                     const methods: Record<string, string> = { CASH: 'Efectivo', CARD: 'Tarjeta', BIZUM: 'Bizum', VOUCHER: 'Vale', MIXED: 'Mixto', EXCHANGE: 'Cambio de artículos' };
                     const printed = printDocument(saleReceipt({

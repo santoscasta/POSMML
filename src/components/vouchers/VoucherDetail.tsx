@@ -1,4 +1,5 @@
-import { escapeHtml, printDocument, thermalStyles } from '../../utils/print';
+import { printDocument } from '../../utils/print';
+import { voucherReceipt } from '../../utils/voucherReceipt';
 import { VoucherDelivery } from './VoucherDelivery';
 import { useState } from 'react';
 import { apiPost } from '../../utils/apiClient';
@@ -81,31 +82,12 @@ export function VoucherDetail({ voucher, open, onClose, onUpdate }: VoucherDetai
   };
 
   const handlePrint = () => {
-    const printed = printDocument(`
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <title>Vale ${escapeHtml(voucher.code)}</title>
-        <style>${thermalStyles} body { text-align: center; }</style>
-      </head>
-      <body>
-        <div class="brand">my mini <strong>Leo</strong></div>
-        <div class="tagline">Baby Clothing</div>
-        <div class="divider"></div>
-        <div class="label">Referencia del vale</div><p>El código completo está en el correo o en el vale original.</p>
-        <div class="code">${escapeHtml(voucher.code)}</div>
-        <div class="label">Valor</div>
-        <div class="amount">${formatCurrency(voucher.originalAmount)}</div>
-        ${voucher.currentBalance !== voucher.originalAmount
-          ? `<div class="info">Saldo disponible: ${formatCurrency(voucher.currentBalance)}</div>`
-          : ''
-        }
-        ${voucher.customerName ? `<div class="info">Para: ${escapeHtml(voucher.customerName)}</div>` : ''}
-        <div class="divider"></div>
-        <div class="info">Emitido: ${new Date(voucher.issuedAt).toLocaleDateString('es-ES')}</div>
-      </body>
-      </html>
-    `);
+    const printed = printDocument(voucherReceipt({
+      code: voucher.code, amount: voucher.originalAmount,
+      balance: voucher.currentBalance, partialCode: true,
+      date: new Date(voucher.issuedAt).toLocaleDateString('es-ES'),
+      customerName: voucher.customerName,
+    }));
     if (!printed) setError('Permite las ventanas emergentes para imprimir.');
   };
 

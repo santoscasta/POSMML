@@ -13,7 +13,7 @@ export interface CashSession {
   notes?: string;
   accountingError?: string;
   kpis?: SessionKPIs;
-  countedOrders?: { name: string; amount: number; method: string; createdAt: string }[];
+  countedOrders?: { name: string; amount: number; method: string; createdAt: string; mixedPayments?: { method: string; amount: number }[] }[];
   unregisteredOrders?: { id: string; name: string; reason: string }[];
   refreshedAt?: string;
 }

@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import { useSession } from '../context/SessionContext';
 import { apiGet } from '../utils/apiClient';
 import { formatCurrency } from '../utils/currency';
+import { paymentSummary } from '../utils/paymentDisplay';
 import { es } from '../i18n/es';
 import { OpenSessionModal } from '../components/sessions/OpenSessionModal';
 import { CloseSessionModal } from '../components/sessions/CloseSessionModal';
@@ -150,6 +151,7 @@ export function SessionsPage() {
                     { label: es.checkout.cash, value: formatCurrency(kpis.cashSales) },
                     { label: es.checkout.card, value: formatCurrency(kpis.cardSales) },
                     { label: es.checkout.bizum, value: formatCurrency(kpis.bizumSales) },
+                    { label: 'Vales', value: formatCurrency(kpis.voucherSales) },
                     { label: es.sessions.expectedCash, value: formatCurrency(kpis.expectedCash) },
                   ].map((kpi) => (
                     <div
@@ -172,8 +174,8 @@ export function SessionsPage() {
             {session.countedOrders && <details className="mt-4 rounded-lg border p-3">
               <summary className="cursor-pointer text-sm font-medium">Pedidos incluidos en esta sesión ({session.countedOrders.length})</summary>
               {session.countedOrders.length === 0 ? <p className="mt-2 text-sm text-muted-foreground">No hay ventas registradas en esta sesión.</p> : <div className="mt-2 max-h-72 overflow-auto">
-                <Table><TableHeader><TableRow><TableHead>Pedido</TableHead><TableHead>Fecha</TableHead><TableHead>Pago</TableHead><TableHead>Importe</TableHead></TableRow></TableHeader>
-                  <TableBody>{session.countedOrders.map((order, index) => <TableRow key={`${order.name}-${index}`}><TableCell>{order.name}</TableCell><TableCell>{formatDate(order.createdAt)}</TableCell><TableCell>{{ CASH: 'Efectivo', CARD: 'Tarjeta', BIZUM: 'Bizum', VOUCHER: 'Vale', MIXED: 'Mixto', EXCHANGE: 'Cambio de artículos' }[order.method] || order.method}</TableCell><TableCell>{formatCurrency(order.amount)}</TableCell></TableRow>)}</TableBody>
+                <Table><TableHeader><TableRow><TableHead>Pedido</TableHead><TableHead>Fecha</TableHead><TableHead>Pago</TableHead><TableHead>Total venta</TableHead></TableRow></TableHeader>
+                  <TableBody>{session.countedOrders.map((order, index) => <TableRow key={`${order.name}-${index}`}><TableCell>{order.name}</TableCell><TableCell>{formatDate(order.createdAt)}</TableCell><TableCell>{paymentSummary(order)}</TableCell><TableCell>{formatCurrency(order.amount)}</TableCell></TableRow>)}</TableBody>
                 </Table>
               </div>}
             </details>}

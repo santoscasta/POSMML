@@ -68,6 +68,7 @@ router.get('/sessions/current', async (req, res) => {
     res.json({ ...session, ...summarize(orders, session.openingAmount),
       countedOrders: orders.filter(p => p.type === 'sale').map(p => ({
         name: p.shopifyOrderName, amount: collectedSaleAmount(p), method: p.exchangeId ? 'EXCHANGE' : p.method, createdAt: p.createdAt,
+        mixedPayments: p.mixedPayments,
       })),
       unregisteredOrders: diagnostics.filter(p => isBusinessToday(p.createdAt) && ['PAID', 'PARTIALLY_REFUNDED', 'REFUNDED'].includes(p.financialStatus)),
       refreshedAt: new Date().toISOString(),

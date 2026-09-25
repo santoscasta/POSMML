@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useSession, type SessionCloseResult } from '../../context/SessionContext';
 import { formatCurrency } from '../../utils/currency';
+import { paymentMethodLabel, paymentSummary } from '../../utils/paymentDisplay';
 import { es } from '../../i18n/es';
 import {
   Dialog,
@@ -18,18 +19,6 @@ import { Printer, CheckCircle2 } from 'lucide-react';
 interface CloseSessionModalProps {
   open: boolean;
   onClose: () => void;
-}
-
-function methodLabel(m: string) {
-  switch (m) {
-    case 'CASH': return 'Efectivo';
-    case 'CARD': return 'Tarjeta';
-    case 'BIZUM': return 'Bizum';
-    case 'VOUCHER': return 'Vale';
-    case 'MIXED': return 'Mixto';
-    case 'EXCHANGE': return 'Cambio de artículos';
-    default: return m;
-  }
 }
 
 export function CloseSessionModal({ open, onClose }: CloseSessionModalProps) {
@@ -142,13 +131,13 @@ export function CloseSessionModal({ open, onClose }: CloseSessionModalProps) {
 
       ${sales.length > 0 ? `
       <div class="section">Detalle de ventas (${sales.length})</div>
-      ${sales.map(o => `<div class="order"><div class="row"><span>${o.name} · ${methodLabel(o.method)}</span><span>${formatCurrency(o.amount)}</span></div></div>`).join('')}
+      ${sales.map(o => `<div class="order"><div class="row"><span>${o.name} · ${paymentSummary(o)}</span><span>${formatCurrency(o.amount)}</span></div></div>`).join('')}
       <div class="line"></div>
       ` : ''}
 
       ${refunds.length > 0 ? `
       <div class="section">Reembolsos (${refunds.length})</div>
-      ${refunds.map(o => `<div class="order"><div class="row"><span>${o.name} · ${methodLabel(o.method)}${o.voucherCode ? ' · Vale: ' + o.voucherCode : ''}</span><span>-${formatCurrency(o.amount)}</span></div></div>`).join('')}
+      ${refunds.map(o => `<div class="order"><div class="row"><span>${o.name} · ${paymentMethodLabel(o.method)}${o.voucherCode ? ' · Vale: ' + o.voucherCode : ''}</span><span>-${formatCurrency(o.amount)}</span></div></div>`).join('')}
       <div class="line"></div>
       ` : ''}
 
@@ -251,7 +240,7 @@ export function CloseSessionModal({ open, onClose }: CloseSessionModalProps) {
                     <div key={idx} className="flex items-center justify-between px-3 py-2">
                       <div>
                         <span className="font-semibold">{o.name}</span>
-                        <span className="ml-2 text-muted-foreground">{methodLabel(o.method)}</span>
+                        <span className="ml-2 text-muted-foreground">{paymentSummary(o)}</span>
                         {o.type === 'refund' && (
                           <span className="ml-1 text-destructive">(reembolso)</span>
                         )}
@@ -303,6 +292,10 @@ export function CloseSessionModal({ open, onClose }: CloseSessionModalProps) {
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Ventas Bizum</span>
                       <span className="font-medium">{formatCurrency(kpis.bizumSales)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Ventas con vale</span>
+                      <span className="font-medium">{formatCurrency(kpis.voucherSales)}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Devoluciones en efectivo</span>

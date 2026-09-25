@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { apiPost } from '../../utils/apiClient';
-import { formatCurrency } from '../../utils/currency';
-import { escapeHtml, printDocument, thermalStyles } from '../../utils/print';
+import { printDocument } from '../../utils/print';
+import { voucherReceipt } from '../../utils/voucherReceipt';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import type { Voucher } from '../../types/voucher';
@@ -32,12 +32,11 @@ export function VoucherDelivery({ voucher, autoSend = false }: { voucher: Vouche
 
   return <div className="w-full space-y-3">
     {voucher.fullCode && <Button className="w-full" variant="outline" onClick={() => {
-      const ok = printDocument(`<!DOCTYPE html><html lang="es"><head><meta charset="utf-8"><title>Vale My mini Leo</title><style>${thermalStyles}</style></head><body>
-        <div class="center brand">My mini Leo</div><h1 class="center">Vale</h1>
-        <p class="center code">${escapeHtml(voucher.fullCode!)}</p>
-        <p class="center total">${formatCurrency(voucher.currentBalance)}</p>
-        <p>Emitido: ${escapeHtml(new Date(voucher.issuedAt).toLocaleDateString('es-ES'))}</p>
-        <div class="line"></div><p class="footer">Presenta este código para utilizar tu vale.<br>myminileo.com</p></body></html>`);
+      const ok = printDocument(voucherReceipt({
+        code: voucher.fullCode!, amount: voucher.currentBalance,
+        date: new Date(voucher.issuedAt).toLocaleDateString('es-ES'),
+        customerName: voucher.customerName,
+      }));
       if (!ok) setError('El navegador ha bloqueado la impresión. Permite las ventanas emergentes y pulsa Imprimir vale.');
     }}>Imprimir vale</Button>}
     <form className="space-y-2" onSubmit={e => { e.preventDefault(); void send(email); }}>

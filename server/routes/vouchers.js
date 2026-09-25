@@ -4,25 +4,11 @@ import shopifyGQL from '../lib/shopifyGQL.js';
 import { getStore } from '../lib/operationStore.js';
 import { issueVoucher, allGiftCards } from '../lib/voucherIssue.js';
 import { sendVoucherEmail } from '../lib/voucherEmail.js';
+import { parseVoucherMetadata } from '../lib/voucherMetadata.js';
 
 const router = Router();
 
-function parseNoteMetadata(note) {
-  if (!note) return {};
-  // Try to parse structured metadata from note (format: JSON block at end)
-  const jsonMatch = note.match(/\n---POS_META---\n(.+)$/s);
-  if (jsonMatch) {
-    try {
-      return JSON.parse(jsonMatch[1]);
-    } catch { /* ignore */ }
-  }
-  // Fallback: try to extract customer name from old format "Vale POS MML - Name"
-  const nameMatch = note.match(/^Vale POS MML\s*-\s*(.+)$/);
-  if (nameMatch) return { customerName: nameMatch[1].trim() };
-  return {};
-}
-
-function mapGiftCard(gc) {
+export function mapGiftCard(gc) {
   const balance = parseFloat(gc.balance.amount);
   const initial = parseFloat(gc.initialValue.amount);
 
@@ -44,13 +30,14 @@ function mapGiftCard(gc) {
   });
 
   // Extract metadata from note
-  const meta = parseNoteMetadata(gc.note);
+  const meta = parseVoucherMetadata(gc.note);
   const displayNote = gc.note ? gc.note.replace(/\n---POS_META---\n.+$/s, '').trim() : null;
 
-  // Customer name: prefer Shopify customer, then metadata, then null
-  const customerName = gc.customer
-    ? `${gc.customer.firstName || ''} ${gc.customer.lastName || ''}`.trim() || null
-    : meta.customerName || null;
+  // An email-only Shopify customer must not hide the name stored on the voucher.
+  const shopifyCustomerName = gc.customer
+    ? `${gc.customer.firstName || ''} ${gc.customer.lastName || ''}`.trim()
+    : '';
+  const customerName = shopifyCustomerName || (typeof meta.customerName === 'string' ? meta.customerName.trim() : '') || null;
   const customerEmail = gc.customer?.email || meta.customerEmail || null;
 
   return {
