@@ -13,6 +13,7 @@ import refundRoutes from './routes/refunds.js';
 import { requireAuth, checkOrigin } from './lib/auth.js';
 import { getStore } from './lib/operationStore.js';
 import mailRoutes from './routes/mail.js';
+import customerRoutes from './routes/customers.js';
 import { getMailService } from './lib/mail/service.js';
 import { createMailMonitor } from './lib/mail/monitor.js';
 import shopifyGQL from './lib/shopifyGQL.js';
@@ -44,6 +45,7 @@ app.use('/api', voucherRoutes);
 app.use('/api', dashboardRoutes);
 app.use('/api', refundRoutes);
 app.use('/api', mailRoutes);
+app.use('/api', customerRoutes);
 
 const mailMonitor = createMailMonitor({ mail: getMailService(), posStore: getStore(), gql: shopifyGQL });
 const checkMail = () => void mailMonitor.tick().catch(() => console.error('No se pudo ejecutar el servicio de correo; revisa el almacenamiento persistente.'));

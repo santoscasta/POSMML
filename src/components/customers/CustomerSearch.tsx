@@ -4,7 +4,8 @@ import type { Customer } from '../../types/customer';
 import { es } from '../../i18n/es';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { User, X } from 'lucide-react';
+import { RegisterCustomerModal } from './RegisterCustomerModal';
+import { User, X, UserPlus } from 'lucide-react';
 
 interface CustomerSearchProps {
   onSelect: (customer: Customer) => void;
@@ -13,6 +14,7 @@ interface CustomerSearchProps {
 export function CustomerSearch({ onSelect }: CustomerSearchProps) {
   const [query, setQuery] = useState('');
   const [open, setOpen] = useState(false);
+  const [registerOpen, setRegisterOpen] = useState(false);
   const { customers, loading, searchCustomers } = useCustomers();
   const ref = useRef<HTMLDivElement>(null);
 
@@ -38,29 +40,34 @@ export function CustomerSearch({ onSelect }: CustomerSearchProps) {
 
   return (
     <div className="relative" ref={ref}>
-      <div className="relative">
-        <User className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-        <Input
-          type="text"
-          value={query}
-          onChange={(e) => handleChange(e.target.value)}
-          placeholder={es.customers.search}
-          autoComplete="off"
-          className="pl-9 pr-8"
-        />
-        {query && (
-          <Button
-            variant="ghost"
-            size="icon-xs"
-            className="absolute right-1.5 top-1/2 -translate-y-1/2"
-            onClick={() => {
-              setQuery('');
-              setOpen(false);
-            }}
-          >
-            <X className="size-3.5" />
-          </Button>
-        )}
+      <div className="flex gap-2">
+        <div className="relative min-w-0 flex-1">
+          <User className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            type="text"
+            value={query}
+            onChange={(e) => handleChange(e.target.value)}
+            placeholder={es.customers.search}
+            autoComplete="off"
+            className="pl-9 pr-8"
+          />
+          {query && (
+            <Button
+              variant="ghost"
+              size="icon-xs"
+              className="absolute right-1.5 top-1/2 -translate-y-1/2"
+              onClick={() => {
+                setQuery('');
+                setOpen(false);
+              }}
+            >
+              <X className="size-3.5" />
+            </Button>
+          )}
+        </div>
+        <Button type="button" variant="outline" onClick={() => { setOpen(false); setRegisterOpen(true); }}>
+          <UserPlus className="size-4" /> Nuevo
+        </Button>
       </div>
       {open && (
         <div className="absolute left-0 right-0 top-full z-50 mt-1 max-h-52 overflow-y-auto rounded-sm border border-border bg-popover shadow-md">
@@ -88,6 +95,7 @@ export function CustomerSearch({ onSelect }: CustomerSearchProps) {
           )}
         </div>
       )}
+      <RegisterCustomerModal open={registerOpen} onClose={() => setRegisterOpen(false)} onCreated={handleSelect} />
     </div>
   );
 }
