@@ -85,7 +85,8 @@ export function VouchersPage() {
       const q = search.toLowerCase();
       return (
         v.code.toLowerCase().includes(q) ||
-        (v.customerName && v.customerName.toLowerCase().includes(q))
+        (v.customerName && v.customerName.toLowerCase().includes(q)) ||
+        (v.customerEmail && v.customerEmail.toLowerCase().includes(q))
       );
     }
     return true;
@@ -145,7 +146,7 @@ export function VouchersPage() {
           <Input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Buscar por código o nombre..."
+            placeholder="Buscar por código, nombre o correo..."
             className="pl-8 pr-8"
           />
           {search && (
@@ -225,7 +226,7 @@ export function VouchersPage() {
                 >
                   {formatCurrency(v.currentBalance)}
                 </TableCell>
-                <TableCell>{v.customerName || '—'}</TableCell>
+                <TableCell>{v.customerName || v.customerEmail || '—'}</TableCell>
                 <TableCell>
                   <Badge variant={statusBadgeVariant(v.status)}>
                     {statusLabel(v.status)}
