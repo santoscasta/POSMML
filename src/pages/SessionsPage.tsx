@@ -140,7 +140,7 @@ export function SessionsPage() {
             {kpis && (
               <>
                 <Separator className="my-4" />
-                <p className="mb-3 text-sm text-muted-foreground">Solo ventas registradas en esta sesión de caja. El filtro es la sesión, no «hoy»: no incluye otras sesiones ni pedidos online.</p>
+                <p className="mb-3 text-sm text-muted-foreground">Solo ventas registradas en esta sesión de caja. Las ventas brutas muestran el importe íntegro de la compra; en pagos mixtos, para el efectivo contado solo se suma la parte pagada en efectivo.</p>
                 {session.refreshedAt && <p className="mb-3 text-xs text-muted-foreground">Actualizado: {new Date(session.refreshedAt).toLocaleTimeString('es-ES')}. Se actualiza automáticamente cada 30 segundos.</p>}
                 <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
                   {[
@@ -174,8 +174,8 @@ export function SessionsPage() {
             {session.countedOrders && <details className="mt-4 rounded-lg border p-3">
               <summary className="cursor-pointer text-sm font-medium">Pedidos incluidos en esta sesión ({session.countedOrders.length})</summary>
               {session.countedOrders.length === 0 ? <p className="mt-2 text-sm text-muted-foreground">No hay ventas registradas en esta sesión.</p> : <div className="mt-2 max-h-72 overflow-auto">
-                <Table><TableHeader><TableRow><TableHead>Pedido</TableHead><TableHead>Fecha</TableHead><TableHead>Pago</TableHead><TableHead>Total venta</TableHead></TableRow></TableHeader>
-                  <TableBody>{session.countedOrders.map((order, index) => <TableRow key={`${order.name}-${index}`}><TableCell>{order.name}</TableCell><TableCell>{formatDate(order.createdAt)}</TableCell><TableCell>{paymentSummary(order)}</TableCell><TableCell>{formatCurrency(order.amount)}</TableCell></TableRow>)}</TableBody>
+                <Table><TableHeader><TableRow><TableHead>Pedido</TableHead><TableHead>Fecha</TableHead><TableHead>Pago</TableHead><TableHead>Total compra</TableHead><TableHead>Efectivo a caja</TableHead></TableRow></TableHeader>
+                  <TableBody>{session.countedOrders.map((order, index) => <TableRow key={`${order.name}-${index}`}><TableCell>{order.name}</TableCell><TableCell>{formatDate(order.createdAt)}</TableCell><TableCell>{paymentSummary(order)}</TableCell><TableCell>{formatCurrency(order.amount)}</TableCell><TableCell>{formatCurrency(order.cashAmount)}</TableCell></TableRow>)}</TableBody>
                 </Table>
               </div>}
             </details>}

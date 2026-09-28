@@ -20,8 +20,8 @@ export function saleReceipt(data: ReceiptData, gift = false) {
   const row = (label: string, value: string) => `<div class="row"><span>${label}</span><span>${value}</span></div>`;
   const voucherPaid = data.payments?.some(payment => payment.method === 'VOUCHER') ?? false;
   const paymentNames: Record<string, string> = { VOUCHER: 'Vale', CASH: 'Efectivo', CARD: 'Tarjeta', BIZUM: 'Bizum' };
-  const paidCents = voucherPaid ? data.payments!.reduce((sum, payment) => sum + Math.round(payment.amount * 100), 0) : 0;
-  const remaining = (Math.round(data.total * 100) - paidCents) / 100;
+  const cashToDrawer = (data.payments || []).filter(payment => payment.method === 'CASH')
+    .reduce((sum, payment) => sum + Math.round(payment.amount * 100), 0) / 100;
   return `<!DOCTYPE html><html lang="es"><head><title>Ticket${gift ? ' regalo' : ''} ${escapeHtml(data.order)}</title>
     <style>${thermalStyles}</style></head><body>
     ${receiptHeader}
@@ -35,8 +35,8 @@ export function saleReceipt(data: ReceiptData, gift = false) {
       ${data.discountAmount > 0 ? row('Descuento', `-${formatCurrency(data.discountAmount)}`) : ''}
       ${row('IVA (incluido)', formatCurrency(data.taxAmount))}
       ${voucherPaid ? `${row('Total compra', formatCurrency(data.total))}
-        ${data.payments!.map(payment => row(paymentNames[payment.method] || payment.method, `-${formatCurrency(payment.amount)}`)).join('')}
-        <div class="total">${row('TOTAL', formatCurrency(remaining))}</div>`
+        ${data.payments!.map(payment => row(payment.method === 'VOUCHER' ? 'Vale aplicado' : `${paymentNames[payment.method] || payment.method} pagado`, `${payment.method === 'VOUCHER' ? '-' : ''}${formatCurrency(payment.amount)}`)).join('')}
+        <div class="total">${row('EFECTIVO A CAJA', formatCurrency(cashToDrawer))}</div>`
         : `<div class="total">${row('TOTAL', formatCurrency(data.total))}</div>`}
       ${data.cashReceived ? `${row('Recibido', formatCurrency(data.cashReceived))}${row('Cambio', formatCurrency(data.cashReceived - data.total))}` : ''}
       <div class="line"></div>`}

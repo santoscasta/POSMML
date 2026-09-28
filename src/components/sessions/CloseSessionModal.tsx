@@ -131,7 +131,7 @@ export function CloseSessionModal({ open, onClose }: CloseSessionModalProps) {
 
       ${sales.length > 0 ? `
       <div class="section">Detalle de ventas (${sales.length})</div>
-      ${sales.map(o => `<div class="order"><div class="row"><span>${o.name} · ${paymentSummary(o)}</span><span>${formatCurrency(o.amount)}</span></div></div>`).join('')}
+      ${sales.map(o => `<div class="order"><div class="row"><span>${o.name} · ${paymentSummary(o)}</span><span>Total ${formatCurrency(o.amount)}</span></div><div class="row"><span>Efectivo a caja</span><span>${formatCurrency(o.cashAmount || 0)}</span></div></div>`).join('')}
       <div class="line"></div>
       ` : ''}
 
@@ -314,7 +314,7 @@ export function CloseSessionModal({ open, onClose }: CloseSessionModalProps) {
                 </div>
               </div>
 
-              <p className="text-xs text-muted-foreground">Efectivo teórico = fondo inicial + ventas en efectivo − devoluciones en efectivo. Cuenta todo el efectivo, incluido el fondo inicial.</p>
+              <p className="text-xs text-muted-foreground">Efectivo teórico = fondo inicial + pagos en efectivo (en pagos mixtos, solo la parte en efectivo) − devoluciones en efectivo. Cuenta todo el efectivo, incluido el fondo inicial.</p>
 
               {/* Closing amount */}
               <div>

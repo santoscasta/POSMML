@@ -37,6 +37,13 @@ export function collectedSaleAmount(movement) {
   return splits.filter(split => split.method !== 'EXCHANGE').reduce((sum, split) => sum + cents(split.amount), 0) / 100;
 }
 
+export function cashCollectedAmount(movement) {
+  if (movement.type !== 'sale') return 0;
+  const splits = movement.method === 'MIXED' ? movement.mixedPayments : [{ method: movement.method, amount: movement.amount }];
+  if (!Array.isArray(splits)) return 0;
+  return splits.filter(split => split.method === 'CASH').reduce((sum, split) => sum + cents(split.amount), 0) / 100;
+}
+
 export function computeKPIs(movements, openingAmount = 0) {
   const totals = { CASH: 0, CARD: 0, BIZUM: 0, VOUCHER: 0, EXCHANGE: 0 };
   let gross = 0, refunds = 0, refundsCash = 0, totalOrders = 0;

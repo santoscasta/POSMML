@@ -227,9 +227,8 @@ export function CheckoutModal({
     ? methodButtons.find(button => button.key === confirmedMethod)?.label || 'Mixto'
     : 'Mixto';
   const voucherPaid = receiptPayments?.some(payment => payment.method === 'VOUCHER') ?? false;
-  const remainingAfterPayment = voucherPaid
-    ? (Math.round(total * 100) - receiptPayments!.reduce((sum, payment) => sum + Math.round(payment.amount * 100), 0)) / 100
-    : total;
+  const cashToDrawer = (receiptPayments || []).filter(payment => payment.method === 'CASH')
+    .reduce((sum, payment) => sum + Math.round(payment.amount * 100), 0) / 100;
 
   const mixedMethodOptions: { value: MixedMethod; label: string }[] = [
     { value: 'CASH', label: 'Efectivo' },
@@ -276,10 +275,10 @@ export function CheckoutModal({
               </div>
               {voucherPaid && <>
                 {receiptPayments!.map((payment, index) => <div className="flex justify-between" key={index}>
-                  <span className="text-muted-foreground">{methodButtons.find(button => button.key === payment.method)?.label || payment.method}</span>
-                  <span>-{formatCurrency(payment.amount)}</span>
+                  <span className="text-muted-foreground">{payment.method === 'VOUCHER' ? 'Vale aplicado' : `${methodButtons.find(button => button.key === payment.method)?.label || payment.method} pagado`}</span>
+                  <span>{payment.method === 'VOUCHER' ? '-' : ''}{formatCurrency(payment.amount)}</span>
                 </div>)}
-                <div className="flex justify-between font-semibold"><span>TOTAL</span><span>{formatCurrency(remainingAfterPayment)}</span></div>
+                <div className="flex justify-between font-semibold"><span>EFECTIVO A CAJA</span><span>{formatCurrency(cashToDrawer)}</span></div>
               </>}
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Método</span>
