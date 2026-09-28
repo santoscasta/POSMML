@@ -404,20 +404,21 @@ Please change the parent <Route path="${g}"> to <Route path="${g==="/"?"*":`${g}
   @page { margin: 0; }
   * { box-sizing: border-box; color: #000 !important; }
   /* Rollos de 70 mm: dejamos 3 mm de margen a cada lado para evitar recortes. */
-  body { width: 70mm; max-width: 100%; margin: 0 auto; padding: 3mm; font: 14px/1.35 Arial, sans-serif; }
+  body { width: 70mm; max-width: 100%; margin: 0 auto; padding: 3mm; font: 12px/1.3 Arial, sans-serif; }
   .center, .footer { text-align: center; }
-  .receipt-logo { display: block; width: 64mm; max-width: 100%; height: auto; margin: 0 auto 2mm; filter: grayscale(1) brightness(0.7) contrast(10); }
-  .brand, .total { font-size: 18px; font-weight: bold; }
-  .line { border-top: 1px dashed #000; margin: 8px 0; }
-  .row { display: flex; justify-content: space-between; gap: 8px; padding: 2px 0; }
+  .receipt-logo-window { width: 100%; height: 18mm; overflow: hidden; display: flex; align-items: center; justify-content: center; margin-bottom: 1mm; }
+  .receipt-logo { display: block; width: 145%; max-width: none; height: auto; flex: 0 0 auto; filter: grayscale(1) brightness(0.7) contrast(10); }
+  .brand, .total { font-size: 16px; font-weight: bold; }
+  .line { border-top: 1px dashed #000; margin: 6px 0; }
+  .row { display: flex; justify-content: space-between; gap: 8px; padding: 1px 0; }
   .row span { overflow-wrap: anywhere; }
   .bold { font-weight: bold; }
-  .item { padding: 3px 0; break-inside: avoid; }
-  .footer { margin-top: 12px; font-size: 12px; }
-  .code { font: bold 18px monospace; overflow-wrap: anywhere; }
+  .item { padding: 2px 0; break-inside: avoid; }
+  .footer { margin-top: 8px; font-size: 11px; }
+  .code { font: bold 16px monospace; overflow-wrap: anywhere; }
   @media screen { body { padding-top: 16px; } }
 `;function la(e){const t=window.open("","_blank","width=400,height=700");if(!t)return!1;t.document.open(),t.document.write(e),t.document.close();const n=Array.from(t.document.images).map(async a=>{try{await a.decode()}catch{const l=t.document.createElement("div");l.className="center brand",l.textContent=a.alt,a.replaceWith(l)}});return Promise.all([t.document.fonts.ready,...n]).then(()=>{t.closed||(t.focus(),t.print())}),!0}const Lu=`
-  <div class="center"><img class="receipt-logo" src="/logo-myminileo.jpg" alt="My mini Leo" /></div>
+  <div class="receipt-logo-window"><img class="receipt-logo" src="/logo-myminileo.jpg" alt="My mini Leo" /></div>
   <div class="line"></div>
   <div>Calle Asunción 38A<br/>41011 Sevilla<br/>España<br/>Teléfono: 607140250<br/>Instagram: @myminileo</div>
   <div class="line"></div>`,_u=`

@@ -1,5 +1,5 @@
 export const receiptHeader = `
-  <div class="center"><img class="receipt-logo" src="/logo-myminileo.jpg" alt="My mini Leo" /></div>
+  <div class="receipt-logo-window"><img class="receipt-logo" src="/logo-myminileo.jpg" alt="My mini Leo" /></div>
   <div class="line"></div>
   <div>Calle Asunción 38A<br/>41011 Sevilla<br/>España<br/>Teléfono: 607140250<br/>Instagram: @myminileo</div>
   <div class="line"></div>`;
