@@ -66,6 +66,18 @@ export function VoucherDetail({ voucher, open, onClose, onUpdate }: VoucherDetai
 
   if (!voucher) return null;
 
+  const voucherOrders = (voucher.transactions || [])
+    .filter((tx) => tx.type === 'DEBIT' && tx.orderName)
+    .map((tx) => ({
+      id: tx.id,
+      name: tx.orderName!,
+      amount: tx.amount,
+      processedAt: tx.processedAt,
+    }));
+  const hasUnmatchedDebits = (voucher.transactions || []).some(
+    (tx) => tx.type === 'DEBIT' && !tx.orderName,
+  );
+
   const handleCancel = async () => {
     try {
       setCancelling(true);
@@ -160,6 +172,39 @@ export function VoucherDetail({ voucher, open, onClose, onUpdate }: VoucherDetai
             <div className="text-sm">{voucher.notes}</div>
           </div>
         )}
+
+        {/* Orders where the voucher was used */}
+        <div>
+          <div className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            Pedidos donde se usó
+          </div>
+          {voucherOrders.length > 0 ? (
+            <div className="divide-y rounded-lg border">
+              {voucherOrders.map((order) => (
+                <div key={order.id} className="flex items-center justify-between gap-3 px-3 py-2.5 text-sm">
+                  <div>
+                    <div className="font-medium">Pedido {order.name}</div>
+                    <div className="text-xs text-muted-foreground">
+                      {new Date(order.processedAt).toLocaleDateString('es-ES', {
+                        day: '2-digit', month: 'short', year: 'numeric',
+                        hour: '2-digit', minute: '2-digit',
+                      })}
+                    </div>
+                  </div>
+                  <div className="shrink-0 font-semibold text-orange-600">
+                    -{formatCurrency(order.amount)}
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="rounded-lg border border-dashed px-3 py-3 text-sm text-muted-foreground">
+              {hasUnmatchedDebits
+                ? 'Hay cargos registrados sin un número de pedido asociado.'
+                : 'Este vale todavía no se ha usado en ningún pedido.'}
+            </div>
+          )}
+        </div>
 
         {/* Transaction history */}
         {voucher.transactions && voucher.transactions.length > 0 && (

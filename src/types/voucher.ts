@@ -22,6 +22,7 @@ export interface VoucherTransaction {
   amount: number;
   currency?: string;
   note?: string;
+  orderName?: string | null;
   processedAt: string;
 }
 

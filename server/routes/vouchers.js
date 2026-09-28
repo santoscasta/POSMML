@@ -8,6 +8,13 @@ import { parseVoucherMetadata } from '../lib/voucherMetadata.js';
 
 const router = Router();
 
+function orderNameFromTransactionNote(note) {
+  if (typeof note !== 'string') return null;
+  // POS debit notes contain the operation key followed by Shopify's order name.
+  // Older POS notes used the form "Pago POS pedido #1234".
+  return note.match(/\bPOS\b[^\n]*?(#[\w-]+)/i)?.[1] || null;
+}
+
 export function mapGiftCard(gc) {
   const balance = parseFloat(gc.balance.amount);
   const initial = parseFloat(gc.initialValue.amount);
@@ -25,6 +32,7 @@ export function mapGiftCard(gc) {
       amount: Math.abs(amt),
       currency: t.amount.currencyCode,
       note: t.note || null,
+      orderName: amt < 0 ? orderNameFromTransactionNote(t.note) : null,
       processedAt: t.processedAt,
     };
   });
