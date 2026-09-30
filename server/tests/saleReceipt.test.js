@@ -29,11 +29,11 @@ test('voucher receipt shows the purchase, voucher debit and zero still to pay', 
   const data = { order: '#15027', date: '25/09/2026', method: 'Vale',
     items: [{ title: 'Cuerdecitas', variantTitle: 'Default Title', quantity: 2, price: 6 }],
     subtotal: 12, total: 12, discountAmount: 0, taxAmount: 2.08,
-    payments: [{ method: 'VOUCHER', amount: 12 }] };
+    payments: [{ method: 'VOUCHER', amount: 12, voucherCode: '****2e3a' }] };
   const html = saleReceipt(data);
   assert.match(html, /Total compra<\/span><span>12,00/);
-  assert.match(html, /Vale<\/span><span>-12,00/);
-  assert.match(html, /TOTAL<\/span><span>0,00/);
+  assert.match(html, /Vale 2E3A aplicado<\/span><span>-12,00/);
+  assert.match(html, /TOTAL COBRADO<\/span><span>0,00/);
   assert.doesNotMatch(saleReceipt(data, true), /12,00|TOTAL/);
 });
 
@@ -41,9 +41,9 @@ test('mixed voucher receipt separates the voucher from cash', () => {
   const html = saleReceipt({ order: '#1', date: '25/09/2026', method: 'Mixto', items: [],
     subtotal: 12, total: 12, discountAmount: 0, taxAmount: 2.08,
     payments: [{ method: 'VOUCHER', amount: 8 }, { method: 'CASH', amount: 4 }] });
-  assert.match(html, /Vale<\/span><span>-8,00/);
-  assert.match(html, /Efectivo<\/span><span>-4,00/);
-  assert.match(html, /TOTAL<\/span><span>0,00/);
+  assert.match(html, /Vale aplicado<\/span><span>-8,00/);
+  assert.match(html, /Efectivo pagado<\/span><span>4,00/);
+  assert.match(html, /TOTAL COBRADO<\/span><span>4,00/);
 });
 
 test('cash register describes each tender instead of presenting a mixed sale as all cash', () => {

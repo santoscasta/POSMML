@@ -13,14 +13,15 @@ export interface CashSession {
   notes?: string;
   accountingError?: string;
   kpis?: SessionKPIs;
-  countedOrders?: { name: string; amount: number; cashAmount: number; method: string; createdAt: string; mixedPayments?: { method: string; amount: number }[] }[];
-  unregisteredOrders?: { id: string; name: string; reason: string }[];
+  countedOrders?: { name: string; amount: number | null; purchaseAmount: number; cashAmount: number; method: string; createdAt: string; mixedPayments?: { method: string; amount: number }[] }[];
+  unregisteredOrders?: { id: string; name: string; reason: string; amount: number; financialStatus: string }[];
   refreshedAt?: string;
 }
 
 export interface SessionKPIs {
   totalOrders: number;
   grossSales: number;
+  collectedSales: number;
   cashSales: number;
   cardSales: number;
   bizumSales: number;

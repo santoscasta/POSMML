@@ -31,6 +31,7 @@ function fixture(t, overrides = {}) {
     PosRefundOrder: () => ({ order: { id: orderId, name: '#1', totalPriceSet: { shopMoney: { amount: '100', currencyCode: 'EUR' } }, totalRefundedSet: { shopMoney: { amount: '0' } }, transactions: [{ id: 'parent-1', kind: 'SALE', status: 'SUCCESS', gateway: 'manual' }] } }),
     PosRefund: () => ({ refundCreate: { refund: { id: 'refund-1', transactions: { nodes: [{ status: 'SUCCESS' }] } }, userErrors: [] } }),
     PosRefundVoucher: () => ({ giftCardCreate: { giftCard: { id: 'card-new' }, giftCardCode: 'ignored', userErrors: [] } }),
+    RefundCustomerByEmail: () => ({ customers: { nodes: [] } }),
     ...overrides,
   };
   const gql = async (query, variables) => {
@@ -174,7 +175,7 @@ test('partial refunds preserve original sale and use independent session/amount'
   assert.equal(payments[0].amount, 100);
   assert.equal(payments[1].amount, 20);
   assert.deepEqual(computeKPIs(payments, 50), {
-    totalOrders: 1, grossSales: 100, refunds: 20, cashSales: 0, cardSales: 100,
+    totalOrders: 1, grossSales: 100, collectedSales: 100, refunds: 20, cashSales: 0, cardSales: 100,
     bizumSales: 0, voucherSales: 0, refundsCash: 20, expectedCash: 30,
   });
   assert.equal(f.calls.some(c => /orderUpdate/.test(c.query)), false);

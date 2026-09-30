@@ -11,6 +11,13 @@
 - La lista **Pedidos incluidos en esta sesión** muestra los pedidos del contador.
 - Los pedidos pagados etiquetados POS MML de hoy que carecen de registro de pago
   o sesión aparecen como aviso. No se inventan el método de pago ni la sesión.
+- Desde **Conciliar pago** se puede registrar el pago existente, comprobando el
+  ticket y su pertenencia a la sesión abierta. No vuelve a cobrarse el pedido ni
+  se descuenta saldo de los vales. Los pedidos con devoluciones requieren revisar
+  su historial por separado.
+- **Ventas brutas** conserva el valor de las ventas; **Total cobrado** suma
+  efectivo, tarjeta y Bizum, excluyendo vales y crédito de cambios. En una compra
+  de 29,50 € con vale de 24,85 € y tarjeta de 4,65 €, el cobro es 4,65 €.
 - No hay un filtro por estado «preparado». Los pedidos online o sin registro
   de cobro no se incorporan por el simple hecho de aparecer en la pantalla
   general Pedidos. Los registros antiguos se identifican por sus metadatos.

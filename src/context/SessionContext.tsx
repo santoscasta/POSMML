@@ -10,6 +10,7 @@ export interface SessionCloseResult extends SessionWithKPIs {
   orderDetails?: {
     name: string;
     amount: number;
+    purchaseAmount: number;
     cashAmount: number;
     method: string;
     type: string;

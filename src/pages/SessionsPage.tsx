@@ -7,6 +7,7 @@ import { paymentSummary } from '../utils/paymentDisplay';
 import { es } from '../i18n/es';
 import { OpenSessionModal } from '../components/sessions/OpenSessionModal';
 import { CloseSessionModal } from '../components/sessions/CloseSessionModal';
+import { ReconcileOrderModal } from '../components/sessions/ReconcileOrderModal';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -26,6 +27,7 @@ import type { CashSession } from '../types/session';
 export function SessionsPage() {
   const { session, isOpen, loading, refresh } = useSession();
   const [refreshing, setRefreshing] = useState(false);
+  const [reconcileOrder, setReconcileOrder] = useState<NonNullable<CashSession['unregisteredOrders']>[number] | null>(null);
   const [searchParams, setSearchParams] = useSearchParams();
   const [openModalVisible, setOpenModalVisible] = useState(false);
   const [closeModalVisible, setCloseModalVisible] = useState(false);
@@ -140,12 +142,13 @@ export function SessionsPage() {
             {kpis && (
               <>
                 <Separator className="my-4" />
-                <p className="mb-3 text-sm text-muted-foreground">Solo ventas registradas en esta sesión de caja. Las ventas brutas muestran el importe íntegro de la compra; en pagos mixtos, para el efectivo contado solo se suma la parte pagada en efectivo.</p>
+                <p className="mb-3 text-sm text-muted-foreground">Solo ventas registradas en esta sesión. El total cobrado suma efectivo, tarjeta y Bizum. Los vales y el valor aplicado en cambios se muestran por separado; el efectivo teórico solo incluye cobros y devoluciones en efectivo.</p>
                 {session.refreshedAt && <p className="mb-3 text-xs text-muted-foreground">Actualizado: {new Date(session.refreshedAt).toLocaleTimeString('es-ES')}. Se actualiza automáticamente cada 30 segundos.</p>}
                 <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
                   {[
                     { label: 'Pedidos de esta sesión', value: kpis.totalOrders.toString() },
                     { label: 'Ventas brutas', value: formatCurrency(kpis.grossSales) },
+                    { label: 'Total cobrado', value: formatCurrency(kpis.collectedSales) },
                     { label: 'Devoluciones', value: formatCurrency(kpis.refunds) },
                     { label: 'Aplicado en cambios', value: formatCurrency(kpis.exchangeSales || 0) },
                     { label: es.checkout.cash, value: formatCurrency(kpis.cashSales) },
@@ -168,14 +171,14 @@ export function SessionsPage() {
 
             {!!session.unregisteredOrders?.length && <div role="alert" className="mt-4 space-y-2 rounded border border-amber-400 bg-amber-50 p-3 text-sm">
               <p className="font-medium">Hay {session.unregisteredOrders.length} {session.unregisteredOrders.length === 1 ? 'pedido pagado de hoy etiquetado' : 'pedidos pagados de hoy etiquetados'} POS MML sin registro completo de caja.</p>
-              <p>No se incluyen en esta sesión. Revisa estos pedidos antes del cierre; no vuelvas a cobrarlos.</p>
-              <ul className="list-inside list-disc">{session.unregisteredOrders.map(order => <li key={order.id}>{order.name}: {order.reason === 'missing_session' ? 'sin sesión asignada' : 'sin registro del método de pago'}</li>)}</ul>
+              <p>No se incluyen en esta sesión. Comprueba el ticket y registra el pago ya cobrado antes del cierre.</p>
+              <ul className="space-y-2">{session.unregisteredOrders.map(order => <li key={order.id} className="flex flex-wrap items-center justify-between gap-2"><span>{order.name}: {order.reason === 'missing_session' ? 'sin sesión asignada' : 'sin registro del método de pago'}</span>{order.financialStatus === 'PAID' ? <Button size="sm" variant="outline" onClick={() => setReconcileOrder(order)}>Conciliar pago</Button> : <span>Revisar venta y devolución en Shopify</span>}</li>)}</ul>
             </div>}
             {session.countedOrders && <details className="mt-4 rounded-lg border p-3">
               <summary className="cursor-pointer text-sm font-medium">Pedidos incluidos en esta sesión ({session.countedOrders.length})</summary>
               {session.countedOrders.length === 0 ? <p className="mt-2 text-sm text-muted-foreground">No hay ventas registradas en esta sesión.</p> : <div className="mt-2 max-h-72 overflow-auto">
-                <Table><TableHeader><TableRow><TableHead>Pedido</TableHead><TableHead>Fecha</TableHead><TableHead>Pago</TableHead><TableHead>Total compra</TableHead><TableHead>Efectivo a caja</TableHead></TableRow></TableHeader>
-                  <TableBody>{session.countedOrders.map((order, index) => <TableRow key={`${order.name}-${index}`}><TableCell>{order.name}</TableCell><TableCell>{formatDate(order.createdAt)}</TableCell><TableCell>{paymentSummary(order)}</TableCell><TableCell>{formatCurrency(order.amount)}</TableCell><TableCell>{formatCurrency(order.cashAmount)}</TableCell></TableRow>)}</TableBody>
+                <Table><TableHeader><TableRow><TableHead>Pedido</TableHead><TableHead>Fecha</TableHead><TableHead>Pago</TableHead><TableHead>Total compra</TableHead><TableHead>Cobrado</TableHead><TableHead>Efectivo a caja</TableHead></TableRow></TableHeader>
+                  <TableBody>{session.countedOrders.map((order, index) => <TableRow key={`${order.name}-${index}`}><TableCell>{order.name}</TableCell><TableCell>{formatDate(order.createdAt)}</TableCell><TableCell>{paymentSummary(order)}</TableCell><TableCell>{formatCurrency(order.purchaseAmount)}</TableCell><TableCell>{order.amount === null ? 'Pendiente de conciliación' : formatCurrency(order.amount)}</TableCell><TableCell>{formatCurrency(order.cashAmount)}</TableCell></TableRow>)}</TableBody>
                 </Table>
               </div>}
             </details>}
@@ -265,6 +268,7 @@ export function SessionsPage() {
         open={closeModalVisible}
         onClose={() => setCloseModalVisible(false)}
       />
+      {reconcileOrder && session && <ReconcileOrderModal order={reconcileOrder} sessionId={session.id} onClose={() => setReconcileOrder(null)} onSaved={refreshPage} />}
     </div>
   );
 }

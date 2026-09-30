@@ -2,8 +2,9 @@ import { Router } from 'express';
 import shopifyGQL from '../lib/shopifyGQL.js';
 import { getStore, PosError } from '../lib/operationStore.js';
 import { mutationResult, currentSession } from '../lib/posService.js';
-import { getPayments, computeKPIs, collectedSaleAmount, cashCollectedAmount, cents } from '../lib/accounting.js';
+import { getPayments, computeKPIs, collectedSaleAmount, newCollectedAmount, cashCollectedAmount, cents } from '../lib/accounting.js';
 import { isBusinessToday } from '../lib/businessTime.js';
+import { reconcileSale } from '../lib/reconcileSale.js';
 
 const router = Router();
 
@@ -67,7 +68,7 @@ router.get('/sessions/current', async (req, res) => {
     const orders = await getPayments(shopifyGQL, getStore(), { sessionId: session.id, diagnostics });
     res.json({ ...session, ...summarize(orders, session.openingAmount),
       countedOrders: orders.filter(p => p.type === 'sale').map(p => ({
-        name: p.shopifyOrderName, amount: collectedSaleAmount(p), cashAmount: cashCollectedAmount(p), method: p.exchangeId ? 'EXCHANGE' : p.method, createdAt: p.createdAt,
+        name: p.shopifyOrderName, amount: newCollectedAmount(p), purchaseAmount: collectedSaleAmount(p), cashAmount: cashCollectedAmount(p), method: p.exchangeId ? 'EXCHANGE' : p.method, createdAt: p.createdAt,
         mixedPayments: p.mixedPayments,
       })),
       unregisteredOrders: diagnostics.filter(p => isBusinessToday(p.createdAt) && ['PAID', 'PARTIALLY_REFUNDED', 'REFUNDED'].includes(p.financialStatus)),
@@ -77,6 +78,11 @@ router.get('/sessions/current', async (req, res) => {
     console.error('GET /sessions/current error:', err);
     res.status(err.status || 500).json({ error: err.message, code: err.code });
   }
+});
+
+router.post('/sessions/reconcile-order', async (req, res) => {
+  try { res.json(await reconcileSale(shopifyGQL, getStore(), req.body)); }
+  catch (error) { res.status(error.status || 500).json({ error: error.message }); }
 });
 
 // Open a new session
@@ -229,7 +235,7 @@ router.post('/sessions/close', async (req, res) => {
 
       // Build detailed order list for the closing report
       const orderDetails = orders.filter(p => p.type !== 'exchange_return' && !(p.exchangeId && p.type === 'refund'))
-        .map(p => ({ ...p, name: p.shopifyOrderName, amount: p.type === 'sale' ? collectedSaleAmount(p) : p.amount, cashAmount: cashCollectedAmount(p) }));
+        .map(p => ({ ...p, name: p.shopifyOrderName, amount: p.type === 'sale' ? newCollectedAmount(p) : p.amount, purchaseAmount: p.type === 'sale' ? collectedSaleAmount(p) : p.amount, cashAmount: cashCollectedAmount(p) }));
 
       res.json({ ...updated, kpis, orderDetails });
     });

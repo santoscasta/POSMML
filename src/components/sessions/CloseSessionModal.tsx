@@ -118,6 +118,7 @@ export function CloseSessionModal({ open, onClose }: CloseSessionModalProps) {
       <div class="row"><span>Ventas con vale</span><span>${formatCurrency(rKpis.voucherSales || 0)}</span></div>
       <div class="line"></div>
       <div class="row bold"><span>Ventas brutas</span><span>${formatCurrency(rKpis.grossSales || 0)}</span></div>
+      <div class="row bold"><span>Total cobrado</span><span>${formatCurrency(rKpis.collectedSales || 0)}</span></div>
       <div class="row"><span>Reembolsos</span><span>-${formatCurrency(rKpis.refunds || 0)}</span></div>
       <div class="row bold"><span>Nº pedidos</span><span>${rKpis.totalOrders || 0}</span></div>
       ` : ''}
@@ -131,7 +132,7 @@ export function CloseSessionModal({ open, onClose }: CloseSessionModalProps) {
 
       ${sales.length > 0 ? `
       <div class="section">Detalle de ventas (${sales.length})</div>
-      ${sales.map(o => `<div class="order"><div class="row"><span>${o.name} · ${paymentSummary(o)}</span><span>Total ${formatCurrency(o.amount)}</span></div><div class="row"><span>Efectivo a caja</span><span>${formatCurrency(o.cashAmount || 0)}</span></div></div>`).join('')}
+      ${sales.map(o => `<div class="order"><div class="row"><span>${o.name} · ${paymentSummary(o)}</span><span>Compra ${formatCurrency(o.purchaseAmount)}</span></div><div class="row"><span>Cobrado</span><span>${formatCurrency(o.amount)}</span></div><div class="row"><span>Efectivo a caja</span><span>${formatCurrency(o.cashAmount || 0)}</span></div></div>`).join('')}
       <div class="line"></div>
       ` : ''}
 
@@ -176,6 +177,7 @@ export function CloseSessionModal({ open, onClose }: CloseSessionModalProps) {
                     <span className="text-muted-foreground">Ventas brutas</span>
                     <span className="font-semibold">{formatCurrency(closeResult.kpis.grossSales)}</span>
                   </div>
+                  <div className="flex justify-between"><span>Total cobrado</span><span className="font-semibold">{formatCurrency(closeResult.kpis.collectedSales)}</span></div>
                   <Separator />
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Efectivo</span>
@@ -305,6 +307,7 @@ export function CloseSessionModal({ open, onClose }: CloseSessionModalProps) {
                       <span className="text-muted-foreground">Ventas brutas</span>
                       <span className="font-medium">{formatCurrency(kpis.grossSales)}</span>
                     </div>
+                    <div className="flex justify-between font-semibold"><span>Total cobrado</span><span>{formatCurrency(kpis.collectedSales)}</span></div>
                   </>
                 )}
                 <Separator />

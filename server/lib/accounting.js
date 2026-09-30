@@ -44,6 +44,14 @@ export function cashCollectedAmount(movement) {
   return splits.filter(split => split.method === 'CASH').reduce((sum, split) => sum + cents(split.amount), 0) / 100;
 }
 
+// Vouchers and exchange credit reuse value paid on a previous purchase.
+export function newCollectedAmount(movement) {
+  const splits = movement.method === 'MIXED' ? movement.mixedPayments : [movement];
+  if (!Array.isArray(splits) || !splits.length || splits.some(split => !['CASH', 'CARD', 'BIZUM', 'VOUCHER', 'EXCHANGE'].includes(split.method)) || splits.reduce((sum, split) => sum + cents(split.amount), 0) !== cents(movement.amount)) return null;
+  return splits.filter(split => ['CASH', 'CARD', 'BIZUM'].includes(split.method))
+    .reduce((sum, split) => sum + cents(split.amount), 0) / 100;
+}
+
 export function computeKPIs(movements, openingAmount = 0) {
   const totals = { CASH: 0, CARD: 0, BIZUM: 0, VOUCHER: 0, EXCHANGE: 0 };
   let gross = 0, refunds = 0, refundsCash = 0, totalOrders = 0;
@@ -71,7 +79,7 @@ export function computeKPIs(movements, openingAmount = 0) {
     }
   }
   return {
-    totalOrders, grossSales: gross / 100, refunds: refunds / 100,
+    totalOrders, grossSales: gross / 100, collectedSales: (totals.CASH + totals.CARD + totals.BIZUM) / 100, refunds: refunds / 100,
     cashSales: totals.CASH / 100, cardSales: totals.CARD / 100,
     bizumSales: totals.BIZUM / 100, voucherSales: totals.VOUCHER / 100,
     ...(totals.EXCHANGE ? { exchangeSales: totals.EXCHANGE / 100 } : {}),
@@ -100,6 +108,7 @@ export async function getPayments(gql, store, { sessionId, orderId, diagnostics 
       if (!mf.payment_method || !mf.session_id) diagnostics?.push({
         id: order.id, name: order.name, createdAt: order.createdAt,
         financialStatus: order.displayFinancialStatus,
+        amount: Number(order.totalPriceSet.shopMoney.amount),
         reason: !mf.payment_method ? 'missing_payment' : 'missing_session',
       });
       if (!mf.payment_method) continue;

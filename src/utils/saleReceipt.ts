@@ -2,6 +2,7 @@ import { escapeHtml, thermalStyles } from './print';
 import { formatCurrency } from './currency';
 import { receiptFooter, receiptHeader } from './receiptBranding';
 import type { PaymentMethod } from '../types/payment';
+import { paymentAmounts, voucherLabel } from './paymentDisplay';
 
 interface ReceiptData {
   order: string;
@@ -14,15 +15,14 @@ interface ReceiptData {
   taxAmount: number;
   total: number;
   cashReceived?: number;
-  payments?: { method: PaymentMethod; amount: number }[];
+  payments?: { method: PaymentMethod; amount: number; voucherCode?: string }[];
 }
 
 export function saleReceipt(data: ReceiptData, gift = false) {
   const row = (label: string, value: string) => `<div class="row"><span>${label}</span><span>${value}</span></div>`;
   const voucherPaid = data.payments?.some(payment => payment.method === 'VOUCHER') ?? false;
   const paymentNames: Record<string, string> = { VOUCHER: 'Vale', CASH: 'Efectivo', CARD: 'Tarjeta', BIZUM: 'Bizum' };
-  const cashToDrawer = (data.payments || []).filter(payment => payment.method === 'CASH')
-    .reduce((sum, payment) => sum + Math.round(payment.amount * 100), 0) / 100;
+  const amounts = paymentAmounts(data.payments || []);
   const note = data.note?.trim();
   const noteBlock = note
     ? `<div class="line"></div><div class="order-note"><strong>Nota del pedido:</strong><br>${escapeHtml(note).replace(/\r\n?|\n/g, '<br>')}</div>`
@@ -41,8 +41,9 @@ export function saleReceipt(data: ReceiptData, gift = false) {
       ${data.discountAmount > 0 ? row('Descuento', `-${formatCurrency(data.discountAmount)}`) : ''}
       ${row('IVA (incluido)', formatCurrency(data.taxAmount))}
       ${voucherPaid ? `${row('Total compra', formatCurrency(data.total))}
-        ${data.payments!.map(payment => row(payment.method === 'VOUCHER' ? 'Vale aplicado' : `${paymentNames[payment.method] || payment.method} pagado`, `${payment.method === 'VOUCHER' ? '-' : ''}${formatCurrency(payment.amount)}`)).join('')}
-        <div class="total">${row('EFECTIVO A CAJA', formatCurrency(cashToDrawer))}</div>`
+        ${data.payments!.map(payment => row(payment.method === 'VOUCHER' ? `${escapeHtml(voucherLabel(payment.voucherCode))} aplicado` : `${paymentNames[payment.method] || payment.method} pagado`, `${payment.method === 'VOUCHER' ? '-' : ''}${formatCurrency(payment.amount)}`)).join('')}
+        <div class="total">${row('TOTAL COBRADO', formatCurrency(amounts.collected))}</div>
+        ${row('Efectivo a caja', formatCurrency(amounts.cash))}`
         : `<div class="total">${row('TOTAL', formatCurrency(data.total))}</div>`}
       ${data.cashReceived ? `${row('Recibido', formatCurrency(data.cashReceived))}${row('Cambio', formatCurrency(data.cashReceived - data.total))}` : ''}
       <div class="line"></div>`}

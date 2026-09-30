@@ -43,7 +43,7 @@ export function VoucherBalanceChecker({ onSelect }: VoucherBalanceCheckerProps) 
       setLoading(true);
       setError(null);
       setVoucher(null);
-      const result = await apiGet<Voucher>(`/vouchers/${code.trim().toUpperCase()}`);
+      const result = await apiGet<Voucher>(`/vouchers/${encodeURIComponent(code.trim())}`);
       setVoucher(result);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Vale no encontrado');

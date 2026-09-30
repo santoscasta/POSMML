@@ -7,7 +7,7 @@ import { ORDER_DETAIL } from '../../graphql/orders';
 import { apiGet, apiPost } from '../../utils/apiClient';
 import type { PosPayment } from '../../types/payment';
 import { formatCurrency } from '../../utils/currency';
-import { paymentSummary } from '../../utils/paymentDisplay';
+import { paymentSummary, paymentAmounts, voucherLabel } from '../../utils/paymentDisplay';
 import { ExchangeModal } from './ExchangeModal';
 import { RefundModal } from './RefundModal';
 import {
@@ -217,7 +217,9 @@ export function OrderDetailModal({ orderId, open, onClose, onUpdate }: OrderDeta
   })();
   const salePayment = payments.find(p => p.type === 'sale' && !p.exchangeId);
   const posPaymentMethod = salePayment?.method || payments.find(p => p.type === 'sale')?.method || posMetafields.payment_method;
-  const posVoucherCode = payments.find(p => p.voucherCode)?.voucherCode || posMetafields.voucher_code;
+  const saleSplits = salePayment ? (salePayment.method === 'MIXED' ? salePayment.mixedPayments : [salePayment]) : undefined;
+  const amounts = saleSplits ? paymentAmounts(saleSplits) : null;
+  const usedVouchers = saleSplits?.filter(p => p.method === 'VOUCHER') || [];
   const posRefundMethod = payments.find(p => p.type === 'refund')?.method || posMetafields.refund_method;
 
   const subtotal = parseFloat(order?.subtotalPriceSet.shopMoney.amount ?? '0');
@@ -263,7 +265,7 @@ export function OrderDetailModal({ orderId, open, onClose, onUpdate }: OrderDeta
                   </div>
                 </div>
                 <div className="text-xl font-bold text-accent">
-                  {formatCurrency(total, currency)}
+                  {amounts?.voucher ? <><div className="text-xs font-normal text-muted-foreground">Cobrado</div>{formatCurrency(amounts.collected, currency)}<div className="text-xs font-normal text-muted-foreground">Compra: {formatCurrency(total, currency)}</div></> : formatCurrency(total, currency)}
                 </div>
               </div>
 
@@ -307,15 +309,15 @@ export function OrderDetailModal({ orderId, open, onClose, onUpdate }: OrderDeta
                         {salePayment ? paymentSummary(salePayment) : posPaymentMethod === 'CASH' ? 'Efectivo' : posPaymentMethod === 'CARD' ? 'Tarjeta' : posPaymentMethod === 'BIZUM' ? 'Bizum' : posPaymentMethod === 'VOUCHER' ? 'Vale' : posPaymentMethod === 'MIXED' ? 'Mixto' : posPaymentMethod === 'EXCHANGE' ? 'Cambio de artículos' : posPaymentMethod}
                       </span>
                     </div>
-                    {posVoucherCode && (
-                      <div className="flex items-center justify-between">
+                    {usedVouchers.map((voucher, index) => (
+                      <div key={index} className="flex items-center justify-between">
                         <span className="text-muted-foreground">Vale utilizado</span>
                         <div className="inline-flex items-center gap-1.5 rounded-md bg-accent/10 px-2 py-1">
                           <Ticket className="size-3 text-accent" />
-                          <span className="font-mono text-xs font-semibold text-accent">{posVoucherCode}</span>
+                          <span className="font-mono text-xs font-semibold text-accent">{voucherLabel(voucher.voucherCode)} · {formatCurrency(voucher.amount, currency)}</span>
                         </div>
                       </div>
-                    )}
+                    ))}
                     {posRefundMethod && (
                       <div className="flex justify-between">
                         <span className="text-muted-foreground">Método reembolso</span>
@@ -433,9 +435,14 @@ export function OrderDetailModal({ orderId, open, onClose, onUpdate }: OrderDeta
                   </div>
                   <Separator />
                   <div className="flex justify-between font-semibold">
-                    <span>Total</span>
+                    <span>Total compra</span>
                     <span>{formatCurrency(total, currency)}</span>
                   </div>
+                  {!!amounts?.voucher && <>
+                    <div className="flex justify-between"><span>Vales aplicados</span><span>-{formatCurrency(amounts.voucher, currency)}</span></div>
+                    <div className="flex justify-between font-semibold"><span>Total cobrado</span><span>{formatCurrency(amounts.collected, currency)}</span></div>
+                    <div className="flex justify-between"><span>Efectivo a caja</span><span>{formatCurrency(amounts.cash, currency)}</span></div>
+                  </>}
                   {refunded > 0 && (
                     <div className="flex justify-between text-destructive">
                       <span>Reembolsado</span>
@@ -540,7 +547,7 @@ export function OrderDetailModal({ orderId, open, onClose, onUpdate }: OrderDeta
                       items: order.lineItems.edges.map(({ node }) => ({ title: node.title, variantTitle: node.variant?.title || '', quantity: node.quantity, price: Number(node.originalUnitPriceSet.shopMoney.amount) })),
                       subtotal, discountAmount: discounts, taxAmount: tax, total,
                       cashReceived: salePayment.method === 'CASH' ? salePayment.cashReceived : undefined,
-                      payments: salePayment.method === 'MIXED' ? salePayment.mixedPayments : [{ method: salePayment.method, amount: salePayment.amount }],
+                      payments: saleSplits,
                     }));
                     if (!printed) setError('Permite las ventanas emergentes para reimprimir el ticket.');
                   }}><Printer className="size-4" />Reimprimir ticket</Button>}

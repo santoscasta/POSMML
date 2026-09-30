@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { formatCurrency } from '../../utils/currency';
 import { apiGet, apiPost } from '../../utils/apiClient';
 import type { PaymentMethod, MixedPaymentSplit } from '../../types/payment';
+import { paymentAmounts, voucherLabel } from '../../utils/paymentDisplay';
 import {
   Dialog,
   DialogContent,
@@ -52,7 +53,7 @@ interface CheckoutModalProps {
   ) => Promise<string | null>;
   onClose: () => void;
   pending?: boolean;
-  pendingPayment?: { method: PaymentMethod; amount: number; mixedPayments?: MixedPaymentSplit[] };
+  pendingPayment?: { method: PaymentMethod; amount: number; mixedPayments?: MixedPaymentSplit[]; voucherCode?: string };
   checkoutError?: string | null;
   onResume?: () => Promise<string | null>;
 }
@@ -93,7 +94,7 @@ export function CheckoutModal({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successOrder, setSuccessOrder] = useState<string | null>(null);
-  const [receiptPayments, setReceiptPayments] = useState<{ method: PaymentMethod; amount: number }[] | null>(null);
+  const [receiptPayments, setReceiptPayments] = useState<{ method: PaymentMethod; amount: number; voucherCode?: string }[] | null>(null);
   const [emailTo, setEmailTo] = useState(customerEmail || '');
   const [emailSent, setEmailSent] = useState(false);
   const [emailKind, setEmailKind] = useState<'normal' | 'gift'>('normal');
@@ -132,7 +133,7 @@ export function CheckoutModal({
     setVoucherInfo(null);
     setRemainderMethod(null);
     try {
-      const info = await apiGet<VoucherInfo>(`/vouchers/${voucherCode.trim()}`);
+      const info = await apiGet<VoucherInfo>(`/vouchers/${encodeURIComponent(voucherCode.trim())}`);
       if (info.status !== 'ACTIVE') {
         setVoucherError('Este vale no está activo');
       } else if (info.currentBalance <= 0) {
@@ -140,8 +141,8 @@ export function CheckoutModal({
       } else {
         setVoucherInfo(info);
       }
-    } catch {
-      setVoucherError('Vale no encontrado');
+    } catch (cause) {
+      setVoucherError(cause instanceof Error ? cause.message : 'Vale no encontrado');
     } finally {
       setVoucherLoading(false);
     }
@@ -187,7 +188,7 @@ export function CheckoutModal({
 
     setLoading(false);
     if (orderName) {
-      setReceiptPayments(splits || [{ method, amount: total }]);
+      setReceiptPayments(splits || [{ method, amount: total, voucherCode: method === 'VOUCHER' ? voucherInfo?.code : undefined }]);
       setSuccessOrder(orderName);
     } else {
       setError('Error al procesar el pago');
@@ -229,8 +230,7 @@ export function CheckoutModal({
     ? methodButtons.find(button => button.key === confirmedMethod)?.label || 'Mixto'
     : 'Mixto';
   const voucherPaid = receiptPayments?.some(payment => payment.method === 'VOUCHER') ?? false;
-  const cashToDrawer = (receiptPayments || []).filter(payment => payment.method === 'CASH')
-    .reduce((sum, payment) => sum + Math.round(payment.amount * 100), 0) / 100;
+  const amounts = paymentAmounts(receiptPayments || []);
 
   const mixedMethodOptions: { value: MixedMethod; label: string }[] = [
     { value: 'CASH', label: 'Efectivo' },
@@ -250,7 +250,7 @@ export function CheckoutModal({
             setLoading(true);
             const name = await onResume();
             if (name) {
-              setReceiptPayments(pendingPayment?.mixedPayments || (pendingPayment ? [{ method: pendingPayment.method, amount: pendingPayment.amount }] : null));
+              setReceiptPayments(pendingPayment?.mixedPayments || (pendingPayment ? [{ method: pendingPayment.method, amount: pendingPayment.amount, voucherCode: pendingPayment.voucherCode }] : null));
               setSuccessOrder(name); setError(null);
             }
             setLoading(false);
@@ -277,10 +277,11 @@ export function CheckoutModal({
               </div>
               {voucherPaid && <>
                 {receiptPayments!.map((payment, index) => <div className="flex justify-between" key={index}>
-                  <span className="text-muted-foreground">{payment.method === 'VOUCHER' ? 'Vale aplicado' : `${methodButtons.find(button => button.key === payment.method)?.label || payment.method} pagado`}</span>
+                  <span className="text-muted-foreground">{payment.method === 'VOUCHER' ? `${voucherLabel(payment.voucherCode)} aplicado` : `${methodButtons.find(button => button.key === payment.method)?.label || payment.method} pagado`}</span>
                   <span>{payment.method === 'VOUCHER' ? '-' : ''}{formatCurrency(payment.amount)}</span>
                 </div>)}
-                <div className="flex justify-between font-semibold"><span>EFECTIVO A CAJA</span><span>{formatCurrency(cashToDrawer)}</span></div>
+                <div className="flex justify-between font-semibold"><span>Total cobrado</span><span>{formatCurrency(amounts.collected)}</span></div>
+                <div className="flex justify-between"><span>Efectivo a caja</span><span>{formatCurrency(amounts.cash)}</span></div>
               </>}
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Método</span>

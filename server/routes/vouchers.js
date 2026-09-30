@@ -5,6 +5,7 @@ import { getStore } from '../lib/operationStore.js';
 import { issueVoucher, allGiftCards } from '../lib/voucherIssue.js';
 import { sendVoucherEmail } from '../lib/voucherEmail.js';
 import { parseVoucherMetadata } from '../lib/voucherMetadata.js';
+import { lookupVoucher } from '../lib/voucherLookup.js';
 
 const router = Router();
 
@@ -50,8 +51,8 @@ export function mapGiftCard(gc) {
 
   return {
     id: gc.id,
-    code: gc.maskedCode || `****${gc.lastCharacters}`,
-    lastCharacters: gc.lastCharacters,
+    code: (gc.maskedCode || `****${gc.lastCharacters}`).toUpperCase(),
+    lastCharacters: gc.lastCharacters?.toUpperCase(),
     originalAmount: initial,
     currentBalance: balance,
     currency: gc.balance.currencyCode,
@@ -132,19 +133,9 @@ router.post('/vouchers', async (req, res) => {
 // Lookup by last characters
 router.get('/vouchers/:code', async (req, res) => {
   try {
-    const code = req.params.code;
-    const data = await shopifyGQL(
-      `query($q: String!) {
-        giftCards(first: 5, query: $q) { edges { node { ${GC_FIELDS} } } }
-      }`,
-      { q: code },
-    );
-    const cards = data.giftCards.edges.map(e => mapGiftCard(e.node));
-    const match = cards.find(c => c.lastCharacters === code || c.code.includes(code));
-    if (!match) return res.status(404).json({ error: 'Vale no encontrado' });
-    res.json(match);
+    res.json(mapGiftCard(await lookupVoucher(shopifyGQL, req.params.code, GC_FIELDS)));
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(err.status || 500).json({ error: err.message });
   }
 });
 
