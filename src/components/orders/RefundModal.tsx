@@ -265,7 +265,7 @@ export function RefundModal({ order, open, onClose, onRefunded }: RefundModalPro
               className="w-full gap-2"
               onClick={() => {
                 const printed = printDocument(voucherReceipt({
-                  title: 'VALE DE DEVOLUCIÓN', code: voucherCode,
+                  title: 'VALE', code: voucherCode,
                   amount: refundAmount, currencyCode,
                   orderName: order.name,
                   customerName: customer ? `${customer.firstName || ''} ${customer.lastName || ''}`.trim() : undefined,

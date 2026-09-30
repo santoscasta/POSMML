@@ -25,16 +25,24 @@ export async function resolveRefundCustomer(gql, ctx, input) {
     if (!details.firstName || (!details.email && !details.phone)) throw new PosError('Indica el nombre y un email o teléfono del cliente');
     if (details.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(details.email)) throw new PosError('Email del cliente inválido');
     if (details.phone && !/^\+[1-9]\d{6,14}$/.test(details.phone)) throw new PosError('Indica el teléfono con prefijo internacional, por ejemplo +34607140250');
-    const tag = `pos-customer-${ctx.op.key}`;
-    customer = await ctx.step('refund-customer-create', async () => mutationResult(await gql(`mutation RefundCustomerCreate($input: CustomerInput!) {
-      customerCreate(input: $input) { customer { ${fields} } userErrors { message } }
-    }`, { input: { ...details, tags: [tag] } }), 'customerCreate', 'customer'), async () => {
-      const data = await gql(`query RefundCustomerRecovery($query: String!) {
-        customers(first: 2, query: $query) { nodes { ${fields} tags } }
-      }`, { query: `tag:${tag}` });
-      const matches = data.customers.nodes.filter(c => c.tags.includes(tag));
-      return matches.length === 1 ? matches[0] : null;
-    });
+    if (details.email) {
+      const data = await gql(`query RefundCustomerByEmail($query: String!) {
+        customers(first: 10, query: $query) { nodes { ${fields} } }
+      }`, { query: `email:${JSON.stringify(details.email)}` });
+      customer = data.customers.nodes.find(c => c.email?.trim().toLowerCase() === details.email.toLowerCase()) || null;
+    }
+    if (!customer) {
+      const tag = `pos-customer-${ctx.op.key}`;
+      customer = await ctx.step('refund-customer-create', async () => mutationResult(await gql(`mutation RefundCustomerCreate($input: CustomerInput!) {
+        customerCreate(input: $input) { customer { ${fields} } userErrors { message } }
+      }`, { input: { ...details, tags: [tag] } }), 'customerCreate', 'customer'), async () => {
+        const data = await gql(`query RefundCustomerRecovery($query: String!) {
+          customers(first: 2, query: $query) { nodes { ${fields} tags } }
+        }`, { query: `tag:${tag}` });
+        const matches = data.customers.nodes.filter(c => c.tags.includes(tag));
+        return matches.length === 1 ? matches[0] : null;
+      });
+    }
   }
   ctx.op.voucherCustomer = customer;
   ctx.save();
