@@ -7,6 +7,7 @@ interface ReceiptData {
   order: string;
   date: string;
   method: string;
+  note?: string;
   items: { title: string; variantTitle: string; quantity: number; price: number }[];
   subtotal: number;
   discountAmount: number;
@@ -22,12 +23,17 @@ export function saleReceipt(data: ReceiptData, gift = false) {
   const paymentNames: Record<string, string> = { VOUCHER: 'Vale', CASH: 'Efectivo', CARD: 'Tarjeta', BIZUM: 'Bizum' };
   const cashToDrawer = (data.payments || []).filter(payment => payment.method === 'CASH')
     .reduce((sum, payment) => sum + Math.round(payment.amount * 100), 0) / 100;
+  const note = data.note?.trim();
+  const noteBlock = note
+    ? `<div class="line"></div><div class="order-note"><strong>Nota del pedido:</strong><br>${escapeHtml(note).replace(/\r\n?|\n/g, '<br>')}</div>`
+    : '';
   return `<!DOCTYPE html><html lang="es"><head><title>Ticket${gift ? ' regalo' : ''} ${escapeHtml(data.order)}</title>
-    <style>${thermalStyles}</style></head><body>
+    <style>${thermalStyles}.order-note { overflow-wrap: anywhere; }</style></head><body>
     ${receiptHeader}
     ${row('Ticket:', escapeHtml(data.order))}
     ${row('Fecha:', escapeHtml(data.date))}
     ${row('Método:', escapeHtml(data.method))}
+    ${noteBlock}
     <div class="line"></div>
     ${data.items.map(i => `<div class="item">${row(`${i.quantity}x ${escapeHtml(i.title)}${i.variantTitle && i.variantTitle !== 'Default Title' ? ` (${escapeHtml(i.variantTitle)})` : ''}`, gift ? '' : formatCurrency(i.price * i.quantity))}</div>`).join('')}
     <div class="line"></div>

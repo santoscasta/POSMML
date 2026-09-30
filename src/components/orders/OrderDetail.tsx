@@ -536,6 +536,7 @@ export function OrderDetailModal({ orderId, open, onClose, onUpdate }: OrderDeta
                       order: order.name,
                       date: new Date(order.createdAt).toLocaleString('es-ES'),
                       method: paymentSummary(salePayment),
+                      note: order.note,
                       items: order.lineItems.edges.map(({ node }) => ({ title: node.title, variantTitle: node.variant?.title || '', quantity: node.quantity, price: Number(node.originalUnitPriceSet.shopMoney.amount) })),
                       subtotal, discountAmount: discounts, taxAmount: tax, total,
                       cashReceived: salePayment.method === 'CASH' ? salePayment.cashReceived : undefined,
@@ -549,6 +550,7 @@ export function OrderDetailModal({ orderId, open, onClose, onUpdate }: OrderDeta
                       order: order.name,
                       date: new Date(order.createdAt).toLocaleString('es-ES'),
                       method: methods[posPaymentMethod] || 'No indicado',
+                      note: order.note,
                       items: order.lineItems.edges.map(({ node }) => ({ title: node.title, variantTitle: node.variant?.title || '', quantity: node.quantity, price: 0 })),
                       subtotal: 0, discountAmount: 0, taxAmount: 0, total: 0,
                     }, true));

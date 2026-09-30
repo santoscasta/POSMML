@@ -154,7 +154,7 @@ export function CartPanel() {
                   className="w-full resize-y rounded-lg border border-input bg-transparent px-3 py-2 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50"
                 />
                 <p id="order-note-help" className="text-xs text-muted-foreground">
-                  Se guardará en el pedido y podrás consultarla en Pedidos.
+                  Se guardará en el pedido, se imprimirá en el ticket y podrás consultarla en Pedidos.
                 </p>
               </div>
 
@@ -205,6 +205,7 @@ export function CartPanel() {
           discountAmount={discountAmount}
           itemCount={itemCount}
           items={cart.items.map(i => ({ title: i.title, variantTitle: i.variantTitle, quantity: i.quantity, price: i.price }))}
+          orderNote={pending?.cart.note ?? cart.note}
           customerEmail={cart.customer?.email}
           onConfirm={handleCheckout}
           pending={!!pending}

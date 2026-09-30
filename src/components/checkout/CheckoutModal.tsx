@@ -42,6 +42,7 @@ interface CheckoutModalProps {
   discountAmount: number;
   itemCount: number;
   items: CartItemInfo[];
+  orderNote?: string;
   customerEmail?: string;
   onConfirm: (
     method: PaymentMethod,
@@ -64,6 +65,7 @@ export function CheckoutModal({
   discountAmount,
   itemCount,
   items,
+  orderNote,
   customerEmail,
   onConfirm,
   onClose,
@@ -300,7 +302,7 @@ export function CheckoutModal({
                 const now = new Date();
                 const dateStr = now.toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
                 const printed = printDocument(saleReceipt({ order: successOrder, date: dateStr,
-                  method: confirmedMethodLabel, items, subtotal, discountAmount, taxAmount, total,
+                  method: confirmedMethodLabel, note: orderNote, items, subtotal, discountAmount, taxAmount, total,
                   cashReceived: method === 'CASH' ? cashReceivedNum : undefined,
                   payments: receiptPayments || undefined }));
                 if (!printed) window.alert('Permite las ventanas emergentes para imprimir el ticket.');
@@ -318,7 +320,7 @@ export function CheckoutModal({
                 const now = new Date();
                 const dateStr = now.toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
                 const printed = printDocument(saleReceipt({ order: successOrder, date: dateStr,
-                  method: confirmedMethodLabel,
+                  method: confirmedMethodLabel, note: orderNote,
                   items, subtotal, discountAmount, taxAmount, total }, true));
                 if (!printed) window.alert('Permite las ventanas emergentes para imprimir el ticket.');
               }}
