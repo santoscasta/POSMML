@@ -12,6 +12,8 @@ La API queda cerrada si faltan las credenciales. Sirve producción exclusivament
 
 ## Cobros y devoluciones
 
+En «Cambiar artículos», el apartado «Artículos que se lleva» muestra el catálogo con fotos. Pulsa una prenda y elige su talla o variante; los artículos con una sola variante se añaden directamente. Puedes filtrar por categoría (incluidas sus subcategorías) o buscar por nombre de forma opcional. Se muestran todos los productos cargados, sin el límite anterior de 30, y las tallas agotadas no se pueden seleccionar. Los artículos elegidos conservan su foto junto a la cantidad y el botón «Quitar».
+
 Cada intento tiene un identificador persistente. El navegador lo guarda antes de enviar la petición; el servidor guarda los pasos antes de llamar a Shopify. Un reintento conserva carrito, importe y método originales.
 
 - Si el cobro falla, utiliza **Reanudar cobro pendiente**. El pedido se completa inicialmente como pendiente de pago y solo se marca pagado después del canje de los vales.

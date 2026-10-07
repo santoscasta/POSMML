@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import type { OrderDetail } from '../../types/order';
-import type { Product } from '../../types/product';
-import { useProducts } from '../../hooks/useProducts';
+import type { Product, ProductVariant } from '../../types/product';
+import { ExchangeProductPicker } from './ExchangeProductPicker';
 import { apiGet, apiPost, ApiError } from '../../utils/apiClient';
 import { formatCurrency } from '../../utils/currency';
 import { printDocument } from '../../utils/print';
@@ -13,7 +13,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../ui/dialog';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 
-interface Item { variantId: string; quantity: number; title: string }
+interface Item { variantId: string; quantity: number; title: string; imageUrl: string | null }
 interface Quote { token: string; credit: number; total: number; due: number; voucher: number }
 interface NewCustomer { firstName: string; lastName: string; email: string; phone: string }
 interface Attempt { operationId: string; orderId: string; refundLineItems: { lineItemId: string; quantity: number }[]; items: { variantId: string; quantity: number }[]; restock: boolean; locationId?: string; quoteToken: string; method: string; cashReceived?: number; customerId?: string; newCustomer?: NewCustomer }
@@ -39,12 +39,11 @@ export function ExchangeModal({ order, exchangedQuantities, onClose, onDone }: {
   const [registerCustomer, setRegisterCustomer] = useState(false);
   const [newCustomer, setNewCustomer] = useState<NewCustomer>({ firstName: '', lastName: '', email: '', phone: '' });
   const { refresh } = useSession();
-  const { products, loading, error: productError, setSearchQuery, searchQuery, retry } = useProducts(false);
   useEffect(() => { let alive = true; void apiGet<{ id: string; name: string }[]>('/locations').then(rows => { if (alive) { setLocations(rows); setLocationId(rows[0]?.id || ''); } }).catch(() => { if (alive) setError('No se han podido cargar las ubicaciones de reposición'); }); return () => { alive = false; }; }, []);
   const selectedReturns = Object.entries(returns).filter(([, quantity]) => quantity > 0).map(([lineItemId, quantity]) => ({ lineItemId, quantity }));
   const selection = { orderId: order.id, refundLineItems: selectedReturns, items: items.map(({ variantId, quantity }) => ({ variantId, quantity })), restock, locationId: restock ? locationId : undefined };
   const invalidate = () => { setQuote(null); setError(''); };
-  const add = (product: Product, variantId: string, variantTitle: string) => { invalidate(); setItems(previous => { const found = previous.find(i => i.variantId === variantId); return found ? previous.map(i => i.variantId === variantId ? { ...i, quantity: i.quantity + 1 } : i) : [...previous, { variantId, quantity: 1, title: `${product.title}${variantTitle === 'Default Title' ? '' : ` · ${variantTitle}`}` }]; }); };
+  const add = (product: Product, variant: ProductVariant) => { invalidate(); setItems(previous => { const found = previous.find(i => i.variantId === variant.id); return found ? previous.map(i => i.variantId === variant.id ? { ...i, quantity: i.quantity + 1 } : i) : [...previous, { variantId: variant.id, quantity: 1, title: `${product.title}${variant.title === 'Default Title' ? '' : ` · ${variant.title}`}`, imageUrl: variant.image?.url || product.featuredImage?.url || null }]; }); };
   async function calculate() {
     if (active.current) return;
     active.current = true; setBusy(true); setError(''); setQuote(null);
@@ -73,7 +72,7 @@ export function ExchangeModal({ order, exchangedQuantities, onClose, onDone }: {
     } finally { active.current = false; setBusy(false); }
   }
   return <Dialog open onOpenChange={open => { if (!open && !busy) { if (result) onDone(); else onClose(); } }}>
-    <DialogContent className="sm:max-w-2xl"><DialogHeader><DialogTitle>Cambiar artículos · {order.name}</DialogTitle></DialogHeader>
+    <DialogContent className="sm:max-w-3xl"><DialogHeader><DialogTitle>Cambiar artículos · {order.name}</DialogTitle></DialogHeader>
       {busy && <p role="status" className="text-sm">Procesando cambio…</p>}
       {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
       {result ? <div className="space-y-4">
@@ -93,11 +92,8 @@ export function ExchangeModal({ order, exchangedQuantities, onClose, onDone }: {
             {restock && <label className="block text-sm">Ubicación de reposición<select className="mt-1 w-full rounded border p-2" value={locationId} onChange={e => { invalidate(); setLocationId(e.target.value); }}><option value="">Selecciona una ubicación</option>{locations.map(l => <option key={l.id} value={l.id}>{l.name}</option>)}</select></label>}
           </section>
           <section className="space-y-2"><h3 className="font-semibold">2. Artículos que se lleva</h3>
-            <Input aria-label="Buscar artículos para el cambio" placeholder="Buscar producto…" value={searchQuery} onChange={e => setSearchQuery(e.target.value)} />
-            {productError && <p role="alert">{productError} <button type="button" onClick={retry}>Reintentar</button></p>}
-            <div className="max-h-44 space-y-1 overflow-y-auto rounded border p-2">{loading ? <p>Cargando productos…</p> : products.slice(0, 30).map(p => <div key={p.id} className="space-y-1">{p.variants.map(v => <Button key={v.id} variant="ghost" className="h-auto w-full justify-start whitespace-normal text-left" onClick={() => add(p, v.id, v.title)}>{p.title}{v.title !== 'Default Title' ? ` · ${v.title}` : ''} · {formatCurrency(Number(v.price))} · Añadir</Button>)}</div>)}{!loading && !products.length && <p>No se encontraron productos.</p>}</div>
-            {products.length > 30 && <p className="text-xs text-muted-foreground">Se muestran los primeros 30 productos. Usa el buscador para encontrar el artículo.</p>}
-            {items.map(i => <div key={i.variantId} className="flex items-center gap-2 text-sm"><span className="flex-1">{i.title}</span><Input aria-label={`Cantidad de ${i.title}`} className="w-20" type="number" min={1} step={1} value={i.quantity} onChange={e => { invalidate(); setItems(items.map(row => row.variantId === i.variantId ? { ...row, quantity: Number(e.target.value) } : row)); }} /><Button variant="outline" onClick={() => { invalidate(); setItems(items.filter(row => row.variantId !== i.variantId)); }}>Quitar</Button></div>)}
+            <ExchangeProductPicker onAdd={add} />
+            {items.map(i => <div key={i.variantId} className="flex flex-wrap items-center gap-2 rounded border p-2 text-sm">{i.imageUrl && <img src={i.imageUrl} alt={i.title} className="size-10 shrink-0 rounded object-cover" />}<span className="min-w-0 flex-1 basis-24">{i.title}</span><Input aria-label={`Cantidad de ${i.title}`} className="w-20" type="number" min={1} step={1} value={i.quantity} onChange={e => { invalidate(); setItems(items.map(row => row.variantId === i.variantId ? { ...row, quantity: Number(e.target.value) } : row)); }} /><Button variant="outline" onClick={() => { invalidate(); setItems(items.filter(row => row.variantId !== i.variantId)); }}>Quitar</Button></div>)}
           </section>
           <Button variant="outline" disabled={!selectedReturns.length || !items.length || (restock && !locationId)} onClick={calculate}>Calcular diferencia</Button>
           {quote && <section className="space-y-3 rounded border bg-muted/30 p-3"><h3 className="font-semibold">3. Confirmar el cambio</h3><p>Valor de la devolución: {formatCurrency(quote.credit)}</p><p>Nuevos artículos: {formatCurrency(quote.total)}</p><p className="font-semibold">{quote.due > 0 ? `A cobrar: ${formatCurrency(quote.due)}` : quote.voucher > 0 ? `Vale a emitir: ${formatCurrency(quote.voucher)}` : 'Mismo importe: sin cobro y sin vale'}</p>

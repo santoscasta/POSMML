@@ -24,6 +24,7 @@ async page => {
  const query=route.request().postDataJSON().query;
  if(query.includes('GetOrders'))body={data:{orders:{edges:[{node:order}],pageInfo:{hasNextPage:false}}}};
  else if(query.includes('OrderDetail'))body={data:{order}};
+ else if(query.includes('PosCategories'))body={data:{metaobjects:{nodes:[],pageInfo:{hasNextPage:false}}}};
  else body={data:{products:{edges:[{node:{id:'gid://shopify/Product/1',title:'Prenda nueva',productType:'',status:'ACTIVE',totalInventory:10,featuredImage:null,variants:{edges:[{node:{id:'gid://shopify/ProductVariant/2',title:'Talla 2',price:'24.95',inventoryQuantity:10}}]}}}],pageInfo:{hasNextPage:false}}}};
  }
  await route.fulfill({status,contentType:'application/json',body:JSON.stringify(body)});
@@ -37,7 +38,7 @@ async page => {
  await page.getByRole('button',{name:'Cambiar artículos',exact:true}).click();
  const dialog=page.getByRole('dialog').filter({has:page.getByRole('heading',{name:'Cambiar artículos · #14994',exact:true})});
  await dialog.getByLabel('Devolver Artículo QA',{exact:true}).fill('1');
- await dialog.getByRole('button',{name:/Prenda nueva.*Añadir/}).click();
+ await dialog.getByRole('button',{name:'Seleccionar Prenda nueva',exact:true}).click();
  await dialog.getByRole('button',{name:'Calcular diferencia',exact:true}).click();
  if(scenario==='equal')await dialog.getByText('Mismo importe: sin cobro y sin vale',{exact:true}).waitFor();
  if(scenario==='extra'){
