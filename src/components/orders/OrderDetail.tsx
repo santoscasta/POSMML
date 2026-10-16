@@ -231,8 +231,8 @@ export function OrderDetailModal({ orderId, open, onClose, onUpdate }: OrderDeta
   return (
     <>
       <Dialog open={open} onOpenChange={(isOpen) => { if (!isOpen) onClose(); }}>
-        <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
+        <DialogContent className="flex max-h-[calc(100dvh-2rem)] flex-col overflow-hidden sm:max-w-[min(80rem,calc(100%-2rem))]">
+          <DialogHeader className="shrink-0 pr-8">
             <DialogTitle>Detalle del Pedido</DialogTitle>
           </DialogHeader>
 
@@ -250,290 +250,296 @@ export function OrderDetailModal({ orderId, open, onClose, onUpdate }: OrderDeta
 
           {order && !loading && (
             <>
-              {/* Order header */}
-              <div className="flex items-start justify-between">
-                <div>
-                  <div className="text-lg font-bold">{order.name}</div>
-                  <div className="text-xs text-muted-foreground">
-                    {new Date(order.createdAt).toLocaleDateString('es-ES', {
-                      day: '2-digit',
-                      month: 'long',
-                      year: 'numeric',
-                      hour: '2-digit',
-                      minute: '2-digit',
-                    })}
-                  </div>
-                </div>
-                <div className="text-xl font-bold text-accent">
-                  {amounts?.voucher ? <><div className="text-xs font-normal text-muted-foreground">Cobrado</div>{formatCurrency(amounts.collected, currency)}<div className="text-xs font-normal text-muted-foreground">Compra: {formatCurrency(total, currency)}</div></> : formatCurrency(total, currency)}
-                </div>
-              </div>
-
-              {/* Status badges */}
-              <div className="flex flex-wrap gap-2">
-                <Badge variant={financialBadgeVariant(order.displayFinancialStatus)}>
-                  {financialLabel(order.displayFinancialStatus)}
-                </Badge>
-                <Badge variant={fulfillmentBadgeVariant(order.displayFulfillmentStatus)}>
-                  {fulfillmentLabel(order.displayFulfillmentStatus)}
-                </Badge>
-                {order.cancelledAt && (
-                  <Badge variant="destructive">Cancelado</Badge>
-                )}
-              </div>
-
-              {/* Tags */}
-              {order.tags.length > 0 && (
-                <div className="flex flex-wrap gap-1.5">
-                  {order.tags.map((tag) => (
-                    <Badge
-                      key={tag}
-                      variant={tag === 'POS MML' ? 'default' : 'outline'}
-                    >
-                      {tag}
-                    </Badge>
-                  ))}
-                </div>
-              )}
-
-              {/* POS Payment info & voucher */}
-              {posPaymentMethod && (
-                <div>
-                  <div className="mb-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                    Pago POS
-                  </div>
-                  <div className="space-y-1.5 rounded-lg bg-muted/50 p-3 text-sm">
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Método de pago</span>
-                      <span className="font-medium">
-                        {salePayment ? paymentSummary(salePayment) : posPaymentMethod === 'CASH' ? 'Efectivo' : posPaymentMethod === 'CARD' ? 'Tarjeta' : posPaymentMethod === 'BIZUM' ? 'Bizum' : posPaymentMethod === 'VOUCHER' ? 'Vale' : posPaymentMethod === 'MIXED' ? 'Mixto' : posPaymentMethod === 'EXCHANGE' ? 'Cambio de artículos' : posPaymentMethod}
-                      </span>
+              <div className="min-h-0 space-y-4 overflow-y-auto overscroll-contain [overflow-wrap:anywhere]">
+                <div className="space-y-3">
+                  {/* Order header */}
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <div className="text-lg font-bold">{order.name}</div>
+                      <div className="text-xs text-muted-foreground">
+                        {new Date(order.createdAt).toLocaleDateString('es-ES', {
+                          day: '2-digit',
+                          month: 'long',
+                          year: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })}
+                      </div>
                     </div>
-                    {usedVouchers.map((voucher, index) => (
-                      <div key={index} className="flex items-center justify-between">
-                        <span className="text-muted-foreground">Vale utilizado</span>
-                        <div className="inline-flex items-center gap-1.5 rounded-md bg-accent/10 px-2 py-1">
-                          <Ticket className="size-3 text-accent" />
-                          <span className="font-mono text-xs font-semibold text-accent">{voucherLabel(voucher.voucherCode)} · {formatCurrency(voucher.amount, currency)}</span>
-                        </div>
-                      </div>
-                    ))}
-                    {posRefundMethod && (
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Método reembolso</span>
-                        <span className="font-medium">
-                          {posRefundMethod === 'CASH' ? 'Efectivo' : posRefundMethod === 'CARD' ? 'Tarjeta' : posRefundMethod === 'VOUCHER' ? 'Vale' : posRefundMethod === 'EXCHANGE' ? 'Cambio de artículos' : posRefundMethod}
-                        </span>
-                      </div>
+                    <div className="shrink-0 text-right text-xl font-bold text-accent">
+                      {amounts?.voucher ? <><div className="text-xs font-normal text-muted-foreground">Cobrado</div>{formatCurrency(amounts.collected, currency)}<div className="text-xs font-normal text-muted-foreground">Compra: {formatCurrency(total, currency)}</div></> : formatCurrency(total, currency)}
+                    </div>
+                  </div>
+
+                  {/* Status badges */}
+                  <div className="flex flex-wrap gap-2">
+                    <Badge variant={financialBadgeVariant(order.displayFinancialStatus)}>
+                      {financialLabel(order.displayFinancialStatus)}
+                    </Badge>
+                    <Badge variant={fulfillmentBadgeVariant(order.displayFulfillmentStatus)}>
+                      {fulfillmentLabel(order.displayFulfillmentStatus)}
+                    </Badge>
+                    {order.cancelledAt && (
+                      <Badge variant="destructive">Cancelado</Badge>
                     )}
                   </div>
-                </div>
-              )}
 
-              {/* Customer */}
-              {order.customer && (
-                <div>
-                  <div className="mb-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                    Cliente
-                  </div>
-                  <div className="text-sm font-medium">
-                    {order.customer.firstName} {order.customer.lastName}
-                  </div>
-                  {order.customer.email && (
-                    <div className="text-xs text-muted-foreground">{order.customer.email}</div>
-                  )}
-                  {order.customer.phone && (
-                    <div className="text-xs text-muted-foreground">{order.customer.phone}</div>
-                  )}
-                </div>
-              )}
-
-              {/* Shipping address */}
-              {order.shippingAddress && (
-                <div>
-                  <div className="mb-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                    Direccion de envio
-                  </div>
-                  <div className="text-sm">
-                    {order.shippingAddress.address1}, {order.shippingAddress.city}
-                  </div>
-                  <div className="text-xs text-muted-foreground">
-                    {order.shippingAddress.province}, {order.shippingAddress.country} {order.shippingAddress.zip}
-                  </div>
-                </div>
-              )}
-
-              {/* Note */}
-              {order.note && (
-                <div>
-                  <div className="mb-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                    Notas
-                  </div>
-                  <div className="text-sm rounded-lg bg-muted/50 p-2">{order.note}</div>
-                </div>
-              )}
-
-              <Separator />
-
-              {/* Line items */}
-              <div>
-                <div className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                  Articulos
-                </div>
-                <div className="rounded-lg border">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Producto</TableHead>
-                        <TableHead className="text-center">Cant.</TableHead>
-                        <TableHead className="text-right">P. Unit.</TableHead>
-                        <TableHead className="text-right">Total</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {lineItems.map((item) => (
-                        <TableRow key={item.id}>
-                          <TableCell>
-                            <div className="text-sm font-medium">{item.title}</div>
-                            {item.variant?.title && item.variant.title !== 'Default Title' && (
-                              <div className="text-xs text-muted-foreground">{item.variant.title}</div>
-                            )}
-                          </TableCell>
-                          <TableCell className="text-center">{item.quantity}</TableCell>
-                          <TableCell className="text-right text-xs">
-                            {formatCurrency(item.originalUnitPriceSet.shopMoney.amount, currency)}
-                          </TableCell>
-                          <TableCell className="text-right font-semibold">
-                            {formatCurrency(item.originalTotalSet.shopMoney.amount, currency)}
-                          </TableCell>
-                        </TableRow>
+                  {/* Tags */}
+                  {order.tags.length > 0 && (
+                    <div className="flex flex-wrap gap-1.5 [&>[data-slot=badge]]:max-w-full [&>[data-slot=badge]]:h-auto [&>[data-slot=badge]]:whitespace-normal">
+                      {order.tags.map((tag) => (
+                        <Badge
+                          key={tag}
+                          variant={tag === 'POS MML' ? 'default' : 'outline'}
+                        >
+                          {tag}
+                        </Badge>
                       ))}
-                    </TableBody>
-                  </Table>
-                </div>
-              </div>
-
-              {/* Price breakdown */}
-              <div>
-                <div className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                  Resumen
-                </div>
-                <div className="space-y-1.5 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Subtotal</span>
-                    <span>{formatCurrency(subtotal, currency)}</span>
-                  </div>
-                  {discounts > 0 && (
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Descuentos</span>
-                      <span className="text-destructive">-{formatCurrency(discounts, currency)}</span>
-                    </div>
-                  )}
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Impuestos</span>
-                    <span>{formatCurrency(tax, currency)}</span>
-                  </div>
-                  <Separator />
-                  <div className="flex justify-between font-semibold">
-                    <span>Total compra</span>
-                    <span>{formatCurrency(total, currency)}</span>
-                  </div>
-                  {!!amounts?.voucher && <>
-                    <div className="flex justify-between"><span>Vales aplicados</span><span>-{formatCurrency(amounts.voucher, currency)}</span></div>
-                    <div className="flex justify-between font-semibold"><span>Total cobrado</span><span>{formatCurrency(amounts.collected, currency)}</span></div>
-                    <div className="flex justify-between"><span>Efectivo a caja</span><span>{formatCurrency(amounts.cash, currency)}</span></div>
-                  </>}
-                  {refunded > 0 && (
-                    <div className="flex justify-between text-destructive">
-                      <span>Reembolsado</span>
-                      <span>-{formatCurrency(refunded, currency)}</span>
                     </div>
                   )}
                 </div>
-              </div>
+                <div className="grid min-w-0 items-start gap-5 lg:grid-cols-[minmax(0,1fr)_20rem]">
+                  <div className="min-w-0 space-y-4">
+                    {/* Line items */}
+                    <div>
+                      <div className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                        Articulos
+                      </div>
+                      <div className="rounded-lg border">
+                        <Table className="table-fixed">
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead>Producto</TableHead>
+                              <TableHead className="w-12 text-center sm:w-14">Cant.</TableHead>
+                              <TableHead className="w-16 text-right sm:w-20">P. Unit.</TableHead>
+                              <TableHead className="w-18 text-right sm:w-24">Total</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {lineItems.map((item) => (
+                              <TableRow key={item.id}>
+                                <TableCell className="whitespace-normal [overflow-wrap:anywhere]">
+                                  <div className="text-sm font-medium">{item.title}</div>
+                                  {item.variant?.title && item.variant.title !== 'Default Title' && (
+                                    <div className="text-xs text-muted-foreground">{item.variant.title}</div>
+                                  )}
+                                </TableCell>
+                                <TableCell className="text-center">{item.quantity}</TableCell>
+                                <TableCell className="text-right text-xs">
+                                  {formatCurrency(item.originalUnitPriceSet.shopMoney.amount, currency)}
+                                </TableCell>
+                                <TableCell className="text-right font-semibold">
+                                  {formatCurrency(item.originalTotalSet.shopMoney.amount, currency)}
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </div>
+                    </div>
 
-              {/* Refund history */}
-              {refunds.length > 0 && (
-                <div>
-                  <div className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                    Historial de reembolsos
-                  </div>
-                  <div className="divide-y rounded-lg border">
-                    {refunds.map((refund) => (
-                      <div key={refund.id} className="px-3 py-2.5">
-                        <div className="flex items-center justify-between text-sm">
-                          <div>
-                            <div className="font-medium">
-                              {formatCurrency(
-                                refund.totalRefundedSet.shopMoney.amount,
-                                refund.totalRefundedSet.shopMoney.currencyCode,
-                              )}
-                            </div>
-                            <div className="text-xs text-muted-foreground">
-                              {new Date(refund.createdAt).toLocaleDateString('es-ES', {
-                                day: '2-digit',
-                                month: 'short',
-                                year: 'numeric',
-                                hour: '2-digit',
-                                minute: '2-digit',
-                              })}
-                            </div>
-                          </div>
-                          {refund.note && (
-                            <div className="max-w-[60%] text-right">
-                              {refund.note.includes('Vale generado:') ? (
-                                <div className="inline-flex items-center gap-1.5 rounded-md bg-accent/10 px-2 py-1">
-                                  <Ticket className="size-3 text-accent" />
-                                  <span className="font-mono text-xs font-semibold text-accent">
-                                    {refund.note.match(/Vale generado: (\S+)/)?.[1] || refund.note}
-                                  </span>
+                    {/* Refund history */}
+                    {refunds.length > 0 && (
+                      <div>
+                        <div className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                          Historial de reembolsos
+                        </div>
+                        <div className="divide-y rounded-lg border">
+                          {refunds.map((refund) => (
+                            <div key={refund.id} className="px-3 py-2.5">
+                              <div className="flex items-center justify-between text-sm">
+                                <div>
+                                  <div className="font-medium">
+                                    {formatCurrency(
+                                      refund.totalRefundedSet.shopMoney.amount,
+                                      refund.totalRefundedSet.shopMoney.currencyCode,
+                                    )}
+                                  </div>
+                                  <div className="text-xs text-muted-foreground">
+                                    {new Date(refund.createdAt).toLocaleDateString('es-ES', {
+                                      day: '2-digit',
+                                      month: 'short',
+                                      year: 'numeric',
+                                      hour: '2-digit',
+                                      minute: '2-digit',
+                                    })}
+                                  </div>
                                 </div>
-                              ) : (
-                                <span className="text-xs text-muted-foreground">{refund.note}</span>
+                                {refund.note && (
+                                  <div className="max-w-[60%] text-right">
+                                    {refund.note.includes('Vale generado:') ? (
+                                      <div className="inline-flex items-center gap-1.5 rounded-md bg-accent/10 px-2 py-1">
+                                        <Ticket className="size-3 text-accent" />
+                                        <span className="whitespace-normal font-mono text-xs font-semibold text-accent">
+                                          {refund.note.match(/Vale generado: (\S+)/)?.[1] || refund.note}
+                                        </span>
+                                      </div>
+                                    ) : (
+                                      <span className="text-xs text-muted-foreground">{refund.note}</span>
+                                    )}
+                                  </div>
+                                )}
+                              </div>
+                              {refund.refundLineItems.edges.length > 0 && (
+                                <div className="mt-1.5 space-y-0.5">
+                                  {refund.refundLineItems.edges.map((edge, idx) => (
+                                    <div key={idx} className="flex justify-between text-xs text-muted-foreground">
+                                      <span>{edge.node.lineItem.title} x{edge.node.quantity}</span>
+                                      <span>{formatCurrency(edge.node.subtotalSet.shopMoney.amount, edge.node.subtotalSet.shopMoney.currencyCode)}</span>
+                                    </div>
+                                  ))}
+                                </div>
                               )}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {payments.some(p => p.exchangeId) && <section className="space-y-2 rounded border p-3 text-sm">
+                      <h3 className="font-semibold">Cambios vinculados</h3>
+                      {Array.from(new Map(payments.filter(p => p.exchangeId).map(p => [p.exchangeId, p])).values()).map(p => {
+                        const loadReceipt = async (): Promise<ExchangeReceiptData | null> => {
+                          try { return p.exchangeReceipt || await apiGet<ExchangeReceiptData>(`/exchanges/${encodeURIComponent(p.exchangeId!)}/receipt`); }
+                          catch (cause) { setError(cause instanceof Error ? cause.message : 'No se ha podido recuperar el ticket del cambio'); return null; }
+                        };
+                        return <div className="space-y-2" key={p.exchangeId}>
+                          <p>Pedido original {p.originalOrderName} → Nuevo pedido {p.replacementOrderName}</p>
+                          <div className="flex flex-wrap gap-2">
+                            <Button variant="outline" onClick={async () => { const receipt = await loadReceipt(); if (receipt && !printDocument(exchangeReceipt(receipt))) setError('Permite las ventanas emergentes para imprimir el ticket del cambio'); }}>Imprimir ticket del cambio</Button>
+                            <Button variant="outline" onClick={async () => {
+                              const receipt = await loadReceipt();
+                              if (!receipt) return;
+                              if (!receipt.voucher) { setError('Este cambio no generó ningún vale'); return; }
+                              if (!printDocument(exchangeVoucherReceipt(receipt))) setError('Permite las ventanas emergentes para imprimir el vale');
+                            }}>Imprimir vale del cambio</Button>
+                          </div>
+                        </div>;
+                      })}
+                    </section>}
+                  </div>
+                  <div className="min-w-0 space-y-4 rounded-lg border bg-muted/20 p-4">
+                    {/* POS Payment info & voucher */}
+                    {posPaymentMethod && (
+                      <div>
+                        <div className="mb-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                          Pago POS
+                        </div>
+                        <div className="space-y-1.5 rounded-lg bg-muted/50 p-3 text-sm">
+                          <div className="flex justify-between gap-3">
+                            <span className="text-muted-foreground">Método de pago</span>
+                            <span className="font-medium">
+                              {salePayment ? paymentSummary(salePayment) : posPaymentMethod === 'CASH' ? 'Efectivo' : posPaymentMethod === 'CARD' ? 'Tarjeta' : posPaymentMethod === 'BIZUM' ? 'Bizum' : posPaymentMethod === 'VOUCHER' ? 'Vale' : posPaymentMethod === 'MIXED' ? 'Mixto' : posPaymentMethod === 'EXCHANGE' ? 'Cambio de artículos' : posPaymentMethod}
+                            </span>
+                          </div>
+                          {usedVouchers.map((voucher, index) => (
+                            <div key={index} className="flex items-center justify-between gap-3">
+                              <span className="text-muted-foreground">Vale utilizado</span>
+                              <div className="inline-flex items-center gap-1.5 rounded-md bg-accent/10 px-2 py-1">
+                                <Ticket className="size-3 text-accent" />
+                                <span className="whitespace-normal font-mono text-xs font-semibold text-accent">{voucherLabel(voucher.voucherCode)} · {formatCurrency(voucher.amount, currency)}</span>
+                              </div>
+                            </div>
+                          ))}
+                          {posRefundMethod && (
+                            <div className="flex justify-between gap-3">
+                              <span className="text-muted-foreground">Método reembolso</span>
+                              <span className="font-medium">
+                                {posRefundMethod === 'CASH' ? 'Efectivo' : posRefundMethod === 'CARD' ? 'Tarjeta' : posRefundMethod === 'VOUCHER' ? 'Vale' : posRefundMethod === 'EXCHANGE' ? 'Cambio de artículos' : posRefundMethod}
+                              </span>
                             </div>
                           )}
                         </div>
-                        {refund.refundLineItems.edges.length > 0 && (
-                          <div className="mt-1.5 space-y-0.5">
-                            {refund.refundLineItems.edges.map((edge, idx) => (
-                              <div key={idx} className="flex justify-between text-xs text-muted-foreground">
-                                <span>{edge.node.lineItem.title} x{edge.node.quantity}</span>
-                                <span>{formatCurrency(edge.node.subtotalSet.shopMoney.amount, edge.node.subtotalSet.shopMoney.currencyCode)}</span>
-                              </div>
-                            ))}
+                      </div>
+                    )}
+
+                    {/* Customer */}
+                    {order.customer && (
+                      <div>
+                        <div className="mb-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                          Cliente
+                        </div>
+                        <div className="text-sm font-medium">
+                          {order.customer.firstName} {order.customer.lastName}
+                        </div>
+                        {order.customer.email && (
+                          <div className="text-xs text-muted-foreground">{order.customer.email}</div>
+                        )}
+                        {order.customer.phone && (
+                          <div className="text-xs text-muted-foreground">{order.customer.phone}</div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Shipping address */}
+                    {order.shippingAddress && (
+                      <div>
+                        <div className="mb-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                          Direccion de envio
+                        </div>
+                        <div className="text-sm">
+                          {order.shippingAddress.address1}, {order.shippingAddress.city}
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          {order.shippingAddress.province}, {order.shippingAddress.country} {order.shippingAddress.zip}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Note */}
+                    {order.note && (
+                      <div>
+                        <div className="mb-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                          Notas
+                        </div>
+                        <div className="text-sm rounded-lg bg-muted/50 p-2">{order.note}</div>
+                      </div>
+                    )}
+
+                    {/* Price breakdown */}
+                    <div>
+                      <div className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                        Resumen
+                      </div>
+                      <div className="space-y-1.5 text-sm">
+                        <div className="flex justify-between gap-3">
+                          <span className="text-muted-foreground">Subtotal</span>
+                          <span>{formatCurrency(subtotal, currency)}</span>
+                        </div>
+                        {discounts > 0 && (
+                          <div className="flex justify-between gap-3">
+                            <span className="text-muted-foreground">Descuentos</span>
+                            <span className="text-destructive">-{formatCurrency(discounts, currency)}</span>
+                          </div>
+                        )}
+                        <div className="flex justify-between gap-3">
+                          <span className="text-muted-foreground">Impuestos</span>
+                          <span>{formatCurrency(tax, currency)}</span>
+                        </div>
+                        <Separator />
+                        <div className="flex justify-between font-semibold">
+                          <span>Total compra</span>
+                          <span>{formatCurrency(total, currency)}</span>
+                        </div>
+                        {!!amounts?.voucher && <>
+                          <div className="flex justify-between gap-3"><span>Vales aplicados</span><span>-{formatCurrency(amounts.voucher, currency)}</span></div>
+                          <div className="flex justify-between font-semibold"><span>Total cobrado</span><span>{formatCurrency(amounts.collected, currency)}</span></div>
+                          <div className="flex justify-between gap-3"><span>Efectivo a caja</span><span>{formatCurrency(amounts.cash, currency)}</span></div>
+                        </>}
+                        {refunded > 0 && (
+                          <div className="flex justify-between text-destructive">
+                            <span>Reembolsado</span>
+                            <span>-{formatCurrency(refunded, currency)}</span>
                           </div>
                         )}
                       </div>
-                    ))}
+                    </div>
                   </div>
                 </div>
-              )}
-
-              {payments.some(p => p.exchangeId) && <section className="space-y-2 rounded border p-3 text-sm">
-                <h3 className="font-semibold">Cambios vinculados</h3>
-                {Array.from(new Map(payments.filter(p => p.exchangeId).map(p => [p.exchangeId, p])).values()).map(p => {
-                  const loadReceipt = async (): Promise<ExchangeReceiptData | null> => {
-                    try { return p.exchangeReceipt || await apiGet<ExchangeReceiptData>(`/exchanges/${encodeURIComponent(p.exchangeId!)}/receipt`); }
-                    catch (cause) { setError(cause instanceof Error ? cause.message : 'No se ha podido recuperar el ticket del cambio'); return null; }
-                  };
-                  return <div className="space-y-2" key={p.exchangeId}>
-                    <p>Pedido original {p.originalOrderName} → Nuevo pedido {p.replacementOrderName}</p>
-                    <div className="flex flex-wrap gap-2">
-                      <Button variant="outline" onClick={async () => { const receipt = await loadReceipt(); if (receipt && !printDocument(exchangeReceipt(receipt))) setError('Permite las ventanas emergentes para imprimir el ticket del cambio'); }}>Imprimir ticket del cambio</Button>
-                      <Button variant="outline" onClick={async () => {
-                        const receipt = await loadReceipt();
-                        if (!receipt) return;
-                        if (!receipt.voucher) { setError('Este cambio no generó ningún vale'); return; }
-                        if (!printDocument(exchangeVoucherReceipt(receipt))) setError('Permite las ventanas emergentes para imprimir el vale');
-                      }}>Imprimir vale del cambio</Button>
-                    </div>
-                  </div>;
-                })}
-              </section>}
+              </div>
               {/* Actions */}
-              <DialogFooter>
-                <div className="flex flex-wrap gap-2 w-full justify-end">
+              <DialogFooter className="shrink-0">
+                <div className="grid w-full grid-cols-2 gap-2 lg:flex lg:flex-wrap lg:justify-end [&>button]:min-w-0 [&>button]:h-auto [&>button]:min-h-9 [&>button]:whitespace-normal">
                   {salePayment && <Button variant="outline" onClick={() => {
                     if (salePayment.method === 'MIXED' && !salePayment.mixedPayments?.length) {
                       setError('Falta el desglose del pago mixto. No se puede reimprimir un ticket correcto.');
