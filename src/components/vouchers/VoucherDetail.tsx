@@ -16,6 +16,8 @@ import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
 import { Printer, Plus, Minus } from 'lucide-react';
 import type { Voucher, VoucherTransaction } from '../../types/voucher';
+import type { Customer } from '../../types/customer';
+import { VoucherCustomerAssignment } from './VoucherCustomerAssignment';
 
 interface VoucherDetailProps {
   voucher: Voucher | null;
@@ -59,10 +61,17 @@ function TransactionIcon({ type }: { type: VoucherTransaction['type'] }) {
   }
 }
 
-export function VoucherDetail({ voucher, open, onClose, onUpdate }: VoucherDetailProps) {
+export function VoucherDetail({ voucher: originalVoucher, open, onClose, onUpdate }: VoucherDetailProps) {
   const [cancelling, setCancelling] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [assignment, setAssignment] = useState<{ voucherId: string; customer: Customer } | null>(null);
+  const voucher = originalVoucher && assignment?.voucherId === originalVoucher.id ? {
+    ...originalVoucher,
+    customerId: assignment.customer.id,
+    customerName: `${assignment.customer.firstName || ''} ${assignment.customer.lastName || ''}`.trim(),
+    customerEmail: assignment.customer.email,
+  } : originalVoucher;
 
   if (!voucher) return null;
 
@@ -109,7 +118,7 @@ export function VoucherDetail({ voucher, open, onClose, onUpdate }: VoucherDetai
         <DialogHeader>
           <DialogTitle>Detalle del Vale</DialogTitle>
         </DialogHeader>
-        <VoucherDelivery key={voucher.id} voucher={voucher} />
+        <VoucherDelivery key={`${voucher.id}:${voucher.customerEmail || ''}`} voucher={voucher} />
 
         {error && (
           <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-3 text-sm text-destructive">
@@ -153,6 +162,10 @@ export function VoucherDetail({ voucher, open, onClose, onUpdate }: VoucherDetai
         </div>
 
         {/* Customer info */}
+        {!voucher.customerId && voucher.status !== 'CANCELLED' && <VoucherCustomerAssignment key={voucher.id} voucherId={voucher.id} onAssigned={customer => {
+          setAssignment({ voucherId: voucher.id, customer });
+          onUpdate();
+        }} />}
         {(voucher.customerName || voucher.customerEmail) && (
           <div>
             <div className="mb-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">

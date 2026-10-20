@@ -6,6 +6,7 @@ import { issueVoucher, allGiftCards } from '../lib/voucherIssue.js';
 import { sendVoucherEmail } from '../lib/voucherEmail.js';
 import { parseVoucherMetadata } from '../lib/voucherMetadata.js';
 import { lookupVoucher } from '../lib/voucherLookup.js';
+import { assignVoucherCustomer } from '../lib/voucherCustomer.js';
 
 const router = Router();
 
@@ -58,6 +59,7 @@ export function mapGiftCard(gc) {
     currency: gc.balance.currencyCode,
     customerName,
     customerEmail,
+    customerId: gc.customer?.id || null,
     status: !gc.enabled ? 'CANCELLED' : balance <= 0 ? 'EXHAUSTED' : 'ACTIVE',
     notes: displayNote,
     originOrderId: gc.order?.name || null,
@@ -70,7 +72,7 @@ export function mapGiftCard(gc) {
 const GC_FIELDS = `
   id balance { amount currencyCode } initialValue { amount currencyCode }
   lastCharacters maskedCode createdAt enabled expiresOn
-  customer { firstName lastName email }
+  customer { id firstName lastName email }
   note order { name }
   transactions(first: 50, reverse: true) {
     edges { node { id amount { amount currencyCode } note processedAt } }
@@ -107,6 +109,14 @@ router.get('/vouchers/stats', async (req, res) => {
   } catch (err) {
     console.error('Vouchers stats error:', err);
     res.status(500).json({ error: err.message });
+  }
+});
+
+router.post('/vouchers/assign-customer', async (req, res) => {
+  try {
+    res.json(await getStore().exclusive(() => assignVoucherCustomer(shopifyGQL, req.body)));
+  } catch (err) {
+    res.status(err.status || 500).json({ error: err.message });
   }
 });
 

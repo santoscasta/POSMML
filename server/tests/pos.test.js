@@ -30,7 +30,7 @@ function fixture(t, overrides = {}) {
     PosDebit: () => ({ giftCardDebit: { giftCardDebitTransaction: { id: 'debit-1' }, userErrors: [] } }),
     PosRefundOrder: () => ({ order: { id: orderId, name: '#1', totalPriceSet: { shopMoney: { amount: '100', currencyCode: 'EUR' } }, totalRefundedSet: { shopMoney: { amount: '0' } }, transactions: [{ id: 'parent-1', kind: 'SALE', status: 'SUCCESS', gateway: 'manual' }] } }),
     PosRefund: () => ({ refundCreate: { refund: { id: 'refund-1', transactions: { nodes: [{ status: 'SUCCESS' }] } }, userErrors: [] } }),
-    PosRefundVoucher: () => ({ giftCardCreate: { giftCard: { id: 'card-new' }, giftCardCode: 'ignored', userErrors: [] } }),
+    PosRefundVoucher: ({ input }) => ({ giftCardCreate: { giftCard: { id: 'card-new', customer: input.customerId ? { id: input.customerId } : null }, giftCardCode: 'ignored', userErrors: [] } }),
     RefundCustomerByEmail: () => ({ customers: { nodes: [] } }),
     ...overrides,
   };
@@ -547,12 +547,122 @@ test('rejected voucher debit leaves order unpaid and retry records only one sale
 
 const refundCustomer = { id: 'gid://shopify/Customer/42', firstName: 'Ana', lastName: 'López', email: 'ana@example.com', phone: '+34607140250' };
 
+function refundOrderWithCustomer(customer) {
+  return { order: { id: orderId, name: '#1', customer,
+    totalPriceSet: { shopMoney: { amount: '100', currencyCode: 'EUR' } },
+    totalRefundedSet: { shopMoney: { amount: '0' } },
+    transactions: [{ id: 'parent-1', kind: 'SALE', status: 'SUCCESS', gateway: 'manual' }] } };
+}
+
+test('refund voucher inherits the order customer when the browser omits a selection', async t => {
+  let attempts = 0;
+  const f = fixture(t, {
+    PosRefundOrder: () => refundOrderWithCustomer(refundCustomer),
+    PosRefundVoucher: () => ++attempts === 1
+      ? { giftCardCreate: { giftCard: null, userErrors: [{ message: 'Retry issuance' }] } }
+      : { giftCardCreate: { giftCard: { id: 'card-new', customer: { id: refundCustomer.id } }, userErrors: [] } },
+  });
+  await assert.rejects(f.service.refund(key, refundInput), /Retry issuance/);
+  const result = await createPosService(f.gql, createOperationStore(f.directory)).refund(key, refundInput);
+  assert.deepEqual(result.customer, refundCustomer);
+  for (const call of f.calls.filter(c => c.name === 'PosRefundVoucher')) assert.equal(call.variables.input.customerId, refundCustomer.id);
+  assert.equal(count(f, 'PosRefundOrder'), 1);
+  assert.equal(count(f, 'PosRefund'), 1);
+  assert.match(f.calls.find(c => c.name === 'PosRefundOrder').query, /customer\s*\{\s*id firstName lastName email phone\s*\}/);
+});
+
+test('an explicit anonymous refund does not inherit the order customer', async t => {
+  const f = fixture(t, { PosRefundOrder: () => refundOrderWithCustomer(refundCustomer) });
+  const result = await f.service.refund(key, { ...refundInput, customerId: null });
+  assert.equal(result.customer, null);
+  assert.equal(f.calls.find(c => c.name === 'PosRefundVoucher').variables.input.customerId, undefined);
+});
+
+test('an order without a customer still issues an anonymous refund voucher', async t => {
+  const f = fixture(t, { PosRefundOrder: () => refundOrderWithCustomer(null) });
+  const result = await f.service.refund(key, refundInput);
+  assert.equal(result.customer, null);
+});
+
+test('an older pending refund reads the order customer before issuing its voucher', async t => {
+  const f = fixture(t, {
+    PosRefundOrderCustomer: () => ({ order: { customer: refundCustomer } }),
+  });
+  const state = f.store.read();
+  state.operations[key] = { key, kind: 'refund', input: refundInput, steps: {},
+    sessionId: 'session-A', orderName: '#1', refundInput: { orderId } };
+  f.store.write(state);
+  const result = await f.service.refund(key, refundInput);
+  assert.deepEqual(result.customer, refundCustomer);
+  assert.equal(count(f, 'PosRefundOrderCustomer'), 1);
+  assert.equal(f.calls.find(c => c.name === 'PosRefundVoucher').variables.input.customerId, refundCustomer.id);
+});
+
 test('refund voucher links selected Shopify customer and returns their details', async t => {
-  const f = fixture(t, { RefundCustomer: () => ({ customer: refundCustomer }) });
+  const f = fixture(t, {
+    PosRefundOrder: () => refundOrderWithCustomer({ ...refundCustomer, id: 'gid://shopify/Customer/99' }),
+    RefundCustomer: () => ({ customer: refundCustomer }),
+  });
   const result = await f.service.refund(key, { ...refundInput, customerId: refundCustomer.id });
   assert.deepEqual(result.customer, refundCustomer);
   assert.equal(f.calls.find(c => c.name === 'PosRefundVoucher').variables.input.customerId, refundCustomer.id);
   assert.ok(f.calls.findIndex(c => c.name === 'RefundCustomer') < f.calls.findIndex(c => c.name === 'PosRefund'));
+  const saved = f.store.read().operations[key];
+  assert.equal(saved.input.customerId, refundCustomer.id);
+  assert.deepEqual(saved.voucherCustomer, refundCustomer);
+  assert.equal(saved.voucherSavedCustomerId, refundCustomer.id);
+  assert.deepEqual(saved.result.customer, refundCustomer);
+});
+
+test('a missing saved voucher customer remains pending and retry only checks the existing card', async t => {
+  let savedCustomer = null;
+  const f = fixture(t, {
+    RefundCustomer: () => ({ customer: refundCustomer }),
+    PosRefundVoucher: () => ({ giftCardCreate: { giftCard: { id: 'card-new', customer: null }, userErrors: [] } }),
+    PosRefundVoucherCustomer: () => ({ giftCard: { id: 'card-new', customer: savedCustomer } }),
+  });
+  const input = { ...refundInput, customerId: refundCustomer.id };
+  await assert.rejects(f.service.refund(key, input), { code: 'RECONCILIATION_REQUIRED' });
+  const pending = f.store.read().operations[key];
+  assert.equal(pending.result, undefined);
+  assert.equal(pending.voucherCustomer.id, refundCustomer.id);
+  assert.equal(pending.voucherSavedCustomerId, null);
+  assert.equal(pending.steps['refund-voucher-create'].status, 'done');
+  savedCustomer = { id: refundCustomer.id };
+  const result = await createPosService(f.gql, createOperationStore(f.directory)).refund(key, input);
+  assert.deepEqual(result.customer, refundCustomer);
+  assert.equal(count(f, 'PosRefund'), 1);
+  assert.equal(count(f, 'PosRefundVoucher'), 1);
+  assert.equal(count(f, 'PosRefundVoucherCustomer'), 2);
+});
+
+test('a voucher linked to a different customer cannot report the selected customer as saved', async t => {
+  const f = fixture(t, {
+    RefundCustomer: () => ({ customer: refundCustomer }),
+    PosRefundVoucher: () => ({ giftCardCreate: { giftCard: { id: 'card-new', customer: { id: 'gid://shopify/Customer/99' } }, userErrors: [] } }),
+    PosRefundVoucherCustomer: () => ({ giftCard: { id: 'card-new', customer: { id: 'gid://shopify/Customer/99' } } }),
+  });
+  await assert.rejects(f.service.refund(key, { ...refundInput, customerId: refundCustomer.id }), { code: 'RECONCILIATION_REQUIRED' });
+  assert.equal(f.store.read().operations[key].result, undefined);
+  assert.equal(f.store.read().operations[key].voucherSavedCustomerId, 'gid://shopify/Customer/99');
+  assert.equal(count(f, 'PosRefund'), 1);
+  assert.equal(count(f, 'PosRefundVoucher'), 1);
+});
+
+test('a lost voucher creation response recovers and verifies the original selected customer', async t => {
+  let savedCode;
+  const f = fixture(t, {
+    RefundCustomer: () => ({ customer: refundCustomer }),
+    PosRefundVoucher: ({ input }) => { savedCode = input.code; throw new Error('Response lost'); },
+    PosRefundVoucherRecovery: () => ({ giftCards: { nodes: [{ id: 'card-new', note: `POS ${key}`, lastCharacters: savedCode.slice(-4), initialValue: { amount: '20' }, customer: { id: refundCustomer.id } }] } }),
+  });
+  const input = { ...refundInput, customerId: refundCustomer.id };
+  await assert.rejects(f.service.refund(key, input), { code: 'RECONCILIATION_REQUIRED' });
+  const result = await createPosService(f.gql, createOperationStore(f.directory)).refund(key, input);
+  assert.deepEqual(result.customer, refundCustomer);
+  assert.equal(f.store.read().operations[key].voucherSavedCustomerId, refundCustomer.id);
+  assert.equal(count(f, 'PosRefund'), 1);
+  assert.equal(count(f, 'PosRefundVoucher'), 1);
 });
 
 test('registering a refund customer survives retries without another customer, refund or voucher', async t => {
