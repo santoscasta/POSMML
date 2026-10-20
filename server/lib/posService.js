@@ -204,6 +204,7 @@ export function createPosService(gql, store, { exchange = false } = {}) {
       if (!ctx.op.refundInput) {
         const data = await gql(`query PosRefundOrder($id: ID!) {
           order(id: $id) { id name totalPriceSet { shopMoney { amount currencyCode } } totalRefundedSet { shopMoney { amount } }
+            customer { id firstName lastName email phone }
             transactions(first: 100) { id kind status gateway amountSet { shopMoney { amount } } }
           }
         }`, { id: input.orderId });
@@ -216,11 +217,24 @@ export function createPosService(gql, store, { exchange = false } = {}) {
         if (!Array.isArray(lines) || lines.some(i => !/^gid:\/\/shopify\/LineItem\/\d+$/.test(i.lineItemId) || !Number.isInteger(i.quantity) || i.quantity <= 0)) throw new PosError('Artículos de devolución inválidos');
         if (input.restock && lines.length && !input.locationId) throw new PosError('Selecciona la ubicación para reponer');
         ctx.op.orderName = order.name;
+        ctx.op.orderCustomer = order.customer || null;
         ctx.op.refundInput = {
           orderId: input.orderId, notify: Boolean(input.notify), note: `${input.note || ''}\nPOS operación ${key}`.trim(),
           refundLineItems: lines.map(i => ({ lineItemId: i.lineItemId, quantity: i.quantity, restockType: input.restock ? 'RETURN' : 'NO_RESTOCK', ...(input.restock ? { locationId: input.locationId } : {}) })),
           transactions: [{ orderId: input.orderId, parentId: parent.id, amount: (cents(input.amount) / 100).toFixed(2), kind: 'REFUND', gateway: parent.gateway }],
         };
+        ctx.save();
+      }
+      // An omitted selection inherits the order customer; explicit null keeps
+      // the cashier's choice to issue an anonymous voucher.
+      if (input.method === 'VOUCHER' && input.customerId === undefined && !input.newCustomer && ctx.op.voucherCustomer === undefined) {
+        if (ctx.op.orderCustomer === undefined) {
+          const data = await gql(`query PosRefundOrderCustomer($id: ID!) {
+            order(id: $id) { customer { id firstName lastName email phone } }
+          }`, { id: input.orderId });
+          ctx.op.orderCustomer = data.order?.customer || null;
+        }
+        ctx.op.voucherCustomer = ctx.op.orderCustomer;
         ctx.save();
       }
       const voucherCustomer = input.method === 'VOUCHER' ? await resolveRefundCustomer(gql, ctx, input) : null;
@@ -254,22 +268,36 @@ export function createPosService(gql, store, { exchange = false } = {}) {
         ctx.save();
         const card = await ctx.step('refund-voucher-create', async () => {
           const data = await gql(`mutation PosRefundVoucher($input: GiftCardCreateInput!) {
-            giftCardCreate(input: $input) { giftCard { id } giftCardCode userErrors { message } }
+            giftCardCreate(input: $input) { giftCard { id customer { id } } giftCardCode userErrors { message } }
           }`, { input: { ...(voucherCustomer ? { customerId: voucherCustomer.id } : {}), code: ctx.op.giftCardCode, initialValue: (cents(input.amount) / 100).toFixed(2), note: `Devolución ${ctx.op.orderName}, ${result.id}, POS ${key}${input.customerName ? ` - ${input.customerName}` : ''}` } });
           const giftCard = mutationResult(data, 'giftCardCreate', 'giftCard');
-          return { id: giftCard.id, code: ctx.op.giftCardCode };
+          return { id: giftCard.id, code: ctx.op.giftCardCode, customerId: giftCard.customer?.id || null };
         }, async () => {
           const data = await gql(`query PosRefundVoucherRecovery($query: String!) {
-            giftCards(first: 100, query: $query) { nodes { id note lastCharacters initialValue { amount } } }
+            giftCards(first: 100, query: $query) { nodes { id note lastCharacters initialValue { amount } customer { id } } }
           }`, { query: ctx.op.giftCardCode.slice(-4) });
           const matches = data.giftCards.nodes.filter(c => c.lastCharacters.toUpperCase() === ctx.op.giftCardCode.slice(-4)
             && c.note?.includes(`POS ${key}`) && cents(c.initialValue.amount) === cents(input.amount));
-          return matches.length === 1 ? { id: matches[0].id, code: ctx.op.giftCardCode } : null;
+          return matches.length === 1 ? { id: matches[0].id, code: ctx.op.giftCardCode, customerId: matches[0].customer?.id || null } : null;
         });
         voucherCode = card.code;
         voucherId = card.id;
         entry.voucherCode = voucherCode;
         ctx.save();
+        // Keep the issued card even if its customer was not saved. A retry
+        // rechecks this card instead of repeating the refund or issuing another.
+        let savedCustomerId = card.customerId;
+        if (voucherCustomer && savedCustomerId !== voucherCustomer.id) {
+          const data = await gql(`query PosRefundVoucherCustomer($id: ID!) {
+            giftCard(id: $id) { id customer { id } }
+          }`, { id: card.id });
+          savedCustomerId = data.giftCard?.customer?.id || null;
+        }
+        ctx.op.voucherSavedCustomerId = savedCustomerId || null;
+        ctx.save();
+        if (voucherCustomer && savedCustomerId !== voucherCustomer.id) {
+          throw new PosError(`El vale terminado en ${voucherCode.slice(-4)} ya está emitido, pero Shopify no confirma el cliente seleccionado. Revisa su asociación en Vales y reanuda esta operación. No repitas la devolución.`, 409, 'RECONCILIATION_REQUIRED');
+        }
       }
       return { success: true, refundId: result.id, ...(voucherCode ? { voucherCode, voucherId, customer: voucherCustomer } : {}) };
     });

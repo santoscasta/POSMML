@@ -20,6 +20,7 @@ import { useSession } from '../../context/SessionContext';
 
 import { CustomerSearch } from '../customers/CustomerSearch';
 import type { Customer } from '../../types/customer';
+import { VoucherCustomerAssignment } from '../vouchers/VoucherCustomerAssignment';
 
 type RefundMethod = 'CASH' | 'CARD' | 'VOUCHER';
 interface PendingRefund {
@@ -27,7 +28,7 @@ interface PendingRefund {
   orderId: string;
   amount: number;
   method: RefundMethod;
-  customerId?: string;
+  customerId?: string | null;
   newCustomer?: { firstName: string; lastName: string; email: string; phone: string };
   [key: string]: unknown;
 }
@@ -63,6 +64,7 @@ export function RefundModal({ order, open, onClose, onRefunded }: RefundModalPro
     return value ? JSON.parse(value) : null;
   });
   const [customer, setCustomer] = useState<Customer | null>(() => order.customer ? { ...order.customer, email: order.customer.email || '', phone: order.customer.phone || null } : null);
+  const [customerCleared, setCustomerCleared] = useState(false);
   const [registerCustomer, setRegisterCustomer] = useState(!!pending?.newCustomer);
   const [newCustomer, setNewCustomer] = useState(pending?.newCustomer || { firstName: '', lastName: '', email: '', phone: '' });
   const inFlight = useRef(false);
@@ -197,7 +199,7 @@ export function RefundModal({ order, open, onClose, onRefunded }: RefundModalPro
         method,
         orderName: order.name,
         amount: refundAmount,
-        ...(method === 'VOUCHER' ? registerCustomer ? { newCustomer } : { customerId: customer?.id } : {}),
+        ...(method === 'VOUCHER' ? registerCustomer ? { newCustomer } : { customerId: customer?.id ?? (customerCleared ? null : undefined) } : {}),
       };
 
       localStorage.setItem(storageKey, JSON.stringify(payload));
@@ -258,7 +260,12 @@ export function RefundModal({ order, open, onClose, onRefunded }: RefundModalPro
             <div className="w-full rounded border p-3 text-sm">
               {customer ? <><p className="font-medium">Vale asociado a {customer.firstName} {customer.lastName}</p><p>{customer.email}</p><p>{customer.phone}</p></> : 'Vale sin cliente asociado.'}
             </div>
-            <p className="text-xs text-muted-foreground">El envío utiliza el email de la ficha asociada. Para recibirlo por correo, selecciona o registra un cliente con email antes de confirmar la devolución.</p>
+            {!customer && voucherId && <VoucherCustomerAssignment voucherId={voucherId} onAssigned={assigned => {
+              setCustomer(assigned);
+              setVoucherEmail(assigned.email || '');
+              setVoucherEmailSent(false);
+            }} />}
+            <p className="text-xs text-muted-foreground">El envío utiliza el email de la ficha del cliente asociado al vale.</p>
 
             <Button
               variant="outline"
@@ -492,7 +499,7 @@ export function RefundModal({ order, open, onClose, onRefunded }: RefundModalPro
 
         {method === 'VOUCHER' && <section className="space-y-3 rounded-lg border p-3">
           <h3 className="text-sm font-semibold">Cliente del vale</h3>
-          {customer && !registerCustomer ? <div className="space-y-1 text-sm"><p>{customer.firstName} {customer.lastName}</p><p>{customer.email}</p><p>{customer.phone}</p><Button variant="outline" onClick={() => setCustomer(null)}>Cambiar cliente</Button></div> : <>
+          {customer && !registerCustomer ? <div className="space-y-1 text-sm"><p>{customer.firstName} {customer.lastName}</p><p>{customer.email}</p><p>{customer.phone}</p><Button variant="outline" onClick={() => { setCustomer(null); setCustomerCleared(true); }}>Cambiar cliente</Button></div> : <>
             <div className="flex flex-wrap gap-2"><Button variant={registerCustomer ? 'outline' : 'default'} onClick={() => setRegisterCustomer(false)}>Buscar cliente</Button><Button variant={registerCustomer ? 'default' : 'outline'} onClick={() => setRegisterCustomer(true)}>Registrar cliente</Button></div>
             {registerCustomer ? <div className="grid gap-3 sm:grid-cols-2">
               {(['firstName', 'lastName', 'email', 'phone'] as const).map(key => <label key={key} className="space-y-1 text-sm">

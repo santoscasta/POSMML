@@ -23,6 +23,7 @@ export function saleReceipt(data: ReceiptData, gift = false) {
   const voucherPaid = data.payments?.some(payment => payment.method === 'VOUCHER') ?? false;
   const paymentNames: Record<string, string> = { VOUCHER: 'Vale', CASH: 'Efectivo', CARD: 'Tarjeta', BIZUM: 'Bizum' };
   const amounts = paymentAmounts(data.payments || []);
+  const paymentRows = data.payments?.map(payment => row(payment.method === 'VOUCHER' ? `${escapeHtml(voucherLabel(payment.voucherCode))} aplicado` : `${paymentNames[payment.method] || payment.method} pagado`, `${payment.method === 'VOUCHER' ? '-' : ''}${formatCurrency(payment.amount)}`)).join('') || '';
   const note = data.note?.trim();
   const noteBlock = note
     ? `<div class="line"></div><div class="order-note"><strong>Nota del pedido:</strong><br>${escapeHtml(note).replace(/\r\n?|\n/g, '<br>')}</div>`
@@ -30,7 +31,7 @@ export function saleReceipt(data: ReceiptData, gift = false) {
   return `<!DOCTYPE html><html lang="es"><head><title>Ticket${gift ? ' regalo' : ''} ${escapeHtml(data.order)}</title>
     <style>${thermalStyles}.order-note { overflow-wrap: anywhere; }</style></head><body>
     ${receiptHeader}
-    ${row('Ticket:', escapeHtml(data.order))}
+    ${row('Ticket:', `<strong>${escapeHtml(data.order)}</strong>`)}
     ${row('Fecha:', escapeHtml(data.date))}
     ${row('Método:', escapeHtml(data.method))}
     ${noteBlock}
@@ -41,10 +42,10 @@ export function saleReceipt(data: ReceiptData, gift = false) {
       ${data.discountAmount > 0 ? row('Descuento', `-${formatCurrency(data.discountAmount)}`) : ''}
       ${row('IVA (incluido)', formatCurrency(data.taxAmount))}
       ${voucherPaid ? `${row('Total compra', formatCurrency(data.total))}
-        ${data.payments!.map(payment => row(payment.method === 'VOUCHER' ? `${escapeHtml(voucherLabel(payment.voucherCode))} aplicado` : `${paymentNames[payment.method] || payment.method} pagado`, `${payment.method === 'VOUCHER' ? '-' : ''}${formatCurrency(payment.amount)}`)).join('')}
+        ${paymentRows}
         <div class="total">${row('TOTAL COBRADO', formatCurrency(amounts.collected))}</div>
         ${row('Efectivo a caja', formatCurrency(amounts.cash))}`
-        : `<div class="total">${row('TOTAL', formatCurrency(data.total))}</div>`}
+        : `${(data.payments?.length ?? 0) > 1 ? paymentRows : ''}<div class="total">${row('TOTAL', formatCurrency(data.total))}</div>`}
       ${data.cashReceived ? `${row('Recibido', formatCurrency(data.cashReceived))}${row('Cambio', formatCurrency(data.cashReceived - data.total))}` : ''}
       <div class="line"></div>`}
     ${receiptFooter}

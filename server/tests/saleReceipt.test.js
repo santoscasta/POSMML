@@ -46,6 +46,22 @@ test('mixed voucher receipt separates the voucher from cash', () => {
   assert.match(html, /TOTAL COBRADO<\/span><span>4,00/);
 });
 
+for (const [method, label] of [['CARD', 'Tarjeta'], ['BIZUM', 'Bizum']]) {
+  test(`mixed cash and ${method} receipts show both amounts when printing and reprinting`, () => {
+    const payments = [{ method: 'CASH', amount: 20 }, { method, amount: 61 }];
+    const data = { order: '#15106', date: '20/10/2026', items: [],
+      subtotal: 81, total: 81, discountAmount: 0, taxAmount: 14.06, payments };
+    for (const description of ['Mixto', paymentSummary({ method: 'MIXED', mixedPayments: payments })]) {
+      const html = saleReceipt({ ...data, method: description });
+      assert.match(html, /Efectivo pagado<\/span><span>20,00/);
+      assert.ok(html.includes(`${label} pagado</span><span>61,00`));
+      assert.match(html, /TOTAL<\/span><span>81,00/);
+      const gift = saleReceipt({ ...data, method: 'Mixto' }, true);
+      assert.doesNotMatch(gift, /€|Efectivo pagado|Tarjeta pagado|Bizum pagado|TOTAL/);
+    }
+  });
+}
+
 test('cash register describes each tender instead of presenting a mixed sale as all cash', () => {
   assert.equal(paymentSummary({ method: 'MIXED', mixedPayments: [
     { method: 'VOUCHER', amount: 9.5 }, { method: 'CARD', amount: 2.5 },

@@ -31,8 +31,8 @@ export function exchangeReceipt(data: ExchangeReceiptData) {
     <style>${thermalStyles}</style></head><body>
     ${receiptHeader}
     <div class="center brand">TICKET DE CAMBIO</div>
-    ${row('Pedido original:', escapeHtml(data.originalOrderName))}
-    ${row('Nuevo pedido:', escapeHtml(data.replacementOrderName))}
+    ${row('Pedido original:', `<strong>${escapeHtml(data.originalOrderName)}</strong>`)}
+    ${row('Nuevo pedido:', `<strong>${escapeHtml(data.replacementOrderName)}</strong>`)}
     ${row('Fecha:', escapeHtml(new Date(data.createdAt).toLocaleString('es-ES')))}
     ${customerName ? row('Cliente:', escapeHtml(customerName)) : ''}
     <div class="line"></div>
@@ -67,8 +67,8 @@ export function exchangeVoucherReceipt(data: ExchangeReceiptData) {
     ${customerName ? row('Cliente:', escapeHtml(customerName)) : ''}
     ${data.customer?.email ? row('Email:', escapeHtml(data.customer.email)) : ''}
     ${data.customer?.phone ? row('Teléfono:', escapeHtml(data.customer.phone)) : ''}
-    ${row('Pedido original:', escapeHtml(data.originalOrderName))}
-    ${row('Nuevo pedido:', escapeHtml(data.replacementOrderName))}
+    ${row('Pedido original:', `<strong>${escapeHtml(data.originalOrderName)}</strong>`)}
+    ${row('Nuevo pedido:', `<strong>${escapeHtml(data.replacementOrderName)}</strong>`)}
     ${row('Fecha:', escapeHtml(new Date(data.createdAt).toLocaleString('es-ES')))}
     <div class="line"></div><div class="footer">Presente este vale para canjearlo en tienda.</div>
     ${receiptFooter}

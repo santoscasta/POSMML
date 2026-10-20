@@ -24,7 +24,7 @@ export function voucherReceipt(data: VoucherReceiptData) {
     <p class="center total">${formatCurrency(data.amount, data.currencyCode)}</p>
     ${data.balance != null && data.balance !== data.amount ? row('Saldo disponible:', formatCurrency(data.balance, data.currencyCode)) : ''}
     ${data.customerName ? row('Cliente:', escapeHtml(data.customerName)) : ''}
-    ${data.orderName ? row('Pedido original:', escapeHtml(data.orderName)) : ''}
+    ${data.orderName ? row('Pedido original:', `<strong>${escapeHtml(data.orderName)}</strong>`) : ''}
     ${row('Emitido:', escapeHtml(data.date))}
     <div class="line"></div>
     <div class="footer">${data.partialCode ? 'Consulta el código completo para utilizar tu vale.' : 'Presenta este código para utilizar tu vale.'}</div>

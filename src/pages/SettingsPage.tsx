@@ -4,6 +4,7 @@ import { MailPage } from './MailPage';
 import { Button } from '@/components/ui/button';
 import { readCatalogSettings, saveCatalogSettings, type CatalogView } from '../utils/catalogSettings';
 import { cn } from '@/lib/utils';
+import { AttendancePage } from './AttendancePage';
 
 function CatalogSettings() {
   const [draft, setDraft] = useState(readCatalogSettings);
@@ -35,13 +36,14 @@ function CatalogSettings() {
 export function SettingsPage() {
   return <div className="mx-auto max-w-4xl space-y-6 p-4 sm:p-6">
     <div><h1 className="text-xl font-semibold">Ajustes</h1>
-      <p className="mt-1 text-sm text-muted-foreground">Configura el catálogo, los correos y los avisos del TPV.</p></div>
+      <p className="mt-1 text-sm text-muted-foreground">Gestiona el catálogo, los empleados, los correos y los avisos del TPV.</p></div>
     <nav aria-label="Secciones de ajustes" className="flex flex-wrap gap-2">
-      {[['/ajustes', 'Catálogo'], ['/ajustes/correos', 'Correos y avisos']].map(([to, label]) => <NavLink key={to} to={to} end style={({ isActive }) => ({ color: isActive ? 'var(--primary-foreground)' : 'var(--foreground)' })} className={({ isActive }) => cn('rounded-lg border px-4 py-2 text-sm font-medium', isActive ? 'border-primary bg-primary text-primary-foreground' : 'bg-white hover:bg-muted')}>{label}</NavLink>)}
+      {[['/ajustes', 'Catálogo'], ['/ajustes/correos', 'Correos y avisos'], ['/ajustes/empleados', 'Empleados']].map(([to, label]) => <NavLink key={to} to={to} end style={({ isActive }) => ({ color: isActive ? 'var(--primary-foreground)' : 'var(--foreground)' })} className={({ isActive }) => cn('rounded-lg border px-4 py-2 text-sm font-medium', isActive ? 'border-primary bg-primary text-primary-foreground' : 'bg-white hover:bg-muted')}>{label}</NavLink>)}
     </nav>
     <Routes>
       <Route index element={<CatalogSettings />} />
       <Route path="correos" element={<MailPage />} />
+      <Route path="empleados" element={<AttendancePage manage />} />
       <Route path="*" element={<Navigate to="/ajustes" replace />} />
     </Routes>
   </div>;

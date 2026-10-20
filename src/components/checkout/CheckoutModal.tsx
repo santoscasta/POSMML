@@ -108,9 +108,9 @@ export function CheckoutModal({
   const change = cashReceivedNum - total;
 
   const mixedTotal = mixedSplits.reduce(
-    (sum, s) => sum + (parseFloat(s.amount) || 0),
+    (sum, s) => sum + Math.round((parseFloat(s.amount) || 0) * 100),
     0,
-  );
+  ) / 100;
   const mixedValid = Math.round(mixedTotal * 100) === Math.round(total * 100)
     && mixedSplits.every(s => Number(s.amount) > 0 && (s.method !== 'VOUCHER' || !!s.voucherCode?.trim()));
 
@@ -211,11 +211,17 @@ export function CheckoutModal({
   };
 
   const updateMixedSplit = (index: number, field: 'method' | 'amount' | 'voucherCode', value: string) => {
-    setMixedSplits((prev) =>
-      prev.map((s, i) =>
+    setMixedSplits((prev) => {
+      const updated = prev.map((s, i) =>
         i === index ? { ...s, [field]: field === 'method' ? (value as MixedMethod) : value } : s,
-      ),
-    );
+      );
+      if (field === 'amount') {
+        const otherIndex = index === 0 ? 1 : 0;
+        const remaining = Math.max(0, Math.round(total * 100) - Math.round((parseFloat(value) || 0) * 100));
+        updated[otherIndex] = { ...updated[otherIndex], amount: value === '' ? '' : (remaining / 100).toFixed(2) };
+      }
+      return updated;
+    });
   };
 
   const methodButtons: { key: PaymentMethod; label: string; icon: typeof Banknote }[] = [
@@ -275,13 +281,15 @@ export function CheckoutModal({
                 <span className="text-muted-foreground">{voucherPaid ? 'Total compra' : 'Total'}</span>
                 <span className="font-semibold">{formatCurrency(total)}</span>
               </div>
-              {voucherPaid && <>
+              {(voucherPaid || (receiptPayments?.length ?? 0) > 1) && <>
                 {receiptPayments!.map((payment, index) => <div className="flex justify-between" key={index}>
                   <span className="text-muted-foreground">{payment.method === 'VOUCHER' ? `${voucherLabel(payment.voucherCode)} aplicado` : `${methodButtons.find(button => button.key === payment.method)?.label || payment.method} pagado`}</span>
                   <span>{payment.method === 'VOUCHER' ? '-' : ''}{formatCurrency(payment.amount)}</span>
                 </div>)}
-                <div className="flex justify-between font-semibold"><span>Total cobrado</span><span>{formatCurrency(amounts.collected)}</span></div>
-                <div className="flex justify-between"><span>Efectivo a caja</span><span>{formatCurrency(amounts.cash)}</span></div>
+                {voucherPaid && <>
+                  <div className="flex justify-between font-semibold"><span>Total cobrado</span><span>{formatCurrency(amounts.collected)}</span></div>
+                  <div className="flex justify-between"><span>Efectivo a caja</span><span>{formatCurrency(amounts.cash)}</span></div>
+                </>}
               </>}
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Método</span>
@@ -538,10 +546,12 @@ export function CheckoutModal({
               {/* Mixed payment */}
               {method === 'MIXED' && (
                 <div className="space-y-2">
+                  <p className="text-xs text-muted-foreground">Introduce un importe y el resto se calcula automáticamente.</p>
                   {mixedSplits.map((split, index) => (
                     <div key={index} className="flex items-center gap-2">
                       <select
                         title="Método de pago"
+                        aria-label={`Método del pago ${index + 1}`}
                         className="h-9 rounded-lg border border-input bg-transparent px-2 text-sm outline-none focus-visible:border-ring"
                         value={split.method}
                         onChange={(e) => updateMixedSplit(index, 'method', e.target.value)}
@@ -552,6 +562,7 @@ export function CheckoutModal({
                       </select>
                       <Input
                         type="number"
+                        aria-label={`Importe del pago ${index + 1}`}
                         min={0}
                         step="0.01"
                         placeholder="0.00"
@@ -566,8 +577,13 @@ export function CheckoutModal({
                       />}
                     </div>
                   ))}
+                  {mixedValid && (
+                    <div role="status" className="rounded-sm bg-accent/10 px-3 py-2 text-sm font-semibold">
+                      Resto en {mixedMethodOptions.find(option => option.value === mixedSplits[1].method)?.label.toLowerCase()}: {formatCurrency(Number(mixedSplits[1].amount))}
+                    </div>
+                  )}
                   <div className="flex items-center justify-between text-sm">
-                    <span>Total parciales</span>
+                    <span>Total asignado</span>
                     <span className={cn(!mixedValid && 'text-destructive')}>
                       {formatCurrency(mixedTotal)} / {formatCurrency(total)}
                     </span>

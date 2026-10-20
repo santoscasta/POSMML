@@ -11,11 +11,14 @@ import { es } from './i18n/es';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
-import { Home, ShoppingCart, ClipboardList, Wallet, Ticket, CircleDot, Settings } from 'lucide-react';
+import { Home, ShoppingCart, ClipboardList, Wallet, Ticket, CircleDot, Settings, Clock3 } from 'lucide-react';
 import { AuthGate } from './components/AuthGate';
 import { PendingOperations } from './components/PendingOperations';
 import { clearCredentials } from './utils/auth';
 import { OpenSessionModal } from './components/sessions/OpenSessionModal';
+import { AttendanceProvider, useAttendance } from './context/AttendanceContext';
+import { attendanceLabels } from './utils/attendance';
+import { AttendancePage } from './pages/AttendancePage';
 
 const navItems = [
   { path: '/dashboard', label: es.nav.dashboard || 'Inicio', icon: Home },
@@ -23,6 +26,7 @@ const navItems = [
   { path: '/orders', label: es.nav.orders, icon: ClipboardList },
   { path: '/caja', label: es.nav.cashRegister, icon: Wallet },
   { path: '/vales', label: es.nav.vouchers, icon: Ticket },
+  { path: '/horario', label: 'Horario', icon: Clock3 },
   { path: '/ajustes', label: 'Ajustes', icon: Settings },
 ];
 
@@ -131,9 +135,14 @@ function AppContent() {
   const navigate = useNavigate();
   const location = useLocation();
   const { isOpen, loading, error, refresh } = useSession();
+  const { overview } = useAttendance();
+  const employeeStatus = overview?.employees.find(e => e.id === overview.employee.id)?.status;
   return (
     <div className="flex h-dvh w-full flex-col">
       <header className="flex min-h-11 shrink-0 flex-wrap items-center justify-end gap-2 border-b bg-white px-3 py-1">
+        <Button size="sm" variant="ghost" className="mr-auto max-w-full" onClick={() => navigate('/horario')}>
+          <Clock3 className="size-4" /><span className="max-w-44 truncate">{overview ? overview.employee.name : 'Fichar'}</span>{employeeStatus && <span className="hidden text-xs text-muted-foreground sm:inline">· {attendanceLabels[employeeStatus]}</span>}
+        </Button>
         {isOpen && <Button size="sm" variant="outline" onClick={() => navigate('/caja?cerrar=1')}>
           <Wallet className="size-4" />Cerrar caja
         </Button>}
@@ -149,6 +158,7 @@ function AppContent() {
           <Route path="/orders" element={<OrdersPage />} />
           <Route path="/caja" element={<SessionsPage />} />
           <Route path="/vales" element={<VouchersPage />} />
+          <Route path="/horario" element={<AttendancePage />} />
           <Route path="/ajustes/*" element={<SettingsPage />} />
           <Route path="/correos" element={<Navigate to="/ajustes/correos" replace />} />
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
@@ -167,7 +177,7 @@ export default function App() {
     <AuthGate><SessionProvider>
       <CartProvider>
         <BrowserRouter>
-          <AppContent />
+          <AttendanceProvider><AppContent /></AttendanceProvider>
         </BrowserRouter>
       </CartProvider>
     </SessionProvider></AuthGate>

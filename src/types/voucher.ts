@@ -8,6 +8,7 @@ export interface Voucher {
   currentBalance: number;
   customerName?: string;
   customerEmail?: string;
+  customerId?: string | null;
   status: VoucherStatus;
   notes?: string;
   originOrderId?: string;

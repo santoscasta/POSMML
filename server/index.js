@@ -17,6 +17,8 @@ import customerRoutes from './routes/customers.js';
 import { getMailService } from './lib/mail/service.js';
 import { createMailMonitor } from './lib/mail/monitor.js';
 import shopifyGQL from './lib/shopifyGQL.js';
+import { createAttendanceRouter } from './routes/attendance.js';
+import { getAttendanceService } from './lib/attendance.js';
 
 dotenv.config();
 
@@ -38,6 +40,7 @@ getStore(); // Fail at startup if durable storage is not configured.
 
 // API Routes
 app.get('/api/access', (req, res) => res.json({ authenticated: true }));
+app.use('/api', createAttendanceRouter(getAttendanceService()));
 app.use('/api', graphqlRoutes);
 app.use('/api', sessionRoutes);
 app.use('/api', paymentRoutes);

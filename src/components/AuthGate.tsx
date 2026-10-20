@@ -36,6 +36,7 @@ export function AuthGate({ children }: { children: ReactNode }) {
   return <main className="flex min-h-screen items-center justify-center bg-background p-6">
     <form onSubmit={login} className="w-full max-w-sm space-y-4 rounded-lg border bg-white p-6">
       <h1 className="text-xl font-semibold">Acceso a POS MML</h1>
+      {import.meta.env.VITE_ATTENDANCE_PREVIEW === 'true' && <p className="rounded-lg bg-blue-50 p-3 text-sm leading-6 text-blue-900">Prueba local del control horario.<br />Usuario: <strong>demo</strong> · Contraseña: <strong>demo</strong></p>}
       <label className="block space-y-1"><span>Usuario</span><Input autoComplete="username" value={username} onChange={e => setUsername(e.target.value)} required /></label>
       <label className="block space-y-1"><span>Contraseña</span><Input type="password" autoComplete="current-password" value={password} onChange={e => setPassword(e.target.value)} required /></label>
       {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
