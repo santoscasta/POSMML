@@ -9,8 +9,10 @@ function railway(...args) {
     return JSON.parse(execFileSync('npx', ['--yes', '@railway/cli@5.71.0', ...args], {
       encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], timeout: 60000,
     }));
-  } catch {
-    throw new Error('No se pudo consultar Railway con el token del despliegue.');
+  } catch (error) {
+    // stdout can contain secrets from `variable list`; never include it in errors.
+    const diagnostic = String(error.stderr || '').replaceAll(process.env.RAILWAY_TOKEN || '\0', '[redacted]').trim();
+    throw new Error(`No se pudo consultar Railway (${args[0]}): ${diagnostic || 'respuesta JSON no válida'}`);
   }
 }
 function check(ok, message) {
