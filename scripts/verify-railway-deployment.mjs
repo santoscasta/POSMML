@@ -58,10 +58,21 @@ async function main() {
     await delay(5000);
   }
   check(ready, 'Railway no ha servido la nueva versión en cinco minutos. Revisa el despliegue.');
+  const anonymous = await request('/api/auth/me');
+  check(anonymous.status === 401 && (await anonymous.json()).code === 'SESSION_EXPIRED', 'No se ha confirmado la API de sesiones de la nueva versión.');
   const loginResponse = await request('/api/auth/login', {
     method: 'POST', headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ username: variables.POS_USERNAME, password: variables.POS_PASSWORD }),
   });
+  // The initial account can later be renamed, deactivated or given a new password
+  // in Settings. Environment variables must never reset those account changes.
+  if (loginResponse.status === 401) {
+    for (const endpoint of ['/api/auth/users', '/api/auth/sessions', '/api/attendance/employees', '/api/attendance/overview']) {
+      check((await request(endpoint)).status === 401, `La ruta ${endpoint} debe exigir una sesión.`);
+    }
+    console.log('Nueva versión y API de sesiones operativas. Las credenciales iniciales ya no corresponden a una cuenta activa; se conserva la configuración de usuarios.');
+    return;
+  }
   check(loginResponse.ok, 'La nueva versión no permite acceder con las credenciales configuradas.');
   const login = await loginResponse.json();
   check(login.token && login.user?.role === 'admin', 'No se ha confirmado el perfil administrador.');
@@ -72,8 +83,6 @@ async function main() {
       check(response.ok && response.headers.get('content-type')?.includes('application/json'), `Falló la comprobación de ${endpoint}.`);
       await response.json();
     }
-    const anonymous = await request('/api/auth/me');
-    check(anonymous.status === 401, 'La API de sesiones debe rechazar el acceso anónimo.');
     console.log('Nueva versión operativa: acceso de administrador, sesiones, empleados y fichajes verificados.');
   } finally {
     const logout = await request('/api/auth/logout', { method: 'POST', headers });
