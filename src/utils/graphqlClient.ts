@@ -20,14 +20,15 @@ export async function shopifyGraphQL<T>(
   query: string,
   variables?: Record<string, unknown>,
 ): Promise<T> {
+  const headers = authHeaders();
   const response = await fetch(API_URL, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', ...authHeaders() },
+    headers: { 'Content-Type': 'application/json', ...headers },
     body: JSON.stringify({ query, variables }),
   });
 
   if (!response.ok) {
-    if (response.status === 401) clearCredentials();
+    if (response.status === 401 && headers.Authorization === authHeaders().Authorization) clearCredentials();
     throw new Error(`API error: ${response.status} ${response.statusText}`);
   }
 

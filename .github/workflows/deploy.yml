@@ -20,7 +20,19 @@ jobs:
       - name: Build frontend
         run: npx tsc -b && npx vite build
 
-      - name: Deploy to Railway
-        run: npx @railway/cli@latest up --service ${{ secrets.RAILWAY_SERVICE_ID }} --detach
+      - name: Check production storage and administrator
+        run: node scripts/verify-railway-deployment.mjs --preflight
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+          RAILWAY_SERVICE_ID: ${{ secrets.RAILWAY_SERVICE_ID }}
+
+      - name: Deploy to Railway
+        run: npx @railway/cli@5.71.0 up --service ${{ secrets.RAILWAY_SERVICE_ID }} --detach
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+
+      - name: Verify deployed application
+        run: node scripts/verify-railway-deployment.mjs
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+          RAILWAY_SERVICE_ID: ${{ secrets.RAILWAY_SERVICE_ID }}

@@ -10,13 +10,13 @@ import {
   Download,
   Users,
   ShieldCheck,
-  ArrowRight,
 } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { useAttendance } from "../context/AttendanceContext";
 import { attendanceLabels, duration, madridDate } from "../utils/attendance";
 import type { AttendanceStatus, Journey } from "../types/attendance";
+import { useAuth } from "../context/AuthContext";
 import { cn } from "../lib/utils";
 
 const selectClass =
@@ -71,112 +71,6 @@ function Status({ value }: { value: AttendanceStatus }) {
   );
 }
 
-function Identify() {
-  const { employees, login, setup, busy } = useAttendance();
-  const [employeeId, setEmployeeId] = useState("");
-  const [name, setName] = useState("");
-  const [pin, setPin] = useState("");
-  const first = employees.length === 0;
-  return (
-    <section className="grid gap-6 rounded-xl border bg-white p-5 sm:grid-cols-2 sm:p-8">
-      <div className="space-y-3">
-        <div className="flex size-12 items-center justify-center rounded-xl bg-slate-100 text-slate-600">
-          <Clock3 className="size-6" />
-        </div>
-        <h2 className="text-xl font-semibold">
-          {first ? "Prepara el control horario" : "Tu jornada empieza aquí"}
-        </h2>
-        <p className="max-w-sm text-sm leading-6 text-muted-foreground">
-          {first
-            ? "Crea el primer responsable para dar de alta al equipo y empezar a registrar jornadas."
-            : "Selecciona tu nombre e introduce tu PIN personal para registrar tu entrada, una pausa o tu salida."}
-        </p>
-        <p className="text-xs leading-5 text-muted-foreground">
-          Los fichajes se conservan al cerrar el navegador. Cambiar de persona
-          en el TPV mantiene tu jornada abierta.
-        </p>
-        {import.meta.env.VITE_ATTENDANCE_PREVIEW === "true" && (
-          <div className="rounded-lg bg-blue-50 p-3 text-xs leading-6 text-blue-900">
-            <strong>Prueba local</strong>
-            <br />
-            Marta · Responsable · PIN 1234
-            <br />
-            Ana · PIN 2345 · Leo · PIN 3456
-          </div>
-        )}
-      </div>
-      <form
-        className="space-y-4 self-center"
-        onSubmit={(event) => {
-          event.preventDefault();
-          quiet(
-            (first ? setup(name, pin) : login(employeeId, pin)).then(() =>
-              setPin(""),
-            ),
-          );
-        }}
-      >
-        {first ? (
-          <label className="block space-y-2 text-sm font-medium">
-            Nombre del responsable
-            <Input
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              maxLength={80}
-              required
-            />
-          </label>
-        ) : (
-          <label className="block space-y-2 text-sm font-medium">
-            Empleado
-            <select
-              className={selectClass}
-              value={employeeId}
-              onChange={(e) => {
-                setEmployeeId(e.target.value);
-                setPin("");
-              }}
-              required
-            >
-              <option value="">Selecciona tu nombre</option>
-              {employees.map((e) => (
-                <option key={e.id} value={e.id}>
-                  {e.name}
-                  {e.role === "manager" ? " · Responsable" : ""}
-                </option>
-              ))}
-            </select>
-          </label>
-        )}
-        <label className="block space-y-2 text-sm font-medium">
-          PIN personal
-          <Input
-            className="h-10"
-            type="password"
-            inputMode="numeric"
-            pattern="[0-9]{4,8}"
-            minLength={4}
-            maxLength={8}
-            autoComplete="off"
-            value={pin}
-            onChange={(e) => setPin(e.target.value)}
-            placeholder="Entre 4 y 8 cifras"
-            required
-          />
-        </label>
-        <Button className="h-10 w-full" type="submit" disabled={busy}>
-          {busy
-            ? "Comprobando…"
-            : first
-              ? "Crear responsable"
-              : "Identificarme"}
-          <ArrowRight />
-        </Button>
-      </form>
-    </section>
-  );
-}
-
 function exportJourneys(rows: Journey[]) {
   const cell = (value: string) =>
     `"${(/^[=+@\-\t\r\n]/.test(value) ? `'${value}` : value).replaceAll('"', '""')}"`;
@@ -190,17 +84,37 @@ function exportJourneys(rows: Journey[]) {
       "Minutos trabajados",
       "Minutos de pausa",
       "Estado",
+      "Entrada prevista",
+      "Entrada mínima",
+      "Entrada máxima",
+      "Margen entrada (minutos)",
+      "Salida prevista",
+      "Salida mínima",
+      "Salida máxima",
+      "Margen salida (minutos)",
     ],
-    ...rows.map((row) => [
-      row.employeeName,
-      madridDate(new Date(row.startedAt)),
-      time(row.startedAt),
-      row.endedAt ? madridDate(new Date(row.endedAt)) : "",
-      row.endedAt ? time(row.endedAt) : "",
-      String(Math.floor(row.workedMs / 60000)),
-      String(Math.floor(row.breakMs / 60000)),
-      row.endedAt ? "Cerrada" : attendanceLabels[row.status],
-    ]),
+    ...rows.map((row) => {
+      const entry = row.events.find((event) => event.action === "entry");
+      const exit = row.events.find((event) => event.action === "exit");
+      return [
+        row.employeeName,
+        madridDate(new Date(row.startedAt)),
+        time(row.startedAt),
+        row.endedAt ? madridDate(new Date(row.endedAt)) : "",
+        row.endedAt ? time(row.endedAt) : "",
+        String(Math.floor(row.workedMs / 60000)),
+        String(Math.floor(row.breakMs / 60000)),
+        row.endedAt ? "Cerrada" : attendanceLabels[row.status],
+        entry?.schedule?.entryTime || "",
+        entry?.window?.min || "",
+        entry?.window?.max || "",
+        entry?.schedule ? String(entry.schedule.toleranceMinutes) : "",
+        exit?.schedule?.exitTime || "",
+        exit?.window?.min || "",
+        exit?.window?.max || "",
+        exit?.schedule ? String(exit.schedule.toleranceMinutes) : "",
+      ];
+    }),
   ];
   const url = URL.createObjectURL(
     new Blob(
@@ -232,14 +146,17 @@ export function AttendancePage({ manage = false }: { manage?: boolean }) {
   const [to, setTo] = useState(madridDate());
   const [employeeFilter, setEmployeeFilter] = useState("");
   const [name, setName] = useState("");
-  const [pin, setPin] = useState("");
-  const [role, setRole] = useState("employee");
   const [notice, setNotice] = useState("");
+  const { user } = useAuth();
+  const canPunch = Boolean(user.employeeId);
   const manager = overview?.employee.role === "manager";
   const current = overview?.employees.find(
     (e) => e.id === overview.employee.id,
   );
   const status = current?.status || "out";
+  const entryWindow = overview?.punchWindows?.entry;
+  const exitWindow = overview?.punchWindows?.exit;
+  const relevantWindow = status === "out" ? entryWindow : exitWindow;
   const ownToday =
     overview?.journeys.filter(
       (j) =>
@@ -330,7 +247,10 @@ export function AttendancePage({ manage = false }: { manage?: boolean }) {
             Reintentar conexión
           </Button>
         ) : (
-          <Identify />
+          <p className="rounded-lg border bg-white p-6">
+            No se pudo cargar tu perfil de control horario. Pulsa Actualizar
+            para reintentar.
+          </p>
         )
       ) : (
         <>
@@ -343,7 +263,7 @@ export function AttendancePage({ manage = false }: { manage?: boolean }) {
                 <div>
                   <h2 className="font-semibold">{overview.employee.name}</h2>
                   <p className="text-xs text-muted-foreground">
-                    {manager ? "Responsable" : "Empleado"} ·{" "}
+                    {manager ? "Administrador" : "Empleado"} ·{" "}
                     {date(overview.serverNow)}
                   </p>
                 </div>
@@ -357,7 +277,7 @@ export function AttendancePage({ manage = false }: { manage?: boolean }) {
                   quiet(logout());
                 }}
               >
-                Cambiar de persona
+                Cambiar de usuario
               </Button>
             </div>
             <div className="grid gap-6 p-5 sm:grid-cols-[1fr_auto] sm:p-6">
@@ -389,12 +309,41 @@ export function AttendancePage({ manage = false }: { manage?: boolean }) {
                       las jornadas iniciadas hoy.
                     </p>
                   )}
+                {current?.schedule?.enabled && (
+                  <div className="mt-4 max-w-lg rounded-lg border border-blue-100 bg-blue-50 p-3 text-sm text-blue-900">
+                    <p className="font-semibold">Tus franjas de fichaje</p>
+                    <div className="mt-2 grid gap-2 sm:grid-cols-2">
+                      <p>
+                        Entrada:{" "}
+                        <strong>
+                          {entryWindow?.min}–{entryWindow?.max}
+                        </strong>
+                      </p>
+                      <p>
+                        Salida:{" "}
+                        <strong>
+                          {exitWindow?.min}–{exitWindow?.max}
+                        </strong>
+                      </p>
+                    </div>
+                    <p className="mt-2 text-xs leading-5">
+                      Margen de ±{current.schedule.toleranceMinutes} minutos.
+                      Hora de Madrid. Fuera de estas franjas no se pueden
+                      registrar entradas o salidas.
+                    </p>
+                  </div>
+                )}
               </div>
               <div className="flex flex-wrap items-center gap-2 sm:flex-col sm:items-stretch sm:justify-center">
-                {status === "out" ? (
+                {!canPunch ? (
+                  <p className="max-w-64 text-sm text-muted-foreground">
+                    Para fichar, vincula tu cuenta con un empleado en Ajustes →
+                    Usuarios y sesiones.
+                  </p>
+                ) : status === "out" ? (
                   <Button
                     className="h-11 px-6"
-                    disabled={busy}
+                    disabled={busy || entryWindow?.allowed === false}
                     onClick={() => quiet(register("entry"))}
                   >
                     <LogIn />
@@ -419,13 +368,23 @@ export function AttendancePage({ manage = false }: { manage?: boolean }) {
                     </Button>
                     <Button
                       className="h-11 px-6"
-                      disabled={busy}
+                      disabled={busy || exitWindow?.allowed === false}
                       onClick={() => quiet(register("exit"))}
                     >
                       <LogOut />
                       Fichar salida
                     </Button>
                   </>
+                )}
+                {canPunch && relevantWindow?.allowed === false && (
+                  <p
+                    role="status"
+                    className="max-w-64 rounded-lg bg-amber-50 p-3 text-xs leading-5 text-amber-900"
+                  >
+                    {status === "out" ? "Entrada" : "Salida"} bloqueada fuera de{" "}
+                    {relevantWindow.min}–{relevantWindow.max}. Contacta con el
+                    administrador si necesitas ajustar el horario.
+                  </p>
                 )}
                 <p className="max-w-52 text-xs leading-5 text-muted-foreground">
                   {busy
@@ -443,16 +402,15 @@ export function AttendancePage({ manage = false }: { manage?: boolean }) {
                   <h2 className="text-lg font-semibold">Gestionar empleados</h2>
                 </div>
                 <form
-                  className="grid items-end gap-3 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_1fr_auto]"
+                  className="grid items-end gap-3 sm:grid-cols-2 lg:grid-cols-[1fr_auto]"
                   onSubmit={(e) => {
                     e.preventDefault();
                     setNotice("");
                     quiet(
-                      addEmployee(name, pin, role).then(() => {
+                      addEmployee(name).then(() => {
                         setName("");
-                        setPin("");
                         setNotice(
-                          "Empleado creado. Ya puede identificarse para fichar.",
+                          "Empleado creado. Vincúlalo a una cuenta en Ajustes → Usuarios y sesiones.",
                         );
                       }),
                     );
@@ -466,31 +424,6 @@ export function AttendancePage({ manage = false }: { manage?: boolean }) {
                       maxLength={80}
                       required
                     />
-                  </label>
-                  <label className="space-y-1.5 text-sm">
-                    PIN inicial
-                    <Input
-                      type="password"
-                      inputMode="numeric"
-                      pattern="[0-9]{4,8}"
-                      minLength={4}
-                      maxLength={8}
-                      value={pin}
-                      onChange={(e) => setPin(e.target.value)}
-                      autoComplete="new-password"
-                      required
-                    />
-                  </label>
-                  <label className="space-y-1.5 text-sm">
-                    Permisos
-                    <select
-                      className={selectClass}
-                      value={role}
-                      onChange={(e) => setRole(e.target.value)}
-                    >
-                      <option value="employee">Empleado</option>
-                      <option value="manager">Responsable</option>
-                    </select>
                   </label>
                   <Button className="h-10" type="submit" disabled={busy}>
                     <Plus />
@@ -506,8 +439,7 @@ export function AttendancePage({ manage = false }: { manage?: boolean }) {
                       <div>
                         <p className="font-medium">{e.name}</p>
                         <p className="text-xs text-muted-foreground">
-                          {e.role === "manager" ? "Responsable" : "Empleado"} ·{" "}
-                          {e.active ? "Activo" : "Inactivo"}
+                          Empleado · {e.active ? "Activo" : "Inactivo"}
                         </p>
                       </div>
                       <Button
@@ -702,6 +634,12 @@ export function AttendancePage({ manage = false }: { manage?: boolean }) {
                                   <li key={event.id}>
                                     {date(event.at)} · {time(event.at)} ·{" "}
                                     {actionLabels[event.action]}
+                                    {event.window && (
+                                      <span className="block text-muted-foreground">
+                                        Franja aplicada: {event.window.min}–
+                                        {event.window.max} · Madrid
+                                      </span>
+                                    )}
                                   </li>
                                 ))}
                               </ol>

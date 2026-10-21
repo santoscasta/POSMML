@@ -15,3 +15,18 @@ export function madridDate(value = new Date()) {
     day: "2-digit",
   }).format(value);
 }
+
+export function scheduleRange(time: string, margin: number) {
+  const [hour, minute] = time.split(":").map(Number);
+  if (
+    !Number.isFinite(hour) ||
+    !Number.isFinite(minute) ||
+    !Number.isInteger(margin)
+  )
+    return "—";
+  const format = (value: number) => {
+    const minutes = ((value % 1440) + 1440) % 1440;
+    return `${String(Math.floor(minutes / 60)).padStart(2, "0")}:${String(minutes % 60).padStart(2, "0")}`;
+  };
+  return `${format(hour * 60 + minute - margin)}–${format(hour * 60 + minute + margin)}`;
+}

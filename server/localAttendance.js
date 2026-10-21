@@ -6,8 +6,16 @@ import { createServer } from "vite";
 import { createAttendanceService } from "./lib/attendance.js";
 import { createOperationStore } from "./lib/operationStore.js";
 import { createAttendanceRouter } from "./routes/attendance.js";
+import {
+  createAccessService,
+  createAccessMiddleware,
+  authorizeProfile,
+} from "./lib/access.js";
+import { createAccessRouter } from "./routes/access.js";
 
-const directory = path.resolve(".pos-data/attendance-preview");
+const directory = path.resolve(
+  process.env.ATTENDANCE_PREVIEW_DATA_DIR || ".pos-data/attendance-preview",
+);
 let seedTime = Date.now();
 const store = createOperationStore(directory);
 const seed = createAttendanceService(store, { now: () => seedTime });
@@ -42,34 +50,59 @@ if (!seed.employees().length) {
 
 const app = express();
 app.use(express.json());
-app.use("/api", (req, res, next) => {
-  if (
-    req.get("Authorization") !==
-    `Basic ${Buffer.from("demo:demo").toString("base64")}`
-  )
-    return res
-      .status(401)
-      .json({
-        error: "Accede con demo / demo para probar el control horario.",
-      });
-  res.set("Cache-Control", "no-store");
-  next();
+const attendance = createAttendanceService(store);
+const employees = attendance.employees();
+const access = createAccessService(
+  createOperationStore(path.join(directory, "access")),
+  { employeeExists: (id) => attendance.employees().some((e) => e.id === id) },
+);
+const created = await access.bootstrap({
+  username: "admin",
+  password: "admin1234",
+  name: "Marta",
+  employeeId: employees.find((e) => e.name === "Marta")?.id,
 });
-app.get("/api/access", (req, res) => res.json({ authenticated: true }));
+if (created) {
+  const { token } = await access.login({
+    username: "admin",
+    password: "admin1234",
+  });
+  for (const [name, username, password] of [
+    ["Ana", "ana", "ana12345"],
+    ["Leo", "leo", "leo12345"],
+  ]) {
+    const employee = employees.find((e) => e.name === name);
+    if (employee)
+      await access.addUser(token, {
+        username,
+        password,
+        name,
+        role: "collaborator",
+        employeeId: employee.id,
+      });
+  }
+  await access.logout(token);
+}
+app.use("/api", createAccessRouter(access));
+app.use("/api", createAccessMiddleware(access), authorizeProfile);
+app.get("/api/access", (req, res) =>
+  res.json({ authenticated: true, user: req.user }),
+);
 app.get("/api/sessions/current", (req, res) => res.json(null));
 app.get("/api/operations/pending", (req, res) => res.json([]));
-app.use("/api", createAttendanceRouter(createAttendanceService(store)));
+app.use("/api", createAttendanceRouter(attendance));
 app.use("/api", (req, res) =>
-  res
-    .status(503)
-    .json({
-      error:
-        "Esta vista local permite probar Horario y Ajustes → Empleados. Las operaciones de tienda están disponibles en el TPV habitual.",
-    }),
+  res.status(503).json({
+    error:
+      "Esta vista local permite probar Horario y Ajustes → Empleados. Las operaciones de tienda están disponibles en el TPV habitual.",
+  }),
 );
 app.get("/", (req, res) => res.redirect("/horario"));
 const vite = await createServer({
-  server: { middlewareMode: true },
+  server: {
+    middlewareMode: true,
+    hmr: { port: Number(process.env.ATTENDANCE_PREVIEW_PORT || 5180) + 10000 },
+  },
   appType: "spa",
   define: {
     "import.meta.env.VITE_API_URL": JSON.stringify("/api"),
@@ -81,7 +114,7 @@ const port = Number(process.env.ATTENDANCE_PREVIEW_PORT || 5180);
 const server = app.listen(port, "127.0.0.1", () => {
   console.log(`Control horario local: http://127.0.0.1:${port}/horario`);
   console.log(
-    "Acceso TPV: demo / demo. Marta: PIN 1234. Ana: PIN 2345. Leo: PIN 3456.",
+    "Acceso admin: admin / admin1234. Colaboradores: ana / ana12345, leo / leo12345.",
   );
   console.log(`Datos independientes: ${directory}`);
 });

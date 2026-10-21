@@ -7,6 +7,7 @@ import {
 } from "node:crypto";
 import { createOperationStore, PosError } from "./operationStore.js";
 import { businessDate } from "./businessTime.js";
+import { normalizeSchedule, punchWindow } from "./attendanceSchedule.js";
 
 const actions = {
   entry: ["out"],
@@ -20,11 +21,12 @@ const states = {
   resume: "working",
   exit: "out",
 };
-const publicEmployee = ({ id, name, role, active }) => ({
+const publicEmployee = ({ id, name, role, active, schedule }) => ({
   id,
   name,
   role,
   active,
+  ...(schedule ? { schedule } : {}),
 });
 const pinHash = (pin, salt) => scryptSync(pin, salt, 32);
 function validatePin(pin) {
@@ -116,6 +118,30 @@ export function createAttendanceService(
       return result;
     });
   function identify(token, manager = false, data = read()) {
+    // The authenticated POS account is authoritative. PIN tokens cannot change its scope.
+    if (token?.user) {
+      const user = token.user;
+      const linked = data.employees.find(
+        (e) => e.id === user.employeeId && e.active,
+      );
+      if (user.role !== "admin" && !linked)
+        throw new PosError(
+          "Tu cuenta no tiene un empleado activo asociado. Contacta con el administrador.",
+          403,
+        );
+      const employee = linked || {
+        id: `account:${user.id}`,
+        name: user.name,
+        active: true,
+      };
+      const actor = {
+        ...employee,
+        role: user.role === "admin" ? "manager" : "employee",
+      };
+      if (manager && actor.role !== "manager")
+        throw new PosError("Esta acción requiere un administrador.", 403);
+      return actor;
+    }
     const session = tokens.get(token);
     const employee =
       session &&
@@ -147,6 +173,14 @@ export function createAttendanceService(
     employees() {
       return read()
         .employees.filter((e) => e.active)
+        .map(publicEmployee);
+    },
+    employeesFor(user) {
+      return read()
+        .employees.filter(
+          (e) =>
+            e.active && (user.role === "admin" || e.id === user.employeeId),
+        )
         .map(publicEmployee);
     },
     setup(input) {
@@ -212,9 +246,36 @@ export function createAttendanceService(
         return publicEmployee(employee);
       });
     },
+    setSchedule(token, id, input) {
+      return change((data) => {
+        const actor = identify(token, true, data);
+        const employee = data.employees.find((e) => e.id === id);
+        if (!employee) throw new PosError("Empleado no encontrado.", 404);
+        const schedule = normalizeSchedule(input);
+        const previous = employee.schedule || null;
+        employee.schedule = schedule;
+        data.scheduleChanges ||= [];
+        data.scheduleChanges.push({
+          id: randomUUID(),
+          employeeId: id,
+          previous,
+          schedule,
+          changedAt: new Date(now()).toISOString(),
+          changedBy: {
+            id: token?.user?.id || actor.id,
+            name: token?.user?.name || actor.name,
+          },
+        });
+        return publicEmployee(employee);
+      });
+    },
     punch(token, { action, requestId } = {}) {
       return change((data) => {
         const employee = identify(token, false, data);
+        if (!data.employees.some((e) => e.id === employee.id && e.active))
+          throw new PosError(
+            "Vincula tu cuenta con un empleado en Ajustes → Usuarios para fichar.",
+          );
         if (typeof action !== "string" || !Object.hasOwn(actions, action))
           throw new PosError("Fichaje no válido.");
         if (
@@ -240,12 +301,26 @@ export function createAttendanceService(
             "La hora del servidor es anterior al último fichaje. Revisa el reloj.",
             409,
           );
+        const at = now();
+        const window = punchWindow(employee.schedule, action, at);
+        if (!window.allowed)
+          throw new PosError(
+            `${action === "entry" ? "Entrada" : "Salida"} bloqueada. Puedes fichar entre las ${window.min} y las ${window.max} (hora de Madrid). Contacta con el administrador si necesitas ajustar el horario.`,
+            403,
+            "OUTSIDE_SCHEDULE",
+          );
         const event = {
           id: randomUUID(),
           requestId,
           employeeId: employee.id,
           action,
-          at: new Date(now()).toISOString(),
+          at: new Date(at).toISOString(),
+          ...(window.enabled
+            ? {
+                schedule: { ...employee.schedule },
+                window: { min: window.min, max: window.max },
+              }
+            : {}),
         };
         data.events.push(event);
         return event;
@@ -293,6 +368,10 @@ export function createAttendanceService(
         .reverse();
       return {
         employee: publicEmployee(actor),
+        punchWindows: {
+          entry: punchWindow(actor.schedule, "entry", now()),
+          exit: punchWindow(actor.schedule, "exit", now()),
+        },
         employees,
         journeys,
         serverNow: new Date(now()).toISOString(),

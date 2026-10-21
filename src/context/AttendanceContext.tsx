@@ -12,6 +12,7 @@ import type {
   AttendanceAction,
   AttendanceOverview,
   Employee,
+  EmployeeSchedule,
 } from "../types/attendance";
 interface AttendanceContextValue {
   employees: Employee[];
@@ -21,14 +22,14 @@ interface AttendanceContextValue {
   busy: boolean;
   error: string;
   refresh: () => Promise<void>;
-  login: (id: string, pin: string) => Promise<void>;
-  setup: (name: string, pin: string) => Promise<void>;
   logout: () => Promise<void>;
   punch: (action: AttendanceAction) => Promise<void>;
-  addEmployee: (name: string, pin: string, role: string) => Promise<void>;
+  addEmployee: (name: string) => Promise<void>;
   updateEmployee: (id: string, active: boolean) => Promise<void>;
+  setSchedule: (id: string, schedule: EmployeeSchedule) => Promise<void>;
 }
 const AttendanceContext = createContext<AttendanceContextValue | null>(null);
+import { useAuth } from "./AuthContext";
 const API_BASE = import.meta.env.VITE_API_URL || "/api";
 
 export function AttendanceProvider({ children }: { children: ReactNode }) {
@@ -38,7 +39,7 @@ export function AttendanceProvider({ children }: { children: ReactNode }) {
   const [available, setAvailable] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
-  const token = useRef("");
+  const { logout } = useAuth();
   const version = useRef(0);
   const pending = useRef<{
     id: string;
@@ -47,24 +48,22 @@ export function AttendanceProvider({ children }: { children: ReactNode }) {
   } | null>(null);
   const request = useCallback(
     async <T,>(path: string, body?: unknown): Promise<T> => {
-      const requestToken = token.current;
+      const headers = authHeaders();
       const res = await fetch(`${API_BASE}/attendance${path}`, {
         method: body === undefined ? "GET" : "POST",
         headers: {
-          ...authHeaders(),
-          ...(requestToken ? { "X-Attendance-Token": requestToken } : {}),
+          ...headers,
           ...(body === undefined ? {} : { "Content-Type": "application/json" }),
         },
         body: body === undefined ? undefined : JSON.stringify(body),
       });
       const data = await res.json();
       if (!res.ok) {
-        if (res.status === 401 && data.code === "ATTENDANCE_AUTH") {
-          if (token.current === requestToken) {
-            token.current = "";
-            setOverview(null);
-          }
-        } else if (res.status === 401) clearCredentials();
+        if (
+          res.status === 401 &&
+          headers.Authorization === authHeaders().Authorization
+        )
+          clearCredentials();
         throw new Error(data.error || "No se pudo completar la solicitud.");
       }
       return data;
@@ -75,9 +74,7 @@ export function AttendanceProvider({ children }: { children: ReactNode }) {
     const currentVersion = ++version.current;
     try {
       const list = await request<Employee[]>("/employees");
-      const data = token.current
-        ? await request<AttendanceOverview>("/overview")
-        : null;
+      const data = await request<AttendanceOverview>("/overview");
       if (version.current !== currentVersion) return;
       setEmployees(list);
       setOverview(data);
@@ -121,14 +118,6 @@ export function AttendanceProvider({ children }: { children: ReactNode }) {
       setBusy(false);
     }
   }
-  async function authenticate(path: string, input: unknown) {
-    await act(async () => {
-      const result = await request<{ token: string }>(path, input);
-      ++version.current;
-      token.current = result.token;
-      pending.current = null;
-    });
-  }
   return (
     <AttendanceContext.Provider
       value={{
@@ -139,16 +128,22 @@ export function AttendanceProvider({ children }: { children: ReactNode }) {
         busy,
         error,
         refresh,
-        login: (id, pin) => authenticate("/login", { employeeId: id, pin }),
-        setup: (name, pin) => authenticate("/setup", { name, pin }),
-        logout: () =>
-          act(async () => {
-            await request("/logout", {});
-            ++version.current;
-            token.current = "";
-            pending.current = null;
-            setOverview(null);
-          }),
+        logout: async () => {
+          setBusy(true);
+          setError("");
+          try {
+            await logout();
+          } catch (err) {
+            setError(
+              err instanceof Error
+                ? err.message
+                : "No se pudo cerrar la sesión. Reintenta.",
+            );
+            throw err;
+          } finally {
+            setBusy(false);
+          }
+        },
         punch: (action) =>
           act(async () => {
             const employeeId = overview?.employee.id || "";
@@ -160,13 +155,17 @@ export function AttendanceProvider({ children }: { children: ReactNode }) {
             await request("/events", { action, requestId: pending.current.id });
             pending.current = null;
           }),
-        addEmployee: (name, pin, role) =>
+        addEmployee: (name) =>
           act(async () => {
-            await request("/employees", { name, pin, role });
+            await request("/employees", { name });
           }),
         updateEmployee: (id, active) =>
           act(async () => {
             await request(`/employees/${id}`, { active });
+          }),
+        setSchedule: (id, schedule) =>
+          act(async () => {
+            await request(`/employees/${id}/schedule`, schedule);
           }),
       }}
     >

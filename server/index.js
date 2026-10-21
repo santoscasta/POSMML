@@ -19,6 +19,9 @@ import { createMailMonitor } from './lib/mail/monitor.js';
 import shopifyGQL from './lib/shopifyGQL.js';
 import { createAttendanceRouter } from './routes/attendance.js';
 import { getAttendanceService } from './lib/attendance.js';
+import { createAccessService, createAccessMiddleware, authorizeProfile, accessDirectory } from './lib/access.js';
+import { createAccessRouter } from './routes/access.js';
+import { createOperationStore } from './lib/operationStore.js';
 
 dotenv.config();
 
@@ -34,13 +37,17 @@ const allowedOrigins = process.env.ALLOWED_ORIGINS
 app.use(checkOrigin);
 app.use(cors({ origin: allowedOrigins.map(origin => origin.trim()) }));
 app.use(express.json());
-app.use('/api', requireAuth);
 app.use('/auth', requireAuth);
 getStore(); // Fail at startup if durable storage is not configured.
+const attendance = getAttendanceService();
+const access = createAccessService(createOperationStore(accessDirectory()), { employeeExists: id => attendance.employees().some(employee => employee.id === id) });
+if (process.env.POS_USERNAME && process.env.POS_PASSWORD) await access.bootstrap({ username: process.env.POS_USERNAME, password: process.env.POS_PASSWORD, name: 'Administración' });
+app.use('/api', createAccessRouter(access));
+app.use('/api', createAccessMiddleware(access), authorizeProfile);
 
 // API Routes
-app.get('/api/access', (req, res) => res.json({ authenticated: true }));
-app.use('/api', createAttendanceRouter(getAttendanceService()));
+app.get('/api/access', (req, res) => res.json({ authenticated: true, user: req.user }));
+app.use('/api', createAttendanceRouter(attendance));
 app.use('/api', graphqlRoutes);
 app.use('/api', sessionRoutes);
 app.use('/api', paymentRoutes);

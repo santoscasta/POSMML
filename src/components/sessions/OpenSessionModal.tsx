@@ -10,6 +10,7 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { useAuth } from '../../context/AuthContext';
 
 interface OpenSessionModalProps {
   open: boolean;
@@ -18,6 +19,7 @@ interface OpenSessionModalProps {
 }
 
 export function OpenSessionModal({ open, onClose, required = false }: OpenSessionModalProps) {
+  const { user } = useAuth();
   const { openSession } = useSession();
   const [openingAmount, setOpeningAmount] = useState<string>('');
   const [cashierName, setCashierName] = useState<string>('Cajero');
@@ -114,7 +116,7 @@ export function OpenSessionModal({ open, onClose, required = false }: OpenSessio
               <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-3 text-sm text-destructive">
                 {error}
               </div>
-              {error.toLowerCase().includes('ya hay') && (
+              {user.role === 'admin' && error.toLowerCase().includes('ya hay') && (
                 <Button
                   variant="destructive"
                   size="sm"

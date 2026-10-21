@@ -15,6 +15,7 @@ import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
 import { Printer, CheckCircle2 } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
 
 interface CloseSessionModalProps {
   open: boolean;
@@ -22,6 +23,7 @@ interface CloseSessionModalProps {
 }
 
 export function CloseSessionModal({ open, onClose }: CloseSessionModalProps) {
+  const { user } = useAuth();
   const { session, closeSession } = useSession();
   const [closingAmount, setClosingAmount] = useState<string>('');
   const [notes, setNotes] = useState<string>('');
@@ -373,7 +375,7 @@ export function CloseSessionModal({ open, onClose }: CloseSessionModalProps) {
                   <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-3 text-sm text-destructive">
                     {error}
                   </div>
-                  {error.toLowerCase().includes('ya cerrada') && (
+                  {user.role === 'admin' && error.toLowerCase().includes('ya cerrada') && (
                     <Button
                       variant="destructive"
                       size="sm"

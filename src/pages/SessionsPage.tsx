@@ -23,8 +23,10 @@ import {
 import { cn } from '@/lib/utils';
 import { Plus, X, RefreshCw } from 'lucide-react';
 import type { CashSession } from '../types/session';
+import { useAuth } from '../context/AuthContext';
 
 export function SessionsPage() {
+  const { user } = useAuth();
   const { session, isOpen, loading, refresh } = useSession();
   const [refreshing, setRefreshing] = useState(false);
   const [reconcileOrder, setReconcileOrder] = useState<NonNullable<CashSession['unregisteredOrders']>[number] | null>(null);
@@ -169,7 +171,7 @@ export function SessionsPage() {
               </>
             )}
 
-            {!!session.unregisteredOrders?.length && <div role="alert" className="mt-4 space-y-2 rounded border border-amber-400 bg-amber-50 p-3 text-sm">
+            {user.role === 'admin' && !!session.unregisteredOrders?.length && <div role="alert" className="mt-4 space-y-2 rounded border border-amber-400 bg-amber-50 p-3 text-sm">
               <p className="font-medium">Hay {session.unregisteredOrders.length} {session.unregisteredOrders.length === 1 ? 'pedido pagado de hoy etiquetado' : 'pedidos pagados de hoy etiquetados'} POS MML sin registro completo de caja.</p>
               <p>No se incluyen en esta sesión. Comprueba el ticket y registra el pago ya cobrado antes del cierre.</p>
               <ul className="space-y-2">{session.unregisteredOrders.map(order => <li key={order.id} className="flex flex-wrap items-center justify-between gap-2"><span>{order.name}: {order.reason === 'missing_session' ? 'sin sesión asignada' : 'sin registro del método de pago'}</span>{order.financialStatus === 'PAID' ? <Button size="sm" variant="outline" onClick={() => setReconcileOrder(order)}>Conciliar pago</Button> : <span>Revisar venta y devolución en Shopify</span>}</li>)}</ul>

@@ -1,9 +1,19 @@
 import { Router } from "express";
+import { randomInt } from "node:crypto";
 
 export function createAttendanceRouter(service) {
   const router = Router();
   const attempts = new Map();
-  const token = (req) => req.get("X-Attendance-Token");
+  const token = (req) =>
+    req.user ? { user: req.user } : req.get("X-Attendance-Token");
+  const employeeInput = (req) =>
+    req.user
+      ? {
+          ...req.body,
+          pin: String(randomInt(10000000, 100000000)),
+          role: "employee",
+        }
+      : req.body;
   const handle = (work) => async (req, res) => {
     try {
       res.json(await work(req));
@@ -22,31 +32,54 @@ export function createAttendanceRouter(service) {
     value.count++;
     attempts.set(key, value);
     if (value.count > 10)
-      return res
-        .status(429)
-        .json({
-          error:
-            "Demasiados intentos. Espera un minuto antes de volver a identificarte.",
-        });
+      return res.status(429).json({
+        error:
+          "Demasiados intentos. Espera un minuto antes de volver a identificarte.",
+      });
     next();
   };
   router.get(
     "/attendance/employees",
-    handle(() => service.employees()),
+    handle((req) =>
+      req.user ? service.employeesFor(req.user) : service.employees(),
+    ),
   );
   router.post(
     "/attendance/setup",
     limit,
-    handle((req) => service.setup(req.body)),
+    handle((req) => {
+      if (req.user?.role !== undefined && req.user.role !== "admin") {
+        const error = new Error("Esta acción requiere un administrador.");
+        error.status = 403;
+        throw error;
+      }
+      return service.setup(employeeInput(req));
+    }),
   );
   router.post(
     "/attendance/login",
     limit,
-    handle((req) => service.login(req.body)),
+    handle((req) => {
+      if (req.user) {
+        const error = new Error(
+          "Usa tu cuenta de acceso al TPV para identificarte.",
+        );
+        error.status = 403;
+        throw error;
+      }
+      return service.login(req.body);
+    }),
   );
   router.post(
     "/attendance/logout",
-    handle((req) => service.logout(token(req))),
+    handle((req) => {
+      if (req.user) {
+        const error = new Error("Usa Salir para cerrar tu sesión de acceso.");
+        error.status = 403;
+        throw error;
+      }
+      return service.logout(token(req));
+    }),
   );
   router.get(
     "/attendance/overview",
@@ -54,7 +87,11 @@ export function createAttendanceRouter(service) {
   );
   router.post(
     "/attendance/employees",
-    handle((req) => service.addEmployee(token(req), req.body)),
+    handle((req) => service.addEmployee(token(req), employeeInput(req))),
+  );
+  router.post(
+    "/attendance/employees/:id/schedule",
+    handle((req) => service.setSchedule(token(req), req.params.id, req.body)),
   );
   router.post(
     "/attendance/employees/:id",

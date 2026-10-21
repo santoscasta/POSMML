@@ -1,15 +1,18 @@
-let authorization = '';
-
-export function setCredentials(username: string, password: string) {
-  const bytes = new TextEncoder().encode(`${username}:${password}`);
-  authorization = `Basic ${btoa(Array.from(bytes, byte => String.fromCharCode(byte)).join(''))}`;
+const STORAGE_KEY = 'pos.access-session.v1';
+let token = '';
+try { token = sessionStorage.getItem(STORAGE_KEY) || ''; } catch { /* Memory-only access is still available. */ }
+export function setSessionToken(value: string) {
+  token = value;
+  try { sessionStorage.setItem(STORAGE_KEY, value); } catch { /* Reload will require signing in again. */ }
 }
+export function hasCredentials() { return Boolean(token); }
 
 export function authHeaders(): Record<string, string> {
-  return authorization ? { Authorization: authorization } : {};
+  return token ? { Authorization: `Bearer ${token}` } : {};
 }
 
 export function clearCredentials() {
-  authorization = '';
+  token = '';
+  try { sessionStorage.removeItem(STORAGE_KEY); } catch { /* No stored session. */ }
   window.dispatchEvent(new Event('pos:unauthorized'));
 }

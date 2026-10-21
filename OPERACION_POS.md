@@ -2,13 +2,27 @@
 
 ## Antes de desplegar
 
-1. Configura `POS_USERNAME` y `POS_PASSWORD` en el servidor. Usa una contraseña larga y exclusiva. La aplicación solicita estas credenciales antes de consultar Shopify; se mantienen solo en memoria del navegador y se eliminan al salir o recargar. No uses variables `VITE_*` para secretos.
+1. Configura `POS_USERNAME` y `POS_PASSWORD` en el servidor para crear la primera cuenta de administrador cuando el almacén de accesos está vacío. La contraseña debe tener entre 8 y 128 caracteres. Después, gestiona cuentas y contraseñas en **Ajustes → Usuarios y sesiones**: cambiar estas variables no reemplaza cuentas existentes. No uses variables `VITE_*` para secretos.
 2. Añade el origen HTTPS exacto del frontend a `ALLOWED_ORIGINS` (sin ruta ni barra final). En desarrollo añade también el origen de Vite. Los orígenes no incluidos reciben un 403.
 3. Monta un volumen persistente y define `POS_DATA_DIR`. En Railway: volumen `/data`, variable `POS_DATA_DIR=/data/pos-mml`. El servidor rechaza el arranque de producción sin esta variable. Mantén una única réplica y conserva el mismo volumen en cada despliegue.
-4. Haz copias de seguridad de `POS_DATA_DIR/journal.json`. Contiene los movimientos, fechas de apertura, identificadores de operación y códigos de vales: debe tener acceso restringido. No borres ni reinicialices este archivo para resolver un error.
+4. Haz copias de seguridad del directorio completo `POS_DATA_DIR`: `journal.json` contiene las operaciones comerciales; `attendance/journal.json`, empleados y fichajes; y `access/journal.json`, cuentas y registro de sesiones. Restringe el acceso a estas copias. No borres ni reinicialices los archivos para resolver un error.
 5. Genera el frontend con `npx tsc -b && npx vite build`. Este repositorio versiona `dist`; `npm run build` conserva su comportamiento de despliegue con archivos precompilados. El workflow de GitHub también regenera el frontend.
 
-La API queda cerrada si faltan las credenciales. Sirve producción exclusivamente por HTTPS; el proxy de Railway puede terminar TLS. No se ha desplegado ni cambiado ninguna credencial de la tienda como parte de esta corrección.
+La API exige una sesión de usuario válida. Si no hay ninguna cuenta, configura las credenciales iniciales y reinicia el servidor. Sirve producción exclusivamente por HTTPS; el proxy de Railway puede terminar TLS.
+
+## Perfiles y sesiones de acceso
+
+- **Administrador:** todas las pantallas, ajustes, usuarios, registro y revocación de sesiones, y fichajes del equipo.
+- **Colaborador:** POS, pedidos, caja, vales y sus propias jornadas/exportaciones. No accede a Inicio, Ajustes, listado global de operaciones pendientes, conciliaciones ni aperturas/cierres forzados.
+- El servidor valida los permisos en cada petición. Los tokens del antiguo acceso por PIN no permiten cambiar la identidad de una sesión de usuario.
+- Cada colaborador se vincula a un empleado activo, de forma exclusiva, desde Usuarios y sesiones. Un administrador puede gestionar el sistema sin empleado asociado; para fichar debe vincularse a uno.
+- Los accesos caducan a las ocho horas. El token se guarda en `sessionStorage` de la pestaña y en el servidor solo se conserva su hash. Recargar conserva la sesión; reiniciar el servidor también, mientras siga vigente. Cerrar una pestaña no equivale a revocar el acceso: usa **Salir** o la revocación del administrador.
+- Cambiar perfil, contraseña, asociación o estado de una cuenta revoca sus sesiones abiertas. El último administrador no puede quitarse sus propios permisos.
+- Salir, revocar o caducar una sesión de acceso no registra una salida laboral. Los fichajes se gestionan por separado.
+- El registro de accesos se puede descargar como CSV en Usuarios y sesiones; las jornadas se exportan desde Horario.
+- Cada empleado puede tener límites diarios de entrada y salida, configurados por el administrador en su cuenta, con margen inicial de ±15 minutos. Fuera de las franjas se bloquea el fichaje, incluido por API. Los horarios y sus cambios se guardan en el almacén de empleados; los fichajes y el CSV conservan las franjas aplicadas. Consulta el detalle en `docs/CONTROL-HORARIO.md`.
+
+La prueba aislada `npm run dev:horario` utiliza las cuentas y rutas descritas en [Control horario](docs/CONTROL-HORARIO.md).
 
 ## Cobros y devoluciones
 

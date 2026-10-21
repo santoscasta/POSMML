@@ -6,3 +6,8 @@ public
 *.log
 .env*
 !.env.example
+.pos-data
+.playwright-cli
+output
+.mcp.json
+.shopify

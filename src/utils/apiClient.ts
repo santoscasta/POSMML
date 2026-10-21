@@ -12,9 +12,9 @@ export class ApiError extends Error {
   }
 }
 
-async function handleResponse<T>(res: Response): Promise<T> {
+async function handleResponse<T>(res: Response, authorization?: string): Promise<T> {
   if (!res.ok) {
-    if (res.status === 401) clearCredentials();
+    if (res.status === 401 && authorization === authHeaders().Authorization) clearCredentials();
     const error = await res.json().catch(() => ({ error: res.statusText }));
     throw new ApiError(error.error || error.message || 'Request failed', error.code, error.safeToRestart);
   }
@@ -22,20 +22,23 @@ async function handleResponse<T>(res: Response): Promise<T> {
 }
 
 export async function apiGet<T>(path: string): Promise<T> {
-  const res = await fetch(`${API_BASE}${path}`, { headers: authHeaders() });
-  return handleResponse<T>(res);
+  const headers = authHeaders();
+  const res = await fetch(`${API_BASE}${path}`, { headers });
+  return handleResponse<T>(res, headers.Authorization);
 }
 
 export async function apiPost<T>(path: string, body?: unknown): Promise<T> {
+  const headers = authHeaders();
   const res = await fetch(`${API_BASE}${path}`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', ...authHeaders() },
+    headers: { 'Content-Type': 'application/json', ...headers },
     body: body ? JSON.stringify(body) : undefined,
   });
-  return handleResponse<T>(res);
+  return handleResponse<T>(res, headers.Authorization);
 }
 
 export async function apiDelete<T>(path: string): Promise<T> {
-  const res = await fetch(`${API_BASE}${path}`, { method: 'DELETE', headers: authHeaders() });
-  return handleResponse<T>(res);
+  const headers = authHeaders();
+  const res = await fetch(`${API_BASE}${path}`, { method: 'DELETE', headers });
+  return handleResponse<T>(res, headers.Authorization);
 }

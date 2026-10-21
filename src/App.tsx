@@ -14,7 +14,8 @@ import { cn } from '@/lib/utils';
 import { Home, ShoppingCart, ClipboardList, Wallet, Ticket, CircleDot, Settings, Clock3 } from 'lucide-react';
 import { AuthGate } from './components/AuthGate';
 import { PendingOperations } from './components/PendingOperations';
-import { clearCredentials } from './utils/auth';
+import { useAuth } from './context/AuthContext';
+import { useState } from 'react';
 import { OpenSessionModal } from './components/sessions/OpenSessionModal';
 import { AttendanceProvider, useAttendance } from './context/AttendanceContext';
 import { attendanceLabels } from './utils/attendance';
@@ -34,12 +35,14 @@ function Sidebar() {
   const location = useLocation();
   const navigate = useNavigate();
   const { isOpen } = useSession();
+  const { user } = useAuth();
+  const visibleItems = navItems.filter(item => user.role === 'admin' || !['/dashboard', '/ajustes'].includes(item.path));
 
   return (
     <aside className="hidden xl:flex xl:w-60 flex-col border-r bg-white">
       <div
         className="cursor-pointer px-4 pt-4 pb-2"
-        onClick={() => navigate('/dashboard')}
+        onClick={() => navigate(user.role === 'admin' ? '/dashboard' : '/horario')}
       >
         <img
           src="/logo-myminileo.jpg"
@@ -52,7 +55,7 @@ function Sidebar() {
       <Separator />
 
       <nav className="flex flex-1 flex-col gap-1 p-2">
-        {navItems.map((item) => {
+        {visibleItems.map((item) => {
           const active = item.path === '/'
             ? location.pathname === '/'
             : location.pathname.startsWith(item.path);
@@ -97,10 +100,12 @@ function BottomNav() {
   const location = useLocation();
   const navigate = useNavigate();
   const { isOpen } = useSession();
+  const { user } = useAuth();
+  const visibleItems = navItems.filter(item => user.role === 'admin' || !['/dashboard', '/ajustes'].includes(item.path));
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 flex border-t bg-white xl:hidden">
-      {navItems.map((item) => {
+      {visibleItems.map((item) => {
         const active = item.path === '/'
           ? location.pathname === '/'
           : location.pathname.startsWith(item.path);
@@ -136,32 +141,37 @@ function AppContent() {
   const location = useLocation();
   const { isOpen, loading, error, refresh } = useSession();
   const { overview } = useAttendance();
+  const { user, logout } = useAuth();
+  const [logoutError, setLogoutError] = useState('');
+  const [loggingOut, setLoggingOut] = useState(false);
+  const admin = user.role === 'admin';
   const employeeStatus = overview?.employees.find(e => e.id === overview.employee.id)?.status;
   return (
     <div className="flex h-dvh w-full flex-col">
       <header className="flex min-h-11 shrink-0 flex-wrap items-center justify-end gap-2 border-b bg-white px-3 py-1">
         <Button size="sm" variant="ghost" className="mr-auto max-w-full" onClick={() => navigate('/horario')}>
-          <Clock3 className="size-4" /><span className="max-w-44 truncate">{overview ? overview.employee.name : 'Fichar'}</span>{employeeStatus && <span className="hidden text-xs text-muted-foreground sm:inline">· {attendanceLabels[employeeStatus]}</span>}
+          <Clock3 className="size-4" /><span className="max-w-44 truncate">{user.name}</span><span className="text-xs text-muted-foreground">· {admin ? 'Admin' : 'Colaborador'}</span>{employeeStatus && <span className="hidden text-xs text-muted-foreground sm:inline">· {attendanceLabels[employeeStatus]}</span>}
         </Button>
         {isOpen && <Button size="sm" variant="outline" onClick={() => navigate('/caja?cerrar=1')}>
           <Wallet className="size-4" />Cerrar caja
         </Button>}
-        <PendingOperations />
-        <button className="px-2 text-xs text-muted-foreground hover:text-foreground" onClick={clearCredentials}>Salir</button>
+        {admin && <PendingOperations />}
+        <button disabled={loggingOut} className="px-2 text-xs text-muted-foreground hover:text-foreground" onClick={() => { setLoggingOut(true); setLogoutError(''); void logout().catch(error => { setLoggingOut(false); setLogoutError(error instanceof Error ? error.message : 'No se pudo cerrar la sesión. Reintenta.'); }); }}>{loggingOut ? 'Saliendo…' : 'Salir'}</button>
       </header>
+      {logoutError && <p role="alert" className="bg-red-50 p-2 text-sm text-red-800">{logoutError}</p>}
       <div className="flex min-h-0 flex-1">
       <Sidebar />
       <main className={cn("min-h-0 min-w-0 flex-1 bg-background pb-16 xl:pb-0", location.pathname === "/" ? "overflow-hidden" : "overflow-y-auto")}>
         <Routes>
-          <Route path="/dashboard" element={<DashboardPage onNavigate={(path) => navigate(path)} />} />
+          <Route path="/dashboard" element={admin ? <DashboardPage onNavigate={(path) => navigate(path)} /> : <Navigate to="/horario" replace />} />
           <Route path="/" element={<PosPage />} />
           <Route path="/orders" element={<OrdersPage />} />
           <Route path="/caja" element={<SessionsPage />} />
           <Route path="/vales" element={<VouchersPage />} />
           <Route path="/horario" element={<AttendancePage />} />
-          <Route path="/ajustes/*" element={<SettingsPage />} />
+          <Route path="/ajustes/*" element={admin ? <SettingsPage /> : <Navigate to="/horario" replace />} />
           <Route path="/correos" element={<Navigate to="/ajustes/correos" replace />} />
-          <Route path="*" element={<Navigate to="/dashboard" replace />} />
+          <Route path="*" element={<Navigate to={admin ? '/dashboard' : '/horario'} replace />} />
         </Routes>
       </main>
       <BottomNav />
