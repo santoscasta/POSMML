@@ -9,6 +9,7 @@ export interface EmployeeSchedule {
 export interface PunchWindow {
   enabled: boolean;
   allowed: boolean;
+  enforced?: boolean;
   time: string | null;
   min: string | null;
   max: string | null;
@@ -26,7 +27,7 @@ export interface AttendanceEvent {
   action: AttendanceAction;
   at: string;
   schedule?: EmployeeSchedule;
-  window?: { min: string; max: string };
+  window?: { min: string; max: string; enforced?: boolean };
 }
 export interface Journey {
   id: string;

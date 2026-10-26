@@ -290,9 +290,58 @@ test("attendance leaves unconfigured employees unrestricted and permits pauses o
   );
 });
 
+test("attendance admins record actual hours outside their schedule and retain the exemption in history", async (t) => {
+  const { service, store, manager, employee, at, now } = await fixture(t);
+  await service.setSchedule(manager.token, employee.id, schedule);
+  const admin = { user: { id: "admin-account", name: "Ana", role: "admin", employeeId: employee.id } };
+  const windows = service.overview(admin).punchWindows;
+  for (const window of Object.values(windows)) {
+    assert.equal(window.enabled, true);
+    assert.equal(window.enforced, false);
+    assert.equal(window.allowed, true);
+  }
+  const requestId = randomUUID();
+  const entry = await service.punch(admin, { action: "entry", requestId });
+  assert.equal(entry.at, "2026-10-22T06:00:00.000Z");
+  assert.deepEqual(entry.schedule, schedule);
+  assert.deepEqual(entry.window, { min: "08:45", max: "09:15", enforced: false });
+  await assert.rejects(service.punch(admin, { action: "entry", requestId: randomUUID() }), { status: 409 });
+  at("12:00:00");
+  await service.punch(admin, { action: "pause", requestId: randomUUID() });
+  at("12:20:00");
+  await service.punch(admin, { action: "resume", requestId: randomUUID() });
+  at("13:00:00");
+  const exit = await service.punch(admin, { action: "exit", requestId: randomUUID() });
+  assert.equal(exit.at, "2026-10-22T11:00:00.000Z");
+  assert.deepEqual(exit.window, { min: "16:45", max: "17:15", enforced: false });
+  assert.deepEqual(await service.punch(admin, { action: "entry", requestId }), entry);
+  const row = service.overview(admin).journeys[0];
+  assert.equal(row.workedMs, 280 * 60000);
+  assert.equal(row.breakMs, 20 * 60000);
+  assert.equal(row.employeeId, employee.id);
+  const collaborator = { user: { ...admin.user, role: "collaborator" } };
+  const restarted = createAttendanceService(store, { now });
+  assert.equal(restarted.overview(collaborator).punchWindows.entry.allowed, false);
+  assert.equal(restarted.overview(collaborator).punchWindows.entry.enforced, true);
+  assert.equal(restarted.overview(collaborator).journeys[0].events[0].window.enforced, false);
+  await assert.rejects(restarted.punch(collaborator, { action: "entry", requestId: randomUUID() }), { status: 403, code: "OUTSIDE_SCHEDULE" });
+  assert.equal(store.read().events.length, 4);
+});
+
+test("attendance legacy manager status does not exempt a collaborator or a PIN from schedule limits", async (t) => {
+  const { service, store, manager } = await fixture(t);
+  await service.setSchedule(manager.token, manager.employee.id, schedule);
+  const collaborator = { user: { id: "collaborator-account", name: "Marta", role: "collaborator", employeeId: manager.employee.id } };
+  for (const identity of [manager.token, collaborator]) {
+    assert.equal(service.overview(identity).punchWindows.entry.allowed, false);
+    await assert.rejects(service.punch(identity, { action: "entry", requestId: randomUUID() }), { status: 403, code: "OUTSIDE_SCHEDULE" });
+  }
+  assert.equal(store.read().events.length, 0);
+});
+
 test("attendance HTTP enforces administrator configuration and server-time checks even with forged client fields", async (t) => {
   const f = await fixture(t);
-  const { dir, store, service, manager, employee, colleague, now } = f;
+  const { dir, store, service, manager, employee, colleague, now, at } = f;
   const access = createAccessService(
     createOperationStore(path.join(dir, "access")),
     {
@@ -362,6 +411,9 @@ test("attendance HTTP enforces administrator configuration and server-time check
     employeeId: colleague.id,
     schedule: { enabled: false },
     window: { allowed: true },
+    role: "admin",
+    user: admin.user,
+    enforced: false,
   });
   assert.equal(response.status, 403);
   assert.equal((await response.json()).code, "OUTSIDE_SCHEDULE");
@@ -374,4 +426,27 @@ test("attendance HTTP enforces administrator configuration and server-time check
   ).json();
   assert.equal(others.length, 1);
   assert.deepEqual(others[0].schedule, schedule);
+  assert.equal(
+    (await post(`/employees/${manager.employee.id}/schedule`, schedule, admin.token)).status,
+    200,
+  );
+  const adminEntryResponse = await post("/events", {
+    action: "entry", requestId: randomUUID(), employeeId: colleague.id,
+  }, admin.token);
+  assert.equal(adminEntryResponse.status, 200);
+  const adminEntry = await adminEntryResponse.json();
+  assert.equal(adminEntry.employeeId, manager.employee.id);
+  assert.equal(adminEntry.window.enforced, false);
+  assert.equal(adminEntry.at, "2026-10-22T06:00:00.000Z");
+  at("12:00:00");
+  const adminExitResponse = await post("/events", {
+    action: "exit", requestId: randomUUID(),
+  }, admin.token);
+  assert.equal(adminExitResponse.status, 200);
+  assert.equal((await adminExitResponse.json()).window.enforced, false);
+  const overview = await (await fetch(base + "/overview", {
+    headers: { Authorization: `Bearer ${admin.token}` },
+  })).json();
+  assert.equal(overview.punchWindows.entry.allowed, true);
+  assert.equal(overview.journeys[0].workedMs, 4 * 60 * 60000);
 });

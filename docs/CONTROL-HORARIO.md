@@ -43,19 +43,30 @@ prevista y margen, y pulsa **Guardar horario**. El margen inicial es de ±15
 minutos, configurable entre 0 y 120 minutos. Por ejemplo, entrada 09:00 y salida
 17:00 permiten fichar entrada entre 08:45 y 09:15 y salida entre 16:45 y 17:15.
 
-Los límites se aplican en el servidor con la hora de Madrid y se repiten cada día.
+Los límites de los colaboradores se aplican en el servidor con la hora de Madrid y se repiten cada día.
 Los minutos mínimo y máximo están incluidos completos. Las franjas pueden cruzar
 medianoche; por ejemplo, 23:55 ±15 permite de 23:40 a 00:10. Esta versión no incluye
 calendario semanal ni varios turnos previstos por día.
 
-Fuera de la franja el botón se bloquea y el servidor también rechaza las peticiones
-directas. Las pausas y los regresos siguen disponibles durante una jornada abierta.
+Fuera de la franja el botón del colaborador se bloquea y el servidor también rechaza
+las peticiones directas. Las pausas y los regresos siguen disponibles durante una jornada abierta.
 Un cambio de horario no cierra la sesión del usuario y afecta a los siguientes
 fichajes. Para una excepción, el administrador debe ajustar el horario o desactivar
 el límite; siempre se guarda la hora real, sin redondearla ni sustituirla.
 
 Sin horario configurado, o con el límite desactivado, se conserva el fichaje libre.
 Los datos de ejemplo existentes no se restringen automáticamente.
+
+Los administradores también registran su entrada, pausas y salida con su propia
+ficha de empleado. Pueden tener un horario previsto, pero su perfil permite fichar
+a cualquier hora, sin bloqueo por las franjas. En su cuenta, la opción se muestra
+como **Registrar horario previsto (sin bloqueo para administradores)**. Si aún no
+tienen ficha asociada, deben crearla en **Ajustes → Empleados** y vincularla a su
+cuenta en **Ajustes → Usuarios y sesiones**; Horario incluye un acceso a esa configuración.
+Se conserva la hora real y el CSV indica **No (administrador)** en las columnas de
+bloqueo horario de entrada y salida. La exención se guarda con cada fichaje para
+conservarla aunque después cambie el perfil. Una antigua marca de responsable o
+un rol enviado por el navegador no exime a un colaborador.
 
 La configuración y su historial de cambios se guardan junto a los empleados en
 `attendance/journal.json` (en la prueba, `.pos-data/attendance-preview/journal.json`).

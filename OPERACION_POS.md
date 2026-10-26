@@ -20,7 +20,7 @@ La API exige una sesión de usuario válida. Si no hay ninguna cuenta, configura
 - Cambiar perfil, contraseña, asociación o estado de una cuenta revoca sus sesiones abiertas. El último administrador no puede quitarse sus propios permisos.
 - Salir, revocar o caducar una sesión de acceso no registra una salida laboral. Los fichajes se gestionan por separado.
 - El registro de accesos se puede descargar como CSV en Usuarios y sesiones; las jornadas se exportan desde Horario.
-- Cada empleado puede tener límites diarios de entrada y salida, configurados por el administrador en su cuenta, con margen inicial de ±15 minutos. Fuera de las franjas se bloquea el fichaje, incluido por API. Los horarios y sus cambios se guardan en el almacén de empleados; los fichajes y el CSV conservan las franjas aplicadas. Consulta el detalle en `docs/CONTROL-HORARIO.md`.
+- Cada empleado puede tener un horario diario de entrada y salida, configurado por el administrador en su cuenta, con margen inicial de ±15 minutos. A los colaboradores se les bloquea el fichaje fuera de las franjas, incluido por API. Los administradores también fichan con su empleado asociado y conservan el horario previsto, pero pueden entrar y salir a cualquier hora. Los horarios y sus cambios se guardan en el almacén de empleados; los fichajes y el CSV conservan las franjas y si tenían bloqueo. Consulta el detalle en `docs/CONTROL-HORARIO.md`.
 
 La prueba aislada `npm run dev:horario` utiliza las cuentas y rutas descritas en [Control horario](docs/CONTROL-HORARIO.md).
 

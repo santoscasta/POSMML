@@ -182,13 +182,15 @@ function UserEditor({
         <ScheduleEditor
           key={`${linkedEmployee.id}:${JSON.stringify(linkedEmployee.schedule)}`}
           employee={linkedEmployee}
+          unrestricted={account.role === "admin"}
           busy={busy}
           save={saveSchedule}
         />
       ) : (
         <p className="mt-4 text-xs text-muted-foreground">
-          Asocia un empleado activo y guarda la cuenta para configurar su
-          horario.
+          {account.role === "admin"
+            ? "El administrador también debe registrar su jornada. Asocia su ficha de empleado y guarda la cuenta para fichar y configurar su horario, sin bloqueos por hora."
+            : "Asocia un empleado activo y guarda la cuenta para configurar su horario."}
         </p>
       )}
     </details>
@@ -438,7 +440,9 @@ export function UsersPage() {
               saveSchedule={(id, schedule) =>
                 void action(
                   () => setSchedule(id, schedule),
-                  "Horario guardado. Los límites de fichaje ya están aplicados.",
+                  account.role === "admin"
+                    ? "Horario guardado como referencia. El administrador puede fichar a cualquier hora, sin bloqueo."
+                    : "Horario guardado. Los límites de fichaje ya están aplicados.",
                 )
               }
             />

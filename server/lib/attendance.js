@@ -117,6 +117,13 @@ export function createAttendanceService(
       store.write(data);
       return result;
     });
+  function windowFor(token, employee, action, at) {
+    const window = punchWindow(employee.schedule, action, at);
+    // Only the authenticated account's admin profile exempts time limits.
+    // A legacy manager PIN or a client-supplied role cannot grant this exemption.
+    const enforced = window.enabled && token?.user?.role !== "admin";
+    return { ...window, enforced, allowed: !enforced || window.allowed };
+  }
   function identify(token, manager = false, data = read()) {
     // The authenticated POS account is authoritative. PIN tokens cannot change its scope.
     if (token?.user) {
@@ -302,7 +309,7 @@ export function createAttendanceService(
             409,
           );
         const at = now();
-        const window = punchWindow(employee.schedule, action, at);
+        const window = windowFor(token, employee, action, at);
         if (!window.allowed)
           throw new PosError(
             `${action === "entry" ? "Entrada" : "Salida"} bloqueada. Puedes fichar entre las ${window.min} y las ${window.max} (hora de Madrid). Contacta con el administrador si necesitas ajustar el horario.`,
@@ -318,7 +325,11 @@ export function createAttendanceService(
           ...(window.enabled
             ? {
                 schedule: { ...employee.schedule },
-                window: { min: window.min, max: window.max },
+                window: {
+                  min: window.min,
+                  max: window.max,
+                  enforced: window.enforced,
+                },
               }
             : {}),
         };
@@ -369,8 +380,8 @@ export function createAttendanceService(
       return {
         employee: publicEmployee(actor),
         punchWindows: {
-          entry: punchWindow(actor.schedule, "entry", now()),
-          exit: punchWindow(actor.schedule, "exit", now()),
+          entry: windowFor(token, actor, "entry", now()),
+          exit: windowFor(token, actor, "exit", now()),
         },
         employees,
         journeys,

@@ -18,6 +18,7 @@ import { attendanceLabels, duration, madridDate } from "../utils/attendance";
 import type { AttendanceStatus, Journey } from "../types/attendance";
 import { useAuth } from "../context/AuthContext";
 import { cn } from "../lib/utils";
+import { Link } from "react-router-dom";
 
 const selectClass =
   "h-10 w-full min-w-0 rounded-lg border border-input bg-white px-3 text-sm";
@@ -92,6 +93,8 @@ function exportJourneys(rows: Journey[]) {
       "Salida mínima",
       "Salida máxima",
       "Margen salida (minutos)",
+      "Bloqueo horario de entrada",
+      "Bloqueo horario de salida",
     ],
     ...rows.map((row) => {
       const entry = row.events.find((event) => event.action === "entry");
@@ -113,6 +116,12 @@ function exportJourneys(rows: Journey[]) {
         exit?.window?.min || "",
         exit?.window?.max || "",
         exit?.schedule ? String(exit.schedule.toleranceMinutes) : "",
+        entry?.window
+          ? (entry.window.enforced === false ? "No (administrador)" : "Sí")
+          : "",
+        exit?.window
+          ? (exit.window.enforced === false ? "No (administrador)" : "Sí")
+          : "",
       ];
     }),
   ];
@@ -311,7 +320,11 @@ export function AttendancePage({ manage = false }: { manage?: boolean }) {
                   )}
                 {current?.schedule?.enabled && (
                   <div className="mt-4 max-w-lg rounded-lg border border-blue-100 bg-blue-50 p-3 text-sm text-blue-900">
-                    <p className="font-semibold">Tus franjas de fichaje</p>
+                    <p className="font-semibold">
+                      {manager
+                        ? "Tu horario previsto · Sin bloqueo"
+                        : "Tus franjas de fichaje"}
+                    </p>
                     <div className="mt-2 grid gap-2 sm:grid-cols-2">
                       <p>
                         Entrada:{" "}
@@ -327,19 +340,30 @@ export function AttendancePage({ manage = false }: { manage?: boolean }) {
                       </p>
                     </div>
                     <p className="mt-2 text-xs leading-5">
-                      Margen de ±{current.schedule.toleranceMinutes} minutos.
-                      Hora de Madrid. Fuera de estas franjas no se pueden
-                      registrar entradas o salidas.
+                      Margen de ±{current.schedule.toleranceMinutes} minutos.{" "}
+                      {manager
+                        ? "Hora de Madrid. Como administrador, registras tu jornada y puedes fichar a cualquier hora. El horario previsto se conserva como referencia."
+                        : "Hora de Madrid. Fuera de estas franjas no se pueden registrar entradas o salidas."}
                     </p>
                   </div>
                 )}
               </div>
               <div className="flex flex-wrap items-center gap-2 sm:flex-col sm:items-stretch sm:justify-center">
                 {!canPunch ? (
-                  <p className="max-w-64 text-sm text-muted-foreground">
-                    Para fichar, vincula tu cuenta con un empleado en Ajustes →
-                    Usuarios y sesiones.
-                  </p>
+                  <div className="max-w-64 space-y-2 text-sm text-muted-foreground">
+                    <p>
+                      El administrador también registra su jornada. Vincula tu
+                      cuenta con tu ficha de empleado para fichar sin bloqueos
+                      por hora.
+                    </p>
+                    <Button
+                      variant="outline"
+                      nativeButton={false}
+                      render={<Link to="/ajustes/usuarios" />}
+                    >
+                      Vincular mi ficha de empleado
+                    </Button>
+                  </div>
                 ) : status === "out" ? (
                   <Button
                     className="h-11 px-6"
@@ -636,8 +660,12 @@ export function AttendancePage({ manage = false }: { manage?: boolean }) {
                                     {actionLabels[event.action]}
                                     {event.window && (
                                       <span className="block text-muted-foreground">
-                                        Franja aplicada: {event.window.min}–
+                                        {event.window.enforced === false
+                                          ? "Franja prevista"
+                                          : "Franja aplicada"}: {event.window.min}–
                                         {event.window.max} · Madrid
+                                        {event.window.enforced === false &&
+                                          " · Sin bloqueo (administrador)"}
                                       </span>
                                     )}
                                   </li>

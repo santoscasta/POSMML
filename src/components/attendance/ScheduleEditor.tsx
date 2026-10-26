@@ -9,10 +9,12 @@ export function ScheduleEditor({
   employee,
   busy,
   save,
+  unrestricted = false,
 }: {
   employee: Employee;
   busy: boolean;
   save: (id: string, schedule: EmployeeSchedule) => void;
+  unrestricted?: boolean;
 }) {
   const id = useId();
   const [enabled, setEnabled] = useState(employee.schedule?.enabled || false);
@@ -32,8 +34,9 @@ export function ScheduleEditor({
         Horario de {employee.name}
       </h4>
       <p className="mt-2 text-xs leading-5 text-muted-foreground">
-        Configura la hora prevista y el margen anterior y posterior. Fuera de
-        las franjas se bloquean la entrada y la salida.
+        {unrestricted
+          ? "El administrador también registra su jornada. Su horario previsto se guarda como referencia y puede fichar a cualquier hora, sin bloqueo."
+          : "Configura la hora prevista y el margen anterior y posterior. Fuera de las franjas se bloquean la entrada y la salida."}
       </p>
       <form
         className="mt-4 space-y-4"
@@ -55,7 +58,9 @@ export function ScheduleEditor({
             disabled={busy}
             onChange={(event) => setEnabled(event.target.checked)}
           />
-          Aplicar límites de entrada y salida
+          {unrestricted
+            ? "Registrar horario previsto (sin bloqueo para administradores)"
+            : "Aplicar límites de entrada y salida"}
         </label>
         <div className="grid gap-3 sm:grid-cols-3">
           <div className="space-y-1">
@@ -107,7 +112,9 @@ export function ScheduleEditor({
         <div className="grid gap-3 rounded-lg border bg-white p-3 text-sm sm:grid-cols-2">
           <div>
             <p className="text-xs text-muted-foreground">
-              Entrada mínima y máxima
+              {unrestricted
+                ? "Franja prevista de entrada"
+                : "Entrada mínima y máxima"}
             </p>
             <p className="mt-1 font-semibold tabular-nums">
               {enabled
@@ -117,7 +124,9 @@ export function ScheduleEditor({
           </div>
           <div>
             <p className="text-xs text-muted-foreground">
-              Salida mínima y máxima
+              {unrestricted
+                ? "Franja prevista de salida"
+                : "Salida mínima y máxima"}
             </p>
             <p className="mt-1 font-semibold tabular-nums">
               {enabled ? scheduleRange(exitTime, Number(margin)) : "Sin límite"}
