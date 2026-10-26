@@ -28,14 +28,13 @@ async function main() {
   check(typeof variables.POS_DATA_DIR === 'string' && path.posix.isAbsolute(variables.POS_DATA_DIR), 'POS_DATA_DIR debe ser una ruta absoluta en el volumen persistente.');
   if (process.argv.includes('--preflight')) {
     const status = railway('status', '--json');
-    const mounts = [];
-    function visit(value) {
-      if (!value || typeof value !== 'object') return;
-      if (typeof value.mountPath === 'string') mounts.push(value.mountPath);
-      for (const child of Object.values(value)) visit(child);
-    }
-    visit(status);
-    check(mounts.some(mount => variables.POS_DATA_DIR === mount || variables.POS_DATA_DIR.startsWith(`${mount.replace(/\/$/, '')}/`)), 'No se ha confirmado un volumen persistente para POS_DATA_DIR.');
+    const serviceName = variables.RAILWAY_SERVICE_NAME || status.services?.edges?.find(({ node }) => node.id === service || node.name === service)?.node.name || service;
+    // `status` can omit environment instances for project tokens. Query volumes
+    // directly and require an active volume attached to this specific service.
+    const { volumes = [] } = railway('volume', 'list', '--json');
+    const mounts = volumes.filter(volume => volume.serviceName === serviceName && !volume.deletedAt && !volume.isPendingDeletion && typeof volume.mountPath === 'string').map(volume => path.posix.resolve(volume.mountPath));
+    const dataDirectory = path.posix.resolve(variables.POS_DATA_DIR);
+    check(mounts.some(mount => dataDirectory === mount || dataDirectory.startsWith(`${mount.replace(/\/$/, '')}/`)), `No se ha confirmado un volumen persistente para POS_DATA_DIR=${dataDirectory}. Puntos de montaje de ${serviceName}: ${JSON.stringify(mounts)}.`);
     console.log(`Almacenamiento persistente confirmado: ${variables.POS_DATA_DIR}. Credenciales iniciales compatibles.`);
     return;
   }
