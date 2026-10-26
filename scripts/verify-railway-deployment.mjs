@@ -28,13 +28,14 @@ async function main() {
   check(typeof variables.POS_DATA_DIR === 'string' && path.posix.isAbsolute(variables.POS_DATA_DIR), 'POS_DATA_DIR debe ser una ruta absoluta en el volumen persistente.');
   if (process.argv.includes('--preflight')) {
     const status = railway('status', '--json');
-    const serviceName = variables.RAILWAY_SERVICE_NAME || status.services?.edges?.find(({ node }) => node.id === service || node.name === service)?.node.name || service;
+    const serviceName = status.services?.edges?.find(({ node }) => node.id === service || node.name === service)?.node.name || variables.RAILWAY_SERVICE_NAME || service;
     // `status` can omit environment instances for project tokens. Query volumes
     // directly and require an active volume attached to this specific service.
     const { volumes = [] } = railway('volume', 'list', '--json');
     const mounts = volumes.filter(volume => volume.serviceName === serviceName && !volume.deletedAt && !volume.isPendingDeletion && typeof volume.mountPath === 'string').map(volume => path.posix.resolve(volume.mountPath));
     const dataDirectory = path.posix.resolve(variables.POS_DATA_DIR);
-    check(mounts.some(mount => dataDirectory === mount || dataDirectory.startsWith(`${mount.replace(/\/$/, '')}/`)), `No se ha confirmado un volumen persistente para POS_DATA_DIR=${dataDirectory}. Puntos de montaje de ${serviceName}: ${JSON.stringify(mounts)}.`);
+    const volumeSummary = volumes.map(({ name, serviceName, mountPath, deletedAt, isPendingDeletion }) => ({ name, serviceName, mountPath, deletedAt, isPendingDeletion }));
+    check(mounts.some(mount => dataDirectory === mount || dataDirectory.startsWith(`${mount.replace(/\/$/, '')}/`)), `No se ha confirmado un volumen persistente para POS_DATA_DIR=${dataDirectory}. Puntos de montaje de ${serviceName}: ${JSON.stringify(mounts)}. Volúmenes del entorno: ${JSON.stringify(volumeSummary)}.`);
     console.log(`Almacenamiento persistente confirmado: ${variables.POS_DATA_DIR}. Credenciales iniciales compatibles.`);
     return;
   }
