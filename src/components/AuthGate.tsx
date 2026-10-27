@@ -10,6 +10,7 @@ import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { AuthContext } from "../context/AuthContext";
 import type { AccessUser, AccessSession } from "../types/auth";
+import { PasswordChangeForm } from './PasswordChangeForm';
 
 export function AuthGate({ children }: { children: ReactNode }) {
   const [access, setAccess] = useState<{
@@ -21,11 +22,14 @@ export function AuthGate({ children }: { children: ReactNode }) {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [notice, setNotice] = useState('');
 
   useEffect(() => {
-    const reset = () => {
+    const reset = (event: Event) => {
       setAccess(null);
       setChecking(false);
+      setError('');
+      setNotice(event instanceof CustomEvent && typeof event.detail?.notice === 'string' ? event.detail.notice : '');
     };
     window.addEventListener("pos:unauthorized", reset);
     return () => window.removeEventListener("pos:unauthorized", reset);
@@ -77,6 +81,7 @@ export function AuthGate({ children }: { children: ReactNode }) {
     event.preventDefault();
     setLoading(true);
     setError("");
+    setNotice('');
     try {
       const result = await apiPost<{
         token: string;
@@ -113,7 +118,12 @@ export function AuthGate({ children }: { children: ReactNode }) {
           },
         }}
       >
-        {children}
+        {access.user.mustChangePassword ? <main className="flex min-h-dvh items-center justify-center bg-background p-4">
+          <section className="w-full max-w-md space-y-4 rounded-xl border bg-white p-6">
+            <h1 className="text-xl font-semibold">Elige tu contraseña</h1>
+            <PasswordChangeForm forced />
+          </section>
+        </main> : children}
       </AuthContext.Provider>
     );
   return (
@@ -126,13 +136,14 @@ export function AuthGate({ children }: { children: ReactNode }) {
         <p className="text-sm text-muted-foreground">
           Accede con tu cuenta. El menú y los permisos se adaptan a tu perfil.
         </p>
+        {notice && <p role="status" className="rounded-lg bg-emerald-50 p-3 text-sm text-emerald-800">{notice}</p>}
         {import.meta.env.VITE_ATTENDANCE_PREVIEW === "true" && (
           <div className="rounded-lg bg-blue-50 p-3 text-sm leading-6 text-blue-900">
             <strong>Prueba local por perfiles</strong>
             <br />
-            Administrador: <strong>admin / admin1234</strong>
+            Administrador: <strong>admin / admin-local-pass-2026</strong>
             <br />
-            Colaborador: <strong>ana / ana12345</strong>
+            Colaborador: <strong>ana / ana-local-pass-2026</strong>
           </div>
         )}
         <label className="block space-y-1">

@@ -6,6 +6,13 @@
 2. Abre `http://localhost:3000` en el navegador
 3. Accede y navega sin abrir la caja. **Abre una sesión de caja** cuando vayas a cobrar o registrar una devolución o un cambio
 
+### Contraseñas y cuentas
+
+- Pulsa **Mi cuenta → Cambiar contraseña** para cambiar la tuya. Introduce la actual y una nueva de entre 15 y 128 caracteres, y repítela. Puedes usar una frase con espacios.
+- Al guardar se cierran tus sesiones de acceso; vuelve a entrar con la nueva contraseña. Tu caja y tus fichajes no se cierran.
+- Si has olvidado la contraseña, pide a un administrador que entre en **Ajustes → Usuarios y sesiones**, abra tu cuenta y pulse **Restablecer contraseña**. Debe confirmar con su propia contraseña.
+- La contraseña temporal se muestra una sola vez, caduca en 24 horas y debe cambiarse al entrar, antes de utilizar el TPV. Esto también se aplica a la contraseña inicial de una cuenta nueva.
+
 ---
 
 ## 1. Dashboard (Inicio)

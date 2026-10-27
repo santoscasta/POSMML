@@ -78,6 +78,15 @@ async function main() {
   check(login.token && login.user?.role === 'admin', 'No se ha confirmado el perfil administrador.');
   const headers = { Authorization: `Bearer ${login.token}` };
   try {
+    if (login.user.mustChangePassword) {
+      check((await request('/api/auth/me', { headers })).ok, 'No se pudo consultar la cuenta con cambio obligatorio.');
+      for (const endpoint of ['/api/auth/users', '/api/auth/sessions', '/api/attendance/overview', '/api/sessions/current']) {
+        const response = await request(endpoint, { headers });
+        check(response.status === 403 && (await response.json()).code === 'PASSWORD_CHANGE_REQUIRED', `La ruta ${endpoint} debe exigir el cambio de contraseña temporal.`);
+      }
+      console.log('Nueva versión operativa. La cuenta inicial debe elegir una contraseña personal antes de utilizar el TPV.');
+      return;
+    }
     for (const endpoint of ['/api/auth/me', '/api/auth/users', '/api/auth/sessions', '/api/attendance/employees', '/api/attendance/overview']) {
       const response = await request(endpoint, { headers });
       check(response.ok && response.headers.get('content-type')?.includes('application/json'), `Falló la comprobación de ${endpoint}.`);

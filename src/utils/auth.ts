@@ -11,8 +11,8 @@ export function authHeaders(): Record<string, string> {
   return token ? { Authorization: `Bearer ${token}` } : {};
 }
 
-export function clearCredentials() {
+export function clearCredentials(notice = '') {
   token = '';
   try { sessionStorage.removeItem(STORAGE_KEY); } catch { /* No stored session. */ }
-  window.dispatchEvent(new Event('pos:unauthorized'));
+  window.dispatchEvent(new CustomEvent('pos:unauthorized', { detail: { notice } }));
 }

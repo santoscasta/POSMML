@@ -58,28 +58,31 @@ const access = createAccessService(
 );
 const created = await access.bootstrap({
   username: "admin",
-  password: "admin1234",
+  password: "admin-local-pass-2026",
   name: "Marta",
   employeeId: employees.find((e) => e.name === "Marta")?.id,
 });
 if (created) {
   const { token } = await access.login({
     username: "admin",
-    password: "admin1234",
+    password: "admin-local-pass-2026",
   });
   for (const [name, username, password] of [
-    ["Ana", "ana", "ana12345"],
-    ["Leo", "leo", "leo12345"],
+    ["Ana", "ana", "ana-local-pass-2026"],
+    ["Leo", "leo", "leo-local-pass-2026"],
   ]) {
     const employee = employees.find((e) => e.name === name);
-    if (employee)
+    if (employee) {
       await access.addUser(token, {
         username,
-        password,
+        password: `${password}-temporal`,
         name,
         role: "collaborator",
         employeeId: employee.id,
       });
+      const initial = await access.login({ username, password: `${password}-temporal` });
+      await access.changePassword(initial.token, { currentPassword: `${password}-temporal`, newPassword: password });
+    }
   }
   await access.logout(token);
 }
@@ -114,7 +117,7 @@ const port = Number(process.env.ATTENDANCE_PREVIEW_PORT || 5180);
 const server = app.listen(port, "127.0.0.1", () => {
   console.log(`Control horario local: http://127.0.0.1:${port}/horario`);
   console.log(
-    "Acceso admin: admin / admin1234. Colaboradores: ana / ana12345, leo / leo12345.",
+    "Acceso admin: admin / admin-local-pass-2026. Colaboradores: ana / ana-local-pass-2026, leo / leo-local-pass-2026.",
   );
   console.log(`Datos independientes: ${directory}`);
 });

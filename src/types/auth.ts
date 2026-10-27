@@ -6,6 +6,8 @@ export interface AccessUser {
   role: UserRole;
   active: boolean;
   employeeId: string | null;
+  mustChangePassword: boolean;
+  temporaryPasswordExpiresAt: string | null;
 }
 export interface AccessSession {
   id: string;

@@ -4,9 +4,9 @@
 
 Ejecuta `npm run dev:horario` y abre <http://127.0.0.1:5180/horario>.
 
-- Marta, administradora: usuario `admin`, contraseña `admin1234`.
-- Ana, colaboradora: usuario `ana`, contraseña `ana12345`.
-- Leo, colaborador: usuario `leo`, contraseña `leo12345`.
+- Marta, administradora: usuario `admin`, contraseña `admin-local-pass-2026`.
+- Ana, colaboradora: usuario `ana`, contraseña `ana-local-pass-2026`.
+- Leo, colaborador: usuario `leo`, contraseña `leo-local-pass-2026`.
 
 El acceso por cuenta identifica también a la persona que ficha. No se solicita
 un segundo PIN ni se permite cambiar de empleado manteniendo la misma sesión.

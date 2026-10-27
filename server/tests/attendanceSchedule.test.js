@@ -351,24 +351,26 @@ test("attendance HTTP enforces administrator configuration and server-time check
   );
   await access.bootstrap({
     username: "admin",
-    password: "admin1234",
+    password: "admin-local-pass-2026",
     name: "Marta",
     employeeId: manager.employee.id,
   });
   const admin = await access.login({
     username: "admin",
-    password: "admin1234",
+    password: "admin-local-pass-2026",
   });
   await access.addUser(admin.token, {
     username: "ana",
-    password: "ana12345",
+    password: "ana-temporal-pass-2026",
     name: "Ana",
     role: "collaborator",
     employeeId: employee.id,
   });
+  const initial = await access.login({ username: "ana", password: "ana-temporal-pass-2026" });
+  await access.changePassword(initial.token, { currentPassword: "ana-temporal-pass-2026", newPassword: "ana-local-pass-2026" });
   const collaborator = await access.login({
     username: "ana",
-    password: "ana12345",
+    password: "ana-local-pass-2026",
   });
   const app = express();
   app.use(express.json());

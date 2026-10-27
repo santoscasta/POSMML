@@ -8,6 +8,8 @@ import type { Employee, EmployeeSchedule } from "../types/attendance";
 import { ScheduleEditor } from "../components/attendance/ScheduleEditor";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
+import { Link } from 'react-router-dom';
+import { ResetPasswordControl } from '../components/ResetPasswordControl';
 
 const roleLabel = (role: UserRole) =>
   role === "admin" ? "Administrador" : "Colaborador";
@@ -31,6 +33,8 @@ const reasonLabel: Record<string, string> = {
   logout: "Salida del usuario",
   admin_revoked: "Revocada por administrador",
   account_changed: "Cuenta modificada",
+  password_changed: 'Contraseña cambiada',
+  password_reset: 'Contraseña restablecida',
 };
 
 function exportSessions(sessions: UserSession[]) {
@@ -78,6 +82,7 @@ function UserEditor({
   busy,
   save,
   saveSchedule,
+  onPasswordReset,
 }: {
   account: AccessUser;
   employees: Employee[];
@@ -85,11 +90,11 @@ function UserEditor({
   busy: boolean;
   save: (id: string, input: unknown) => void;
   saveSchedule: (id: string, schedule: EmployeeSchedule) => void;
+  onPasswordReset: () => Promise<void>;
 }) {
   const [name, setName] = useState(account.name);
   const [role, setRole] = useState(account.role);
   const [employeeId, setEmployeeId] = useState(account.employeeId || "");
-  const [password, setPassword] = useState("");
   const linkedEmployee = employees.find(
     (employee) => employee.id === account.employeeId,
   );
@@ -101,6 +106,7 @@ function UserEditor({
           · {account.username} · {roleLabel(account.role)} ·{" "}
           {account.active ? "Activo" : "Inactivo"}
           {account.id === currentId ? " · Tu cuenta" : ""}
+          {account.mustChangePassword ? ' · Debe cambiar la contraseña' : ''}
         </span>
       </summary>
       <form
@@ -111,7 +117,6 @@ function UserEditor({
             name,
             role,
             employeeId: employeeId || null,
-            ...(password ? { password } : {}),
           });
         }}
       >
@@ -152,18 +157,6 @@ function UserEditor({
             ))}
           </select>
         </label>
-        <label className="space-y-1 text-sm">
-          Nueva contraseña
-          <Input
-            type="password"
-            autoComplete="new-password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            minLength={8}
-            maxLength={128}
-            placeholder="Dejar vacía para conservarla"
-          />
-        </label>
         <div className="flex flex-wrap gap-2 sm:col-span-2">
           <Button disabled={busy} type="submit">
             Guardar cambios
@@ -178,6 +171,10 @@ function UserEditor({
           </Button>
         </div>
       </form>
+      <div className="mt-4 border-t pt-4">
+        {account.id === currentId ? <Link className="text-sm underline" to="/mi-cuenta">Cambiar mi contraseña</Link> :
+          <ResetPasswordControl id={account.id} name={account.name} disabled={busy || !account.active} onReset={onPasswordReset} />}
+      </div>
       {linkedEmployee ? (
         <ScheduleEditor
           key={`${linkedEmployee.id}:${JSON.stringify(linkedEmployee.schedule)}`}
@@ -339,7 +336,7 @@ export function UsersPage() {
               setUsername("");
               setPassword("");
               setEmployeeId("");
-            }, "Cuenta creada. Ya puede iniciar sesión.");
+            }, "Cuenta creada. La contraseña inicial caduca en 24 horas y deberá cambiarla al entrar.");
           }}
         >
           <label className="space-y-1 text-sm">
@@ -362,11 +359,11 @@ export function UsersPage() {
             />
           </label>
           <label className="space-y-1 text-sm">
-            Contraseña inicial
+            Contraseña inicial temporal
             <Input
               type="password"
               autoComplete="new-password"
-              minLength={8}
+              minLength={15}
               maxLength={128}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
@@ -408,7 +405,7 @@ export function UsersPage() {
         </form>
         <p className="mt-3 text-xs leading-5 text-muted-foreground">
           Da de alta primero a la persona en Ajustes → Empleados. Cada empleado
-          se vincula a una sola cuenta.
+          se vincula a una sola cuenta. La contraseña inicial debe tener entre 15 y 128 caracteres, caduca en 24 horas y se cambia en el primer acceso.
         </p>
       </section>
       <section className="space-y-3">
@@ -431,6 +428,7 @@ export function UsersPage() {
               )}
               currentId={user.id}
               busy={busy}
+              onPasswordReset={load}
               save={(id, input) =>
                 void action(
                   () => apiPost(`/auth/users/${id}`, input),

@@ -3,7 +3,19 @@ import { createAccessMiddleware, requireAdmin } from "../lib/access.js";
 
 export function createAccessRouter(service) {
   const router = Router();
-  const attempts = new Map();
+  const throttle = keyFor => {
+    const attempts = new Map();
+    return (req, res, next) => {
+      const now = Date.now();
+      for (const [key, value] of attempts) if (value.until <= now) attempts.delete(key);
+      const key = keyFor(req);
+      const entry = attempts.get(key) || { count: 0, until: now + 60000 };
+      entry.count++;
+      attempts.set(key, entry);
+      if (entry.count > 10) return res.status(429).set('Retry-After', String(Math.ceil((entry.until - now) / 1000))).json({ error: 'Demasiados intentos. Espera un minuto y vuelve a intentarlo.' });
+      next();
+    };
+  };
   const handle = (work) => async (req, res) => {
     res.set("Cache-Control", "no-store");
     try {
@@ -16,25 +28,12 @@ export function createAccessRouter(service) {
   };
   router.post(
     "/auth/login",
-    (req, res, next) => {
-      const now = Date.now();
-      for (const [key, value] of attempts)
-        if (value.until <= now) attempts.delete(key);
-      const entry = attempts.get(req.ip) || { count: 0, until: now + 60000 };
-      entry.count++;
-      attempts.set(req.ip, entry);
-      if (entry.count > 10)
-        return res
-          .status(429)
-          .json({
-            error:
-              "Demasiados intentos. Espera un minuto y vuelve a intentarlo.",
-          });
-      next();
-    },
+    throttle(req => req.ip),
     handle((req) => service.login(req.body)),
   );
-  router.use("/auth", createAccessMiddleware(service));
+  router.use("/auth", createAccessMiddleware(service, { allowPasswordChange: true }));
+  router.post('/auth/password', throttle(req => req.user.id), handle(req => service.changePassword(req.accessToken, req.body)));
+  router.post('/auth/users/:id/reset-password', requireAdmin, throttle(req => req.user.id), handle(req => service.resetPassword(req.accessToken, req.params.id, req.body)));
   router.get(
     "/auth/me",
     handle((req) => service.current(req.accessToken)),

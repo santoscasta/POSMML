@@ -19,6 +19,7 @@ import { useState } from 'react';
 import { AttendanceProvider, useAttendance } from './context/AttendanceContext';
 import { attendanceLabels } from './utils/attendance';
 import { AttendancePage } from './pages/AttendancePage';
+import { AccountPage } from './pages/AccountPage';
 
 const navItems = [
   { path: '/dashboard', label: es.nav.dashboard || 'Inicio', icon: Home },
@@ -151,6 +152,7 @@ function AppContent() {
         <Button size="sm" variant="ghost" className="mr-auto max-w-full" onClick={() => navigate('/horario')}>
           <Clock3 className="size-4" /><span className="max-w-44 truncate">{user.name}</span><span className="text-xs text-muted-foreground">· {admin ? 'Admin' : 'Colaborador'}</span>{employeeStatus && <span className="hidden text-xs text-muted-foreground sm:inline">· {attendanceLabels[employeeStatus]}</span>}
         </Button>
+        <Button size="sm" variant="ghost" onClick={() => navigate('/mi-cuenta')}>Mi cuenta</Button>
         {isOpen && <Button size="sm" variant="outline" onClick={() => navigate('/caja?cerrar=1')}>
           <Wallet className="size-4" />Cerrar caja
         </Button>}
@@ -168,6 +170,7 @@ function AppContent() {
           <Route path="/caja" element={<SessionsPage />} />
           <Route path="/vales" element={<VouchersPage />} />
           <Route path="/horario" element={<AttendancePage />} />
+          <Route path="/mi-cuenta" element={<AccountPage />} />
           <Route path="/ajustes/*" element={admin ? <SettingsPage /> : <Navigate to="/horario" replace />} />
           <Route path="/correos" element={<Navigate to="/ajustes/correos" replace />} />
           <Route path="*" element={<Navigate to={admin ? '/dashboard' : '/horario'} replace />} />

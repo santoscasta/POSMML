@@ -1,8 +1,8 @@
 # POS MML
 
 Prueba local del control horario: ejecuta `npm run dev:horario` y abre
-<http://127.0.0.1:5180/horario> (administrador `admin` / `admin1234`,
-colaborador `ana` / `ana12345`). Consulta
+<http://127.0.0.1:5180/horario> (administrador `admin` / `admin-local-pass-2026`,
+colaborador `ana` / `ana-local-pass-2026`). Consulta
 [empleados de ejemplo, funcionamiento y alcance](docs/CONTROL-HORARIO.md).
 
 Consulta [configuración, despliegue y recuperación de operaciones](OPERACION_POS.md) antes de arrancar esta versión. Se requieren credenciales de acceso y un volumen persistente en producción; `.env.example` enumera las variables. Ejecuta `npm test` para las pruebas locales sin Shopify real.
