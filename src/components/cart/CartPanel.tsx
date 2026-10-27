@@ -6,6 +6,7 @@ import { DiscountInput } from './DiscountInput';
 import { CustomerSearch } from '../customers/CustomerSearch';
 import { CustomerBadge } from '../customers/CustomerBadge';
 import { CheckoutModal } from '../checkout/CheckoutModal';
+import { OpenSessionModal } from '../sessions/OpenSessionModal';
 import { useCheckout } from '../../hooks/useCheckout';
 import { formatCurrency } from '../../utils/currency';
 import { es } from '../../i18n/es';
@@ -32,9 +33,10 @@ export function CartPanel() {
     total,
     itemCount,
   } = useCart();
-  const { isOpen: sessionOpen, error: sessionError, refresh } = useSession();
+  const { isOpen: sessionOpen, loading: sessionLoading, error: sessionError, refresh } = useSession();
   const { checkout, resume, pending, loading: checkoutLoading, error: checkoutError } = useCheckout();
   const [showCheckout, setShowCheckout] = useState(false);
+  const [showOpenSession, setShowOpenSession] = useState(false);
   const [saleCompleted, setSaleCompleted] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
@@ -97,10 +99,12 @@ export function CartPanel() {
             </div>
           )}
 
-          {!sessionOpen && (
-            <div className="flex items-center gap-2 rounded-sm bg-destructive/10 px-3 py-2 text-sm text-destructive">
-              <AlertCircle className="size-4 shrink-0" />
-              Abre una sesión de caja antes de cobrar
+          {!sessionLoading && !sessionError && !sessionOpen && (
+            <div className="space-y-2 rounded-sm bg-muted px-3 py-2 text-sm">
+              <p>Puedes preparar el carrito con la caja cerrada. Abre una sesión de caja antes de cobrar.</p>
+              <Button variant="outline" size="sm" onClick={() => setShowOpenSession(true)}>
+                Abrir caja
+              </Button>
             </div>
           )}
 
@@ -172,7 +176,7 @@ export function CartPanel() {
                   className="h-auto min-h-16 w-full justify-between bg-primary px-4 py-3 text-left hover:bg-primary/90"
                   size="lg"
                   onClick={() => { setSaleCompleted(false); setShowCheckout(true); }}
-                  disabled={!!sessionError || !sessionOpen || cart.items.length === 0 || !!pending || checkoutLoading}
+                  disabled={sessionLoading || !!sessionError || !sessionOpen || cart.items.length === 0 || !!pending || checkoutLoading}
                 >
                   <span className="flex flex-col gap-1">
                     <span>{es.pos.createOrder}</span>
@@ -195,6 +199,8 @@ export function CartPanel() {
           )}
         </CardContent>
       </ScrollArea>
+
+      <OpenSessionModal open={showOpenSession} onClose={() => setShowOpenSession(false)} />
 
       {showCheckout && (
         <CheckoutModal

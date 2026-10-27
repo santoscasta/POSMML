@@ -16,7 +16,6 @@ import { AuthGate } from './components/AuthGate';
 import { PendingOperations } from './components/PendingOperations';
 import { useAuth } from './context/AuthContext';
 import { useState } from 'react';
-import { OpenSessionModal } from './components/sessions/OpenSessionModal';
 import { AttendanceProvider, useAttendance } from './context/AttendanceContext';
 import { attendanceLabels } from './utils/attendance';
 import { AttendancePage } from './pages/AttendancePage';
@@ -139,7 +138,7 @@ function BottomNav() {
 function AppContent() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { isOpen, loading, error, refresh } = useSession();
+  const { isOpen, error, refresh } = useSession();
   const { overview } = useAttendance();
   const { user, logout } = useAuth();
   const [logoutError, setLogoutError] = useState('');
@@ -177,7 +176,6 @@ function AppContent() {
       <BottomNav />
       </div>
       {error && <div role="alert" className="fixed inset-x-0 top-8 z-50 bg-destructive p-3 text-white">{error} <button onClick={() => void refresh()} className="underline">Reintentar</button></div>}
-      <OpenSessionModal open={location.pathname === "/" && !loading && !error && !isOpen} onClose={() => {}} required />
     </div>
   );
 }

@@ -4,7 +4,7 @@
 
 1. Inicia el servidor: `npm run dev` (o `node server/index.js` + `npx vite --port 3000`)
 2. Abre `http://localhost:3000` en el navegador
-3. **Abre una sesión de caja** antes de cobrar
+3. Accede y navega sin abrir la caja. **Abre una sesión de caja** cuando vayas a cobrar o registrar una devolución o un cambio
 
 ---
 
@@ -29,13 +29,13 @@ La pantalla principal muestra el estado general del sistema:
 ## 2. Caja — Gestión de Sesión
 
 ### Abrir sesión
-1. Al entrar, si no hay una caja abierta, aparece automáticamente la apertura obligatoria
+1. Ve a **Caja → Abrir sesión**, o pulsa **Abrir caja** en el carrito del POS. Entrar en la app, consultar pantallas y preparar el carrito no requiere abrir la caja
 2. Introduce el **monto de apertura** (fondo de caja en efectivo)
 3. Introduce el **nombre del cajero**
 4. Opcionalmente añade una nota
 5. Pulsa **Abrir sesión**
 
-> **IMPORTANTE**: No se pueden procesar cobros sin una sesión de caja abierta.
+> **IMPORTANTE**: Los cobros, las devoluciones y los cambios requieren una sesión de caja abierta. La consulta y la navegación están disponibles con la caja cerrada.
 > Si una sesión anterior continúa abierta, hay que cerrarla desde **Caja** antes de iniciar la siguiente.
 
 ### Durante la sesión
