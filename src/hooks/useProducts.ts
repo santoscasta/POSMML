@@ -35,10 +35,12 @@ export function useProducts(showOutOfStock: boolean) {
     try {
       do {
         const data: ProductsResponse = await queryPage<ProductsResponse>(PRODUCTS_QUERY, {
-          first: 30, after, ...(!showOutOfStock ? { query: 'inventory_total:>0' } : {}),
+          first: 30, after,
+          query: showOutOfStock ? 'status:active' : 'status:active inventory_total:>0',
         }, isCurrent);
         if (!isCurrent()) return;
         for (const { node } of data.products.edges) {
+          if (node.status !== 'ACTIVE') continue;
           const categoryIds: unknown = JSON.parse(node.categoryMembership?.value || '[]');
           if (!Array.isArray(categoryIds) || categoryIds.some(id => typeof id !== 'string')) throw new Error(`Categorías inválidas en ${node.title}`);
           const variants = await completeConnection(node.variants, async after => {

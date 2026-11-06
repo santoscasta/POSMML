@@ -56,6 +56,7 @@ export function PosPage() {
 
   const handleProductSelect = useCallback(
     (product: Product) => {
+      if (product.status !== 'ACTIVE') return;
       if (product.variants.length === 1) {
         const variant = product.variants[0];
         addItem({
@@ -112,7 +113,7 @@ export function PosPage() {
         }
         const data = await shopifyGraphQL<{ products: { edges: { node: Product & { variants: { edges: { node: ProductVariant }[] } } }[] } }>(
           PRODUCT_BY_BARCODE_QUERY,
-          { barcode },
+          { barcode: `status:active AND (barcode:${JSON.stringify(barcode)} OR sku:${JSON.stringify(barcode)})` },
         );
         if (data.products.edges.length > 0) {
           const node = data.products.edges[0].node;
