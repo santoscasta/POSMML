@@ -1,32 +1,16 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { shopifyGraphQL } from '../utils/graphqlClient';
-import { ORDERS_QUERY } from '../graphql/orders';
+import { ORDERS_QUERY, ORDER_SEARCH_ITEMS_QUERY } from '../graphql/orders';
+import { matchesSearch } from '../utils/search';
+import { completeConnection, nextCursor, queryPage } from '../utils/shopifyPagination';
+import type { Connection } from '../utils/shopifyPagination';
 import type { Order } from '../types/order';
 
-interface OrderNode {
-  id: string;
-  name: string;
-  createdAt: string;
-  displayFinancialStatus: string;
-  displayFulfillmentStatus: string;
-  totalPriceSet: { shopMoney: { amount: string; currencyCode: string } };
-  customer: { firstName: string; lastName: string } | null;
-  lineItems: {
-    edges: {
-      node: {
-        title: string;
-        quantity: number;
-        originalTotalSet: { shopMoney: { amount: string; currencyCode: string } };
-      };
-    }[];
-  };
-}
+type OrderNode = Omit<Order, 'lineItems'> & {
+  lineItems: Connection<Order['lineItems'][number]>;
+};
 
 interface OrdersResponse {
-  orders: {
-    edges: { cursor: string; node: OrderNode }[];
-    pageInfo: { hasNextPage: boolean; endCursor: string | null };
-  };
+  orders: Connection<OrderNode>;
 }
 
 export function useOrders() {
@@ -39,6 +23,8 @@ export function useOrders() {
   const [posOnly, setPosOnly] = useState(false);
   const requestId = useRef(0);
   const busy = useRef(false);
+  // Cache fetched pages for later searches while this list is open. Refresh clears it.
+  const pages = useRef(new Map<string, OrdersResponse>());
   const debounceRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   const fetchOrders = useCallback(
@@ -48,29 +34,45 @@ export function useOrders() {
       try {
         setLoading(true);
         setError(null);
-        const variables: Record<string, unknown> = { first: 20 };
+        const isCurrent = () => id === requestId.current;
+        const fetched: Order[] = [];
+        const seen = new Set<string>();
+        let cursor = after || null;
+        let next: string | null = null;
+        do {
+          const key = `${posFilter}:${cursor || ''}`;
+          let data = pages.current.get(key);
+          if (!data) {
+            data = await queryPage<OrdersResponse>(ORDERS_QUERY, {
+              first: 20, after: cursor,
+              ...(posFilter ? { query: 'tag:"POS MML"' } : {}),
+            }, isCurrent);
+            if (!isCurrent()) return;
+            pages.current.set(key, data);
+          }
+          for (const { node } of data.orders.edges) {
+            if (search.trim()) {
+              node.lineItems = await completeConnection(node.lineItems, async after => {
+                const result = await queryPage<{ order: { lineItems: OrderNode['lineItems'] } }>(
+                  ORDER_SEARCH_ITEMS_QUERY, { id: node.id, after }, isCurrent,
+                );
+                return result.order.lineItems;
+              }, isCurrent);
+              if (!isCurrent()) return;
+            }
+            const order = { ...node, lineItems: node.lineItems.edges.map(e => e.node) };
+            if (matchesSearch(order, search)) fetched.push(order);
+          }
+          next = nextCursor(data.orders, seen);
+          cursor = next;
+          // Skip pages without enough matches instead of showing a false empty result.
+        } while (search.trim() && next && fetched.length < 20 && isCurrent());
 
-        const queryParts: string[] = [];
-        if (search) queryParts.push(search);
-        if (posFilter) queryParts.push('tag:"POS MML"');
-        if (queryParts.length > 0) variables.query = queryParts.join(' ');
-        if (after) variables.after = after;
-
-        const data = await shopifyGraphQL<OrdersResponse>(ORDERS_QUERY, variables);
-
-        if (id !== requestId.current) return;
-        const fetched: Order[] = data.orders.edges.map((edge) => ({
-          ...edge.node,
-          lineItems: edge.node.lineItems.edges.map((e) => e.node),
-        }));
-
-        if (after) {
-          setOrders((prev) => [...prev, ...fetched]);
-        } else {
-          setOrders(fetched);
-        }
-        setHasNextPage(data.orders.pageInfo.hasNextPage);
-        setEndCursor(data.orders.pageInfo.endCursor);
+        if (!isCurrent()) return;
+        if (after) setOrders(prev => [...prev, ...fetched]);
+        else setOrders(fetched);
+        setHasNextPage(Boolean(next));
+        setEndCursor(next);
       } catch (err) {
         if (id === requestId.current) setError(err instanceof Error ? err.message : 'Error desconocido');
       } finally {
@@ -106,6 +108,8 @@ export function useOrders() {
 
   const refresh = useCallback(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
+    pages.current.clear();
+    setOrders([]);
     setEndCursor(null);
     setHasNextPage(false);
     fetchOrders(searchQuery, posOnly);

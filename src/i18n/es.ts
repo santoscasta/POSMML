@@ -1,7 +1,7 @@
 export const es = {
   pos: {
     title: 'Punto de Venta',
-    searchPlaceholder: 'Buscar productos...',
+    searchPlaceholder: 'Buscar productos por cualquier dato...',
     cart: 'Carrito',
     emptyCart: 'El carrito está vacío',
     addToCart: 'Agregar',
@@ -44,7 +44,7 @@ export const es = {
     pending: 'Pendiente',
     fulfilled: 'Completado',
     unfulfilled: 'Sin completar',
-    search: 'Buscar pedidos...',
+    search: 'Buscar pedidos por cualquier dato...',
     searchByNumber: 'Buscar por número de pedido',
     filterByStatus: 'Filtrar por estado',
     filterByDate: 'Filtrar por fecha',
@@ -62,7 +62,7 @@ export const es = {
     timeline: 'Línea de tiempo',
   },
   customers: {
-    search: 'Buscar cliente por nombre o email...',
+    search: 'Buscar cliente por cualquier dato...',
     noResults: 'No se encontraron clientes',
     selected: 'Cliente seleccionado',
   },

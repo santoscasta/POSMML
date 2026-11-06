@@ -52,8 +52,8 @@ export function ExchangeProductPicker({ onAdd }: { onAdd: (product: Product, var
   }
 
   return <div className="space-y-3">
-    <p className="text-sm text-muted-foreground">Pulsa la foto de la prenda para añadirla o elegir su talla. También puedes buscar por nombre.</p>
-    <Input aria-label="Buscar artículos para el cambio" placeholder="Buscar producto (opcional)…" value={searchQuery} onChange={event => { setSearchQuery(event.target.value); setSelectedProduct(null); }} />
+    <p className="text-sm text-muted-foreground">Pulsa la foto de la prenda para añadirla o elegir su talla. También puedes buscar por cualquier dato del producto.</p>
+    <Input aria-label="Buscar artículos para el cambio" placeholder="Buscar producto por cualquier dato…" value={searchQuery} onChange={event => { setSearchQuery(event.target.value); setSelectedProduct(null); }} />
     <label className="block space-y-1 text-sm">
       <span>Filtrar por categoría</span>
       <select aria-label="Categoría de artículos para el cambio" className="w-full rounded border bg-background p-2" value={categoryId} disabled={catalog.loading || !!catalog.error} onChange={event => { setCategoryId(event.target.value); setSelectedProduct(null); }}>

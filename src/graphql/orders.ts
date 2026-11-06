@@ -45,47 +45,51 @@ export const COMPLETE_DRAFT_ORDER = `
   }
 `;
 
+const ORDER_SEARCH_LINE_ITEM_FIELDS = `
+  id title quantity sku name
+  variant { id title barcode selectedOptions { name value } }
+  originalTotalSet { shopMoney { amount currencyCode } }
+  originalUnitPriceSet { shopMoney { amount currencyCode } }
+`;
+
+export const ORDER_SEARCH_ITEMS_QUERY = `
+  query OrderSearchItems($id: ID!, $after: String) {
+    order(id: $id) {
+      lineItems(first: 50, after: $after) {
+        edges { node { ${ORDER_SEARCH_LINE_ITEM_FIELDS} } }
+        pageInfo { hasNextPage endCursor }
+      }
+    }
+  }
+`;
+
 export const ORDERS_QUERY = `
   query GetOrders($first: Int!, $after: String, $query: String) {
     orders(first: $first, after: $after, query: $query, sortKey: CREATED_AT, reverse: true) {
       edges {
         cursor
         node {
-          id
-          name
-          createdAt
-          displayFinancialStatus
-          displayFulfillmentStatus
-          totalPriceSet {
-            shopMoney {
-              amount
-              currencyCode
-            }
-          }
-          customer {
-            firstName
-            lastName
-          }
-          lineItems(first: 5) {
-            edges {
-              node {
-                title
-                quantity
-                originalTotalSet {
-                  shopMoney {
-                    amount
-                    currencyCode
-                  }
-                }
-              }
-            }
+          id name createdAt cancelledAt note tags email phone
+          displayFinancialStatus displayFulfillmentStatus
+          discountCodes paymentGatewayNames customAttributes { key value }
+          totalPriceSet { shopMoney { amount currencyCode } }
+          subtotalPriceSet { shopMoney { amount currencyCode } }
+          totalTaxSet { shopMoney { amount currencyCode } }
+          totalDiscountsSet { shopMoney { amount currencyCode } }
+          totalRefundedSet { shopMoney { amount currencyCode } }
+          customer { id firstName lastName email phone note tags }
+          shippingAddress { name company address1 address2 city province country zip phone }
+          billingAddress { name company address1 address2 city province country zip phone }
+          refunds { note createdAt totalRefundedSet { shopMoney { amount currencyCode } } }
+          transactions(first: 20) { kind status amountSet { shopMoney { amount currencyCode } } }
+          metafields(first: 10, namespace: "pos_mml") { edges { node { key value } } }
+          lineItems(first: 10) {
+            edges { node { ${ORDER_SEARCH_LINE_ITEM_FIELDS} } }
+            pageInfo { hasNextPage endCursor }
           }
         }
       }
-      pageInfo {
-        hasNextPage
-        endCursor
-      }
+      pageInfo { hasNextPage endCursor }
     }
   }
 `;

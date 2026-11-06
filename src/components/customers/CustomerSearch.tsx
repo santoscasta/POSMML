@@ -15,7 +15,7 @@ export function CustomerSearch({ onSelect }: CustomerSearchProps) {
   const [query, setQuery] = useState('');
   const [open, setOpen] = useState(false);
   const [registerOpen, setRegisterOpen] = useState(false);
-  const { customers, loading, searchCustomers } = useCustomers();
+  const { customers, loading, error, searchCustomers, retry } = useCustomers();
   const ref = useRef<HTMLDivElement>(null);
 
   const handleChange = (value: string) => {
@@ -27,6 +27,7 @@ export function CustomerSearch({ onSelect }: CustomerSearchProps) {
   const handleSelect = (customer: Customer) => {
     onSelect(customer);
     setQuery('');
+    searchCustomers('');
     setOpen(false);
   };
 
@@ -58,6 +59,7 @@ export function CustomerSearch({ onSelect }: CustomerSearchProps) {
               className="absolute right-1.5 top-1/2 -translate-y-1/2"
               onClick={() => {
                 setQuery('');
+                searchCustomers('');
                 setOpen(false);
               }}
             >
@@ -71,11 +73,14 @@ export function CustomerSearch({ onSelect }: CustomerSearchProps) {
       </div>
       {open && (
         <div className="absolute left-0 right-0 top-full z-50 mt-1 max-h-52 overflow-y-auto rounded-sm border border-border bg-popover shadow-md">
-          {loading ? (
+          {error && <div role="alert" className="px-3 py-2 text-sm text-destructive">
+            {error} <button type="button" className="underline" onClick={retry}>Reintentar</button>
+          </div>}
+          {loading && customers.length === 0 ? (
             <div className="px-3 py-2 text-sm text-muted-foreground">
               {es.pos.loading}
             </div>
-          ) : customers.length === 0 ? (
+          ) : customers.length === 0 && !error ? (
             <div className="px-3 py-2 text-sm text-muted-foreground">
               {es.customers.noResults}
             </div>
@@ -93,6 +98,7 @@ export function CustomerSearch({ onSelect }: CustomerSearchProps) {
               </div>
             ))
           )}
+          {loading && customers.length > 0 && <div role="status" className="px-3 py-2 text-xs text-muted-foreground">Buscando en todos los clientes…</div>}
         </div>
       )}
       <RegisterCustomerModal open={registerOpen} onClose={() => setRegisterOpen(false)} onCreated={handleSelect} />

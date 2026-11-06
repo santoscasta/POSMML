@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { apiGet } from '../utils/apiClient';
 import { formatCurrency } from '../utils/currency';
+import { matchesSearch } from '../utils/search';
 import { IssueVoucherModal } from '../components/vouchers/IssueVoucherModal';
 import { VoucherDetail } from '../components/vouchers/VoucherDetail';
 import { Card, CardContent } from '@/components/ui/card';
@@ -81,15 +82,7 @@ export function VouchersPage() {
 
   const filteredVouchers = vouchers.filter((v) => {
     if (filter !== 'ALL' && v.status !== filter) return false;
-    if (search) {
-      const q = search.toLowerCase();
-      return (
-        v.code.toLowerCase().includes(q) ||
-        (v.customerName && v.customerName.toLowerCase().includes(q)) ||
-        (v.customerEmail && v.customerEmail.toLowerCase().includes(q))
-      );
-    }
-    return true;
+    return matchesSearch(v, search);
   });
 
   const handleVoucherClick = (voucher: Voucher) => {
@@ -146,7 +139,7 @@ export function VouchersPage() {
           <Input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Buscar por código, nombre o correo..."
+            placeholder="Buscar vales por cualquier dato..."
             className="pl-8 pr-8"
           />
           {search && (

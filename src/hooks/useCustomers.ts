@@ -1,67 +1,61 @@
-import { useState, useCallback, useRef, useEffect } from 'react';
-import { shopifyGraphQL } from '../utils/graphqlClient';
+import { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import { CUSTOMERS_SEARCH_QUERY } from '../graphql/customers';
+import { matchesSearch } from '../utils/search';
+import { nextCursor, queryPage } from '../utils/shopifyPagination';
+import type { Connection } from '../utils/shopifyPagination';
 import type { Customer } from '../types/customer';
 
 interface CustomersResponse {
-  customers: {
-    edges: { node: Customer }[];
-  };
+  customers: Connection<Customer>;
 }
 
 export function useCustomers() {
-  const [customers, setCustomers] = useState<Customer[]>([]);
-  const [loading, setLoading] = useState(false);
-  const debounceRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
-  const requestIdRef = useRef(0);
+  const [catalog, setCatalog] = useState<Customer[]>([]);
+  const [query, setQuery] = useState('');
+  const [started, setStarted] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [attempt, setAttempt] = useState(0);
+  const requestId = useRef(0);
 
-  useEffect(() => () => {
-    if (debounceRef.current) clearTimeout(debounceRef.current);
-    requestIdRef.current++;
+  const searchCustomers = useCallback((value: string) => {
+    setQuery(value);
+    if (value.trim()) setStarted(true);
   }, []);
 
-  const searchCustomers = useCallback((query: string) => {
-    const requestId = ++requestIdRef.current;
-    if (debounceRef.current) clearTimeout(debounceRef.current);
-
-    if (!query.trim()) {
-      setCustomers([]);
-      setLoading(false);
-      return;
-    }
-
-    debounceRef.current = setTimeout(async () => {
+  useEffect(() => {
+    if (!started) return;
+    const requests = requestId;
+    const id = ++requests.current;
+    const isCurrent = () => id === requests.current;
+    async function load() {
+      setLoading(true);
+      setError(null);
+      const collected = new Map<string, Customer>();
+      const cursors = new Set<string>();
+      let after: string | null = null;
       try {
-        setLoading(true);
-        const value = query.trim();
-        const searchQueries = [value];
-        if (value.includes('@')) {
-          searchQueries.unshift(`email:${JSON.stringify(value)}`);
-        } else {
-          const nameParts = value.split(/\s+/).filter(Boolean);
-          const nameQuery = nameParts.length > 1
-            ? `first_name:${JSON.stringify(nameParts[0])} AND last_name:${JSON.stringify(nameParts.slice(1).join(' '))}`
-            : `first_name:${JSON.stringify(value)} OR last_name:${JSON.stringify(value)}`;
-          searchQueries.unshift(nameQuery);
-        }
-        const results = await Promise.allSettled(searchQueries.map(searchQuery =>
-          shopifyGraphQL<CustomersResponse>(CUSTOMERS_SEARCH_QUERY, { query: searchQuery }),
-        ));
-        if (requestId !== requestIdRef.current) return;
-        const uniqueCustomers = new Map<string, Customer>();
-        for (const result of results) {
-          if (result.status === 'fulfilled') {
-            for (const edge of result.value.customers.edges) uniqueCustomers.set(edge.node.id, edge.node);
-          }
-        }
-        setCustomers([...uniqueCustomers.values()]);
-      } catch {
-        if (requestId === requestIdRef.current) setCustomers([]);
+        do {
+          const data: CustomersResponse = await queryPage<CustomersResponse>(
+            CUSTOMERS_SEARCH_QUERY, { first: 100, after }, isCurrent,
+          );
+          if (!isCurrent()) return;
+          for (const { node } of data.customers.edges) collected.set(node.id, node);
+          setCatalog([...collected.values()]);
+          after = nextCursor(data.customers, cursors);
+        } while (after && isCurrent());
+      } catch (err) {
+        if (isCurrent()) setError(err instanceof Error ? err.message : 'Error al buscar clientes');
       } finally {
-        if (requestId === requestIdRef.current) setLoading(false);
+        if (isCurrent()) setLoading(false);
       }
-    }, 300);
-  }, []);
+    }
+    const timeout = setTimeout(() => { void load(); }, 300);
+    return () => { ++requests.current; clearTimeout(timeout); };
+  }, [started, attempt]);
 
-  return { customers, loading, searchCustomers };
+  const customers = useMemo(() => query.trim()
+    ? catalog.filter(customer => matchesSearch(customer, query)) : [], [catalog, query]);
+  return { customers, loading: Boolean(query.trim()) && loading, error,
+    searchCustomers, retry: () => { setLoading(true); setAttempt(value => value + 1); } };
 }
