@@ -9,6 +9,8 @@ export interface DraftOrder {
   createdAt: string;
 }
 
+export type OrderSortKey = 'ORDER_NUMBER' | 'CREATED_AT' | 'PROCESSED_AT' | 'CUSTOMER_NAME' | 'TOTAL_PRICE' | 'FINANCIAL_STATUS' | 'FULFILLMENT_STATUS';
+
 export interface Order {
   id: string;
   name: string;
@@ -16,6 +18,7 @@ export interface Order {
   displayFinancialStatus: string;
   displayFulfillmentStatus: string;
   createdAt: string;
+  processedAt: string | null;
   customer: { firstName: string; lastName: string } | null;
   lineItems: {
     title: string;

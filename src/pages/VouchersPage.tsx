@@ -1,7 +1,10 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { apiGet } from '../utils/apiClient';
 import { formatCurrency } from '../utils/currency';
 import { matchesSearch } from '../utils/search';
+import { compareSortValues, nextSort } from '../utils/sort';
+import type { SortConfig } from '../utils/sort';
+import { SortableTableHead } from '../components/SortableTableHead';
 import { IssueVoucherModal } from '../components/vouchers/IssueVoucherModal';
 import { VoucherDetail } from '../components/vouchers/VoucherDetail';
 import { Card, CardContent } from '@/components/ui/card';
@@ -13,7 +16,6 @@ import {
   TableHeader,
   TableBody,
   TableRow,
-  TableHead,
   TableCell,
 } from '@/components/ui/table';
 import { cn } from '@/lib/utils';
@@ -29,6 +31,25 @@ interface VoucherStats {
 }
 
 type FilterStatus = 'ALL' | VoucherStatus;
+type VoucherSortKey = 'code' | 'originalAmount' | 'currentBalance' | 'customer' | 'status' | 'issuedAt';
+
+const columns: { key: VoucherSortKey; label: string }[] = [
+  { key: 'code', label: 'Código' },
+  { key: 'originalAmount', label: 'Monto' },
+  { key: 'currentBalance', label: 'Saldo' },
+  { key: 'customer', label: 'Cliente' },
+  { key: 'status', label: 'Estado' },
+  { key: 'issuedAt', label: 'Fecha' },
+];
+
+function sortValue(voucher: Voucher, key: VoucherSortKey): string | number | null {
+  switch (key) {
+    case 'customer': return voucher.customerName || voucher.customerEmail || null;
+    case 'status': return statusLabel(voucher.status);
+    case 'issuedAt': return voucher.issuedAt ? new Date(voucher.issuedAt).getTime() : null;
+    default: return voucher[key];
+  }
+}
 
 function statusBadgeVariant(status: string) {
   switch (status) {
@@ -55,6 +76,7 @@ export function VouchersPage() {
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState<FilterStatus>('ALL');
+  const [sort, setSort] = useState<SortConfig<VoucherSortKey>>({ key: 'issuedAt', direction: 'desc' });
   const [issueOpen, setIssueOpen] = useState(false);
   const [selectedVoucher, setSelectedVoucher] = useState<Voucher | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
@@ -80,10 +102,10 @@ export function VouchersPage() {
     fetchData();
   }, [fetchData]);
 
-  const filteredVouchers = vouchers.filter((v) => {
+  const filteredVouchers = useMemo(() => vouchers.filter((v) => {
     if (filter !== 'ALL' && v.status !== filter) return false;
     return matchesSearch(v, search);
-  });
+  }).sort((left, right) => compareSortValues(sortValue(left, sort.key), sortValue(right, sort.key), sort.direction)), [vouchers, filter, search, sort]);
 
   const handleVoucherClick = (voucher: Voucher) => {
     setSelectedVoucher(voucher);
@@ -190,12 +212,12 @@ export function VouchersPage() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Código</TableHead>
-              <TableHead>Monto</TableHead>
-              <TableHead>Saldo</TableHead>
-              <TableHead>Cliente</TableHead>
-              <TableHead>Estado</TableHead>
-              <TableHead>Fecha</TableHead>
+              {columns.map(column => <SortableTableHead
+                key={column.key}
+                label={column.label}
+                direction={sort.key === column.key ? sort.direction : undefined}
+                onSort={() => setSort(current => nextSort(current, column.key, column.key === 'issuedAt' ? 'desc' : 'asc'))}
+              />)}
             </TableRow>
           </TableHeader>
           <TableBody>

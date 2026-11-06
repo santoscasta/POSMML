@@ -21,6 +21,8 @@ export function OrdersPage() {
     setSearchQuery,
     posOnly,
     setPosOnly,
+    sort,
+    changeSort,
   } = useOrders();
 
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
@@ -90,6 +92,8 @@ export function OrdersPage() {
         hasNextPage={hasNextPage}
         onLoadMore={loadMore}
         onSelectOrder={handleSelectOrder}
+        sort={sort}
+        onSort={changeSort}
       />}
 
       {/* Order detail modal */}

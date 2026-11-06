@@ -64,12 +64,12 @@ export const ORDER_SEARCH_ITEMS_QUERY = `
 `;
 
 export const ORDERS_QUERY = `
-  query GetOrders($first: Int!, $after: String, $query: String) {
-    orders(first: $first, after: $after, query: $query, sortKey: CREATED_AT, reverse: true) {
+  query GetOrders($first: Int!, $after: String, $query: String, $sortKey: OrderSortKeys = CREATED_AT, $reverse: Boolean = true) {
+    orders(first: $first, after: $after, query: $query, sortKey: $sortKey, reverse: $reverse) {
       edges {
         cursor
         node {
-          id name createdAt cancelledAt note tags email phone
+          id name createdAt processedAt cancelledAt note tags email phone
           displayFinancialStatus displayFulfillmentStatus
           discountCodes paymentGatewayNames customAttributes { key value }
           totalPriceSet { shopMoney { amount currencyCode } }

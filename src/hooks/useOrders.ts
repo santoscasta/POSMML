@@ -3,7 +3,9 @@ import { ORDERS_QUERY, ORDER_SEARCH_ITEMS_QUERY } from '../graphql/orders';
 import { matchesSearch } from '../utils/search';
 import { completeConnection, nextCursor, queryPage } from '../utils/shopifyPagination';
 import type { Connection } from '../utils/shopifyPagination';
-import type { Order } from '../types/order';
+import type { Order, OrderSortKey } from '../types/order';
+import { nextSort } from '../utils/sort';
+import type { SortConfig } from '../utils/sort';
 
 type OrderNode = Omit<Order, 'lineItems'> & {
   lineItems: Connection<Order['lineItems'][number]>;
@@ -21,6 +23,7 @@ export function useOrders() {
   const [endCursor, setEndCursor] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [posOnly, setPosOnly] = useState(false);
+  const [sort, setSort] = useState<SortConfig<OrderSortKey>>({ key: 'CREATED_AT', direction: 'desc' });
   const requestId = useRef(0);
   const busy = useRef(false);
   // Cache fetched pages for later searches while this list is open. Refresh clears it.
@@ -40,11 +43,12 @@ export function useOrders() {
         let cursor = after || null;
         let next: string | null = null;
         do {
-          const key = `${posFilter}:${cursor || ''}`;
+          const key = `${sort.key}:${sort.direction}:${posFilter}:${cursor || ''}`;
           let data = pages.current.get(key);
           if (!data) {
             data = await queryPage<OrdersResponse>(ORDERS_QUERY, {
               first: 20, after: cursor,
+              sortKey: sort.key, reverse: sort.direction === 'desc',
               ...(posFilter ? { query: 'tag:"POS MML"' } : {}),
             }, isCurrent);
             if (!isCurrent()) return;
@@ -79,8 +83,12 @@ export function useOrders() {
         if (id === requestId.current) { busy.current = false; setLoading(false); }
       }
     },
-    [],
+    [sort],
   );
+
+  const changeSort = useCallback((key: OrderSortKey) => {
+    setSort(current => nextSort(current, key, key === 'CREATED_AT' || key === 'PROCESSED_AT' ? 'desc' : 'asc'));
+  }, []);
 
   useEffect(() => {
     const requests = requestId;
@@ -126,5 +134,7 @@ export function useOrders() {
     setSearchQuery,
     posOnly,
     setPosOnly,
+    sort,
+    changeSort,
   };
 }

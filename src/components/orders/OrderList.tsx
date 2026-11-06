@@ -1,4 +1,6 @@
-import type { Order } from '../../types/order';
+import type { Order, OrderSortKey } from '../../types/order';
+import type { SortConfig } from '../../utils/sort';
+import { SortableTableHead } from '../SortableTableHead';
 import { formatCurrency } from '../../utils/currency';
 import { es } from '../../i18n/es';
 import { Badge } from '@/components/ui/badge';
@@ -8,7 +10,6 @@ import {
   TableHeader,
   TableBody,
   TableRow,
-  TableHead,
   TableCell,
 } from '@/components/ui/table';
 import { ClipboardList } from 'lucide-react';
@@ -19,6 +20,8 @@ interface OrderListProps {
   hasNextPage: boolean;
   onLoadMore: () => void;
   onSelectOrder: (order: Order) => void;
+  sort: SortConfig<OrderSortKey>;
+  onSort: (key: OrderSortKey) => void;
 }
 
 function financialBadgeVariant(status: string) {
@@ -57,39 +60,48 @@ function fulfillmentLabel(status: string): string {
   }
 }
 
-export function OrderList({ orders, loading, hasNextPage, onLoadMore, onSelectOrder }: OrderListProps) {
-  if (loading && orders.length === 0) {
-    return (
-      <div className="flex items-center justify-center py-12 text-muted-foreground">
-        Cargando...
-      </div>
-    );
-  }
+function formatOrderDate(value: string | null) {
+  if (!value) return '—';
+  return new Date(value).toLocaleDateString('es-ES', {
+    day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit',
+  });
+}
 
-  if (orders.length === 0) {
-    return (
-      <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
-        <ClipboardList className="mb-2 size-8" />
-        <span>{es.orders.noOrders}</span>
-      </div>
-    );
-  }
+const columns: { key: OrderSortKey; label: string }[] = [
+  { key: 'ORDER_NUMBER', label: es.orders.orderNumber },
+  { key: 'CREATED_AT', label: es.orders.createdDate },
+  { key: 'PROCESSED_AT', label: es.orders.processedDate },
+  { key: 'CUSTOMER_NAME', label: es.orders.customer },
+  { key: 'TOTAL_PRICE', label: es.orders.total },
+  { key: 'FINANCIAL_STATUS', label: es.orders.status },
+  { key: 'FULFILLMENT_STATUS', label: 'Envío' },
+];
+
+export function OrderList({ orders, loading, hasNextPage, onLoadMore, onSelectOrder, sort, onSort }: OrderListProps) {
 
   return (
     <div>
       <div className="overflow-x-auto">
-      <Table>
+      <Table aria-busy={loading}>
         <TableHeader>
           <TableRow>
-            <TableHead>{es.orders.orderNumber}</TableHead>
-            <TableHead>{es.orders.date}</TableHead>
-            <TableHead>{es.orders.customer}</TableHead>
-            <TableHead>{es.orders.total}</TableHead>
-            <TableHead>{es.orders.status}</TableHead>
-            <TableHead>Envio</TableHead>
+            {columns.map(column => <SortableTableHead
+              key={column.key}
+              label={column.label}
+              direction={sort.key === column.key ? sort.direction : undefined}
+              onSort={() => onSort(column.key)}
+            />)}
           </TableRow>
         </TableHeader>
         <TableBody>
+          {orders.length === 0 && <TableRow>
+            <TableCell colSpan={columns.length}>
+              <div className="flex flex-col items-center justify-center py-12 text-muted-foreground" role="status">
+                {!loading && <ClipboardList className="mb-2 size-8" />}
+                <span>{loading ? es.pos.loading : es.orders.noOrders}</span>
+              </div>
+            </TableCell>
+          </TableRow>}
           {orders.map((order) => (
             <TableRow
               key={order.id}
@@ -97,15 +109,8 @@ export function OrderList({ orders, loading, hasNextPage, onLoadMore, onSelectOr
               onClick={() => onSelectOrder(order)}
             >
               <TableCell className="font-semibold">{order.name}</TableCell>
-              <TableCell>
-                {new Date(order.createdAt).toLocaleDateString('es-ES', {
-                  day: '2-digit',
-                  month: 'short',
-                  year: 'numeric',
-                  hour: '2-digit',
-                  minute: '2-digit',
-                })}
-              </TableCell>
+              <TableCell>{formatOrderDate(order.createdAt)}</TableCell>
+              <TableCell>{formatOrderDate(order.processedAt)}</TableCell>
               <TableCell>
                 {order.customer
                   ? `${order.customer.firstName} ${order.customer.lastName}`

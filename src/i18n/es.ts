@@ -33,6 +33,8 @@ export const es = {
     recent: 'Pedidos Recientes',
     orderNumber: 'Pedido',
     date: 'Fecha',
+    createdDate: 'Fecha de creación',
+    processedDate: 'Fecha de procesamiento',
     customer: 'Cliente',
     total: 'Total',
     status: 'Estado',
