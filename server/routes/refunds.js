@@ -5,6 +5,7 @@ import { createPosService } from '../lib/posService.js';
 import { sendOperationError } from './payments.js';
 
 import { quoteExchange, exchangeItems, getExchangeReceipt } from '../lib/exchange.js';
+import { cancelOrder } from '../lib/cancelOrder.js';
 
 const router = Router();
 router.post('/exchanges/quote', async (req, res) => {
@@ -124,31 +125,7 @@ router.post('/orders/cancel', async (req, res) => {
   try {
     await getStore().exclusive(async () => {
       assertOrderIdle(req.body.orderId);
-      const { orderId, reason, refund, restock } = req.body;
-      if (refund !== false) {
-        const current = await shopifyGQL(`query OrderCancellationBalance($id: ID!) {
-          order(id: $id) {
-            totalReceivedSet { shopMoney { amount } }
-            totalRefundedSet { shopMoney { amount } }
-          }
-        }`, { id: orderId });
-        if (!current.order) throw new PosError('Pedido no encontrado', 404);
-        if (Number(current.order.totalReceivedSet.shopMoney.amount) > Number(current.order.totalRefundedSet.shopMoney.amount)) {
-          throw new PosError('Reembolsa primero el pedido desde «Reembolso» para registrar el método y la caja; después podrás cancelarlo.', 409);
-        }
-      }
-      const data = await shopifyGQL(
-        `mutation($orderId: ID!, $reason: OrderCancelReason!, $refund: Boolean!, $restock: Boolean!) {
-          orderCancel(orderId: $orderId, reason: $reason, refund: $refund, restock: $restock) {
-            orderCancelUserErrors { field message }
-          }
-        }`,
-        { orderId, reason: reason || 'OTHER', refund: false, restock: restock ?? true },
-      );
-      if (data.orderCancel.orderCancelUserErrors?.length) {
-        return res.status(400).json({ error: data.orderCancel.orderCancelUserErrors.map(e => e.message).join(', ') });
-      }
-      res.json({ success: true });
+      res.json(await cancelOrder(shopifyGQL, req.body));
     });
   } catch (err) {
     res.status(err.status || 500).json({ error: err.message });

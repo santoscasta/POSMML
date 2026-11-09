@@ -33,7 +33,7 @@ test('order cancellation checks refunds using valid GraphQL before cancelling', 
   const orderId = 'gid://shopify/Order/11636';
 
   for (const scenario of [
-    { name: 'fully refunded 200 EUR order', refunded: '200.00', status: 200, cancels: true },
+    { name: 'fully refunded 200 EUR POS order with a completed preparation', refunded: '200.00', prepared: true, status: 200, cancels: true },
     { name: 'partially refunded order', refunded: '100.00', status: 409, error: /Reembolsa primero/ },
     { name: 'paid order without a refund', refunded: '0.00', status: 409, error: /Reembolsa primero/ },
     { name: 'missing order', missing: true, status: 404, error: /Pedido no encontrado/ },
@@ -41,17 +41,22 @@ test('order cancellation checks refunds using valid GraphQL before cancelling', 
   ]) {
     await t.test(scenario.name, async () => {
       const calls = [];
+      let preparationCancelled = false;
       globalThis.fetch = async (target, options) => {
         assert.match(String(target), /\/admin\/api\//);
         const { query, variables } = JSON.parse(options.body);
         const operation = parse(query).definitions[0].operation;
         calls.push({ operation, variables });
-        const data = operation === 'query'
+        if (query.includes('CancelPosOrderFulfillment')) preparationCancelled = true;
+        if (query.includes('mutation CancelPosOrder(')) assert.ok(!scenario.prepared || preparationCancelled, 'Cannot cancel an order that has outstanding fulfillments');
+        const data = query.includes('CancelPosOrderFulfillment') ? { fulfillmentCancel: { fulfillment: { id: 'fulfillment-1', status: 'CANCELLED' }, userErrors: [] } }
+          : query.includes('OrderCancellationStatus') ? { order: { cancelledAt: '2026-11-09T16:00:00Z' } } : operation === 'query'
           ? { order: scenario.missing ? null : {
+            cancelledAt: null, tags: ['POS MML'], fulfillments: scenario.prepared ? [{ id: 'fulfillment-1', status: 'SUCCESS', service: { handle: 'manual' }, trackingInfo: [] }] : [],
             totalReceivedSet: { shopMoney: { amount: '200.00' } },
             totalRefundedSet: { shopMoney: { amount: scenario.refunded } },
           } }
-          : { orderCancel: { orderCancelUserErrors: scenario.rejected ? [{ message: 'Cancellation rejected' }] : [] } };
+          : { orderCancel: { job: { id: 'job-1', done: false }, orderCancelUserErrors: scenario.rejected ? [{ message: 'Cancellation rejected' }] : [] } };
         return new Response(JSON.stringify({ data }), { status: 200 });
       };
       const response = await originalFetch(url, {
@@ -64,7 +69,9 @@ test('order cancellation checks refunds using valid GraphQL before cancelling', 
       else assert.deepEqual(body, { success: true });
       assert.deepEqual(calls, [
         { operation: 'query', variables: { id: orderId } },
-        ...(scenario.cancels ? [{ operation: 'mutation', variables: { orderId, reason: 'OTHER', refund: false, restock: true } }] : []),
+        ...(scenario.prepared ? [{ operation: 'mutation', variables: { id: 'fulfillment-1' } }] : []),
+        ...(scenario.cancels ? [{ operation: 'mutation', variables: { orderId, reason: 'OTHER', restock: true } }] : []),
+        ...(scenario.status === 200 ? [{ operation: 'query', variables: { id: orderId } }] : []),
       ]);
     });
   }
