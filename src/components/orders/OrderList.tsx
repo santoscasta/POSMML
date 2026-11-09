@@ -2,6 +2,7 @@ import type { Order, OrderSortKey } from '../../types/order';
 import type { SortConfig } from '../../utils/sort';
 import { SortableTableHead } from '../SortableTableHead';
 import { formatCurrency } from '../../utils/currency';
+import { orderStatusLabel } from '../../utils/orderStatus';
 import { es } from '../../i18n/es';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -10,6 +11,7 @@ import {
   TableHeader,
   TableBody,
   TableRow,
+  TableHead,
   TableCell,
 } from '@/components/ui/table';
 import { ClipboardList } from 'lucide-react';
@@ -48,6 +50,10 @@ function financialLabel(status: string): string {
     case 'PENDING': return es.orders.pending;
     case 'REFUNDED': return es.orders.refunded;
     case 'PARTIALLY_REFUNDED': return es.orders.partiallyRefunded;
+    case 'PARTIALLY_PAID': return 'Parcialmente pagado';
+    case 'AUTHORIZED': return 'Autorizado';
+    case 'VOIDED': return 'Anulado';
+    case 'EXPIRED': return 'Caducado';
     default: return status;
   }
 }
@@ -56,6 +62,10 @@ function fulfillmentLabel(status: string): string {
   switch (status) {
     case 'FULFILLED': return es.orders.fulfilled;
     case 'UNFULFILLED': return es.orders.unfulfilled;
+    case 'PARTIALLY_FULFILLED': return 'Parcialmente completado';
+    case 'IN_PROGRESS': return 'En preparación';
+    case 'ON_HOLD': return 'En espera';
+    case 'SCHEDULED': return 'Programado';
     default: return status;
   }
 }
@@ -67,14 +77,15 @@ function formatOrderDate(value: string | null) {
   });
 }
 
-const columns: { key: OrderSortKey; label: string }[] = [
+const columns: { key: OrderSortKey | 'ORDER_STATUS'; label: string }[] = [
   { key: 'ORDER_NUMBER', label: es.orders.orderNumber },
+  { key: 'ORDER_STATUS', label: es.orders.status },
   { key: 'CREATED_AT', label: es.orders.createdDate },
   { key: 'PROCESSED_AT', label: es.orders.processedDate },
   { key: 'CUSTOMER_NAME', label: es.orders.customer },
   { key: 'TOTAL_PRICE', label: es.orders.total },
-  { key: 'FINANCIAL_STATUS', label: es.orders.status },
-  { key: 'FULFILLMENT_STATUS', label: 'Envío' },
+  { key: 'FINANCIAL_STATUS', label: es.orders.paymentStatus },
+  { key: 'FULFILLMENT_STATUS', label: es.orders.fulfillmentStatus },
 ];
 
 export function OrderList({ orders, loading, hasNextPage, onLoadMore, onSelectOrder, sort, onSort }: OrderListProps) {
@@ -85,11 +96,13 @@ export function OrderList({ orders, loading, hasNextPage, onLoadMore, onSelectOr
       <Table aria-busy={loading}>
         <TableHeader>
           <TableRow>
-            {columns.map(column => <SortableTableHead
-              key={column.key}
-              label={column.label}
-              direction={sort.key === column.key ? sort.direction : undefined}
-              onSort={() => onSort(column.key)}
+            {columns.map(({ key, label }) => key === 'ORDER_STATUS'
+              ? <TableHead key={key}>{label}</TableHead>
+              : <SortableTableHead
+              key={key}
+              label={label}
+              direction={sort.key === key ? sort.direction : undefined}
+              onSort={() => onSort(key)}
             />)}
           </TableRow>
         </TableHeader>
@@ -109,6 +122,11 @@ export function OrderList({ orders, loading, hasNextPage, onLoadMore, onSelectOr
               onClick={() => onSelectOrder(order)}
             >
               <TableCell className="font-semibold">{order.name}</TableCell>
+              <TableCell>
+                <Badge variant={order.cancelledAt ? 'destructive' : order.closed ? 'secondary' : 'outline'}>
+                  {orderStatusLabel(order)}
+                </Badge>
+              </TableCell>
               <TableCell>{formatOrderDate(order.createdAt)}</TableCell>
               <TableCell>{formatOrderDate(order.processedAt)}</TableCell>
               <TableCell>

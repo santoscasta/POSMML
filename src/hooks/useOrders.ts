@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { ORDERS_QUERY, ORDER_SEARCH_ITEMS_QUERY } from '../graphql/orders';
 import { matchesSearch } from '../utils/search';
+import { orderStatusLabel } from '../utils/orderStatus';
 import { completeConnection, nextCursor, queryPage } from '../utils/shopifyPagination';
 import type { Connection } from '../utils/shopifyPagination';
 import type { Order, OrderSortKey } from '../types/order';
@@ -65,7 +66,7 @@ export function useOrders() {
               if (!isCurrent()) return;
             }
             const order = { ...node, lineItems: node.lineItems.edges.map(e => e.node) };
-            if (matchesSearch(order, search)) fetched.push(order);
+            if (matchesSearch({ ...order, orderStatus: orderStatusLabel(order) }, search)) fetched.push(order);
           }
           next = nextCursor(data.orders, seen);
           cursor = next;

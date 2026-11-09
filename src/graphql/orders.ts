@@ -69,7 +69,7 @@ export const ORDERS_QUERY = `
       edges {
         cursor
         node {
-          id name createdAt processedAt cancelledAt note tags email phone
+          id name createdAt processedAt cancelledAt closed note tags email phone
           displayFinancialStatus displayFulfillmentStatus
           discountCodes paymentGatewayNames customAttributes { key value }
           totalPriceSet { shopMoney { amount currencyCode } }

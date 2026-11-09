@@ -14,6 +14,8 @@ export type OrderSortKey = 'ORDER_NUMBER' | 'CREATED_AT' | 'PROCESSED_AT' | 'CUS
 export interface Order {
   id: string;
   name: string;
+  cancelledAt: string | null;
+  closed: boolean;
   totalPriceSet: { shopMoney: { amount: string; currencyCode: string } };
   displayFinancialStatus: string;
   displayFulfillmentStatus: string;
