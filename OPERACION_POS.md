@@ -30,6 +30,8 @@ La prueba aislada `npm run dev:horario` utiliza las cuentas y rutas descritas en
 
 ## Cobros y devoluciones
 
+En el detalle de un pedido que contiene el producto normal **TARJETA REGALO**, aparece **Generar vale e imprimir** para cada unidad comprada. El pedido debe estar pagado, sin cancelación ni reembolsos. El importe se toma del precio unitario del pedido y el vale se asocia a su cliente cuando existe. La emisión queda vinculada al pedido, artículo y unidad: volver a pulsar, reabrir el pedido o reanudar una respuesta perdida recupera el mismo código. Después de emitirlo aparece **Imprimir vale**; si se bloquea la ventana de impresión, permite las ventanas emergentes y usa ese botón. La emisión no registra otro cobro ni un reembolso. Antes de devolver o cambiar una tarjeta con un vale emitido, cancela ese vale desde **Vales**. Las tarjetas nativas de Shopify mantienen su flujo de emisión de Shopify.
+
 En «Cambiar artículos», el apartado «Artículos que se lleva» muestra el catálogo con fotos. Pulsa una prenda y elige su talla o variante; los artículos con una sola variante se añaden directamente. Puedes filtrar por categoría (incluidas sus subcategorías) o buscar por nombre de forma opcional. Se muestran todos los productos cargados, sin el límite anterior de 30, y las tallas agotadas no se pueden seleccionar. Los artículos elegidos conservan su foto junto a la cantidad y el botón «Quitar».
 
 Cada intento tiene un identificador persistente. El navegador lo guarda antes de enviar la petición; el servidor guarda los pasos antes de llamar a Shopify. Un reintento conserva carrito, importe y método originales.

@@ -7,7 +7,7 @@ import { useSession } from '../context/SessionContext';
 
 interface PendingOperation {
   operationId: string;
-  kind: 'checkout' | 'refund' | 'voucher_issue' | 'exchange';
+  kind: 'checkout' | 'refund' | 'voucher_issue' | 'order_voucher' | 'exchange';
   input: Record<string, unknown>;
   createdAt: string;
   steps: Record<string, string>;
@@ -31,7 +31,7 @@ export function PendingOperations() {
     setBusy(true);
     setMessage('');
     try {
-      const result = await apiPost<{ name?: string; voucherCode?: string; fullCode?: string }>(operation.kind === 'exchange' ? '/exchanges' : operation.kind === 'checkout' ? '/checkout' : operation.kind === 'voucher_issue' ? '/vouchers' : '/refunds', {
+      const result = await apiPost<{ name?: string; voucherCode?: string; fullCode?: string }>(operation.kind === 'order_voucher' ? '/orders/gift-vouchers' : operation.kind === 'exchange' ? '/exchanges' : operation.kind === 'checkout' ? '/checkout' : operation.kind === 'voucher_issue' ? '/vouchers' : '/refunds', {
         operationId: operation.operationId, ...operation.input,
       });
       if (operation.kind === 'exchange') localStorage.removeItem(`pos.pending-exchange.v1:${operation.input.orderId}`);
@@ -53,7 +53,7 @@ export function PendingOperations() {
         {message && <p role="status" className="break-words rounded border p-3 text-sm">{message}</p>}
         {!busy && !operations.length && <p className="text-sm">No hay operaciones pendientes.</p>}
         {operations.map(operation => <div key={operation.operationId} className="space-y-2 rounded border p-3 text-sm">
-          <p>{operation.kind === 'exchange' ? 'Cambio' : operation.kind === 'checkout' ? 'Cobro' : operation.kind === 'voucher_issue' ? 'Emisión de vale' : 'Devolución'} · {new Date(operation.createdAt).toLocaleString('es-ES')}</p>
+          <p>{operation.kind === 'exchange' ? 'Cambio' : operation.kind === 'checkout' ? 'Cobro' : ['voucher_issue', 'order_voucher'].includes(operation.kind) ? 'Emisión de vale' : 'Devolución'} · {new Date(operation.createdAt).toLocaleString('es-ES')}</p>
           <p className="break-all text-xs text-muted-foreground">{operation.operationId}</p>
           <Button disabled={busy} onClick={() => resume(operation)}>Reanudar operación</Button>
         </div>)}

@@ -3,18 +3,23 @@ import { cents } from './accounting.js';
 import { PosError } from './operationStore.js';
 import { mutationResult } from './posService.js';
 
-export async function issueVoucher(gql, store, operationId, input, fields) {
-  return store.operation(operationId, 'voucher_issue', input, async ctx => {
-    const { amount, customerName, customerEmail, notes } = input;
+export async function issueVoucher(gql, store, operationId, input, fields, { kind = 'voucher_issue', prepare } = {}) {
+  return store.operation(operationId, kind, input, async ctx => {
+    if (prepare && !ctx.op.voucherInput) {
+      ctx.op.voucherInput = await prepare(input);
+      ctx.save();
+    }
+    const voucherInput = prepare ? ctx.op.voucherInput : input;
+    const { amount, customerName, customerEmail, notes } = voucherInput;
     if (typeof amount !== 'number' || cents(amount) <= 0) throw new PosError('Importe inválido');
     if (customerEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customerEmail)) throw new PosError('Correo inválido');
     ctx.op.giftCardCode ||= randomBytes(8).toString('hex').toUpperCase();
     ctx.save();
-    const metadata = { ...(customerName ? { customerName } : {}), ...(customerEmail ? { customerEmail } : {}), operationId };
+    const metadata = { ...(customerName ? { customerName } : {}), ...(customerEmail ? { customerEmail } : {}), ...(voucherInput.originOrderId ? { originOrderId: voucherInput.originOrderId } : {}), operationId };
     const note = `${notes || `Vale POS MML${customerName ? ` - ${customerName}` : ''}`}\n---POS_META---\n${JSON.stringify(metadata)}`;
     const card = await ctx.step('voucher-create', async () => mutationResult(await gql(`mutation IssuePosVoucher($input: GiftCardCreateInput!) {
       giftCardCreate(input: $input) { giftCard { ${fields} } userErrors { message } }
-    }`, { input: { ...(input.customerId ? { customerId: input.customerId } : {}), code: ctx.op.giftCardCode, initialValue: (cents(amount) / 100).toFixed(2), note } }), 'giftCardCreate', 'giftCard'), async () => {
+    }`, { input: { ...(voucherInput.customerId ? { customerId: voucherInput.customerId } : {}), code: ctx.op.giftCardCode, initialValue: (cents(amount) / 100).toFixed(2), note } }), 'giftCardCreate', 'giftCard'), async () => {
       let after = null;
       const cursors = new Set();
       const matches = [];

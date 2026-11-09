@@ -4,6 +4,7 @@ import { PosError } from './operationStore.js';
 import { createPosService, currentSession } from './posService.js';
 import { issueVoucher } from './voucherIssue.js';
 import { resolveRefundCustomer } from './refundCustomer.js';
+import { assertGiftVouchersCancelled } from './orderGiftVoucher.js';
 
 export async function quoteExchange(gql, input, store) {
   if (!/^gid:\/\/shopify\/Order\/\d+$/.test(input.orderId)) throw new PosError('Pedido inválido');
@@ -11,6 +12,7 @@ export async function quoteExchange(gql, input, store) {
   const items = input.items;
   const valid = (rows, field, resource) => Array.isArray(rows) && rows.length > 0 && rows.length <= 100 && new Set(rows.map(r => r[field])).size === rows.length && rows.every(r => new RegExp(`^gid://shopify/${resource}/\\d+$`).test(r[field]) && Number.isInteger(r.quantity) && r.quantity > 0);
   if (!valid(returns, 'lineItemId', 'LineItem') || !valid(items, 'variantId', 'ProductVariant')) throw new PosError('Selecciona artículos para devolver y para entregar');
+  await assertGiftVouchersCancelled(gql, store, input.orderId, returns.map(line => line.lineItemId));
   if (input.restock && !/^gid:\/\/shopify\/Location\/\d+$/.test(input.locationId || '')) throw new PosError('Selecciona la ubicación de reposición');
   if (input.restock) {
     const installation = await gql(`query ExchangeScopes { currentAppInstallation { accessScopes { handle } } }`);
@@ -76,7 +78,7 @@ export async function quoteExchange(gql, input, store) {
 // Child operations share one lock and journal. Each mutation still records its
 // own intent/result through the parent step runner for safe crash recovery.
 function childStore(ctx) {
-  return { operation: async (key, kind, input, work) => {
+  return { read: () => ctx.state, operation: async (key, kind, input, work) => {
     ctx.op.children ||= {};
     const child = ctx.op.children[key] ||= { key, kind, input, steps: {}, sessionId: ctx.op.sessionId };
     ctx.save();

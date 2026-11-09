@@ -10,6 +10,7 @@ import { formatCurrency } from '../../utils/currency';
 import { paymentSummary, paymentAmounts, voucherLabel } from '../../utils/paymentDisplay';
 import { ExchangeModal } from './ExchangeModal';
 import { RefundModal } from './RefundModal';
+import { OrderGiftVouchers } from './OrderGiftVouchers';
 import {
   Dialog,
   DialogContent,
@@ -337,6 +338,8 @@ export function OrderDetailModal({ orderId, open, onClose, onUpdate }: OrderDeta
                         </Table>
                       </div>
                     </div>
+
+                    <OrderGiftVouchers key={order.id} order={order} />
 
                     {/* Refund history */}
                     {refunds.length > 0 && (

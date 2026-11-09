@@ -3,6 +3,7 @@ import { cents, paymentSplits } from './accounting.js';
 import { randomBytes } from 'node:crypto';
 import { resolveRefundCustomer } from './refundCustomer.js';
 import { fulfillSale } from './fulfillSale.js';
+import { assertGiftVouchersCancelled } from './orderGiftVoucher.js';
 
 export function mutationResult(data, key, field) {
   const payload = data?.[key];
@@ -202,6 +203,7 @@ export function createPosService(gql, store, { exchange = false } = {}) {
       if (!/^gid:\/\/shopify\/Order\/\d+$/.test(input.orderId) || !['CASH', 'CARD', 'VOUCHER', ...(exchange ? ['EXCHANGE'] : [])].includes(input.method) || cents(input.amount) <= 0) throw new PosError('Devolución inválida');
       const sessionId = await session(ctx);
       if (!ctx.op.refundInput) {
+        await assertGiftVouchersCancelled(gql, store, input.orderId, input.refundLineItems?.map(line => line.lineItemId));
         const data = await gql(`query PosRefundOrder($id: ID!) {
           order(id: $id) { id name totalPriceSet { shopMoney { amount currencyCode } } totalRefundedSet { shopMoney { amount } }
             customer { id firstName lastName email phone }

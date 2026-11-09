@@ -31,6 +31,7 @@ export interface OrderLineItem {
   id: string;
   title: string;
   quantity: number;
+  isGiftCard?: boolean;
   variant?: { id: string; title: string };
   originalTotalSet: { shopMoney: { amount: string; currencyCode: string } };
   originalUnitPriceSet: { shopMoney: { amount: string; currencyCode: string } };

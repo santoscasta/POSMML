@@ -7,6 +7,7 @@ import { sendVoucherEmail } from '../lib/voucherEmail.js';
 import { parseVoucherMetadata } from '../lib/voucherMetadata.js';
 import { lookupVoucher } from '../lib/voucherLookup.js';
 import { assignVoucherCustomer } from '../lib/voucherCustomer.js';
+import { issueOrderGiftVoucher, orderGiftVouchers } from '../lib/orderGiftVoucher.js';
 
 const router = Router();
 
@@ -62,7 +63,7 @@ export function mapGiftCard(gc) {
     customerId: gc.customer?.id || null,
     status: !gc.enabled ? 'CANCELLED' : balance <= 0 ? 'EXHAUSTED' : 'ACTIVE',
     notes: displayNote,
-    originOrderId: gc.order?.name || null,
+    originOrderId: gc.order?.name || meta.originOrderId || null,
     issuedAt: gc.createdAt,
     expiresOn: gc.expiresOn,
     transactions,
@@ -78,6 +79,22 @@ const GC_FIELDS = `
     edges { node { id amount { amount currencyCode } note processedAt } }
   }
 `;
+
+router.get('/orders/:orderId/gift-vouchers', async (req, res) => {
+  try {
+    const vouchers = await orderGiftVouchers(shopifyGQL, getStore(), req.params.orderId, GC_FIELDS);
+    res.json(vouchers.map(({ card, ...entry }) => ({ ...entry, voucher: { ...mapGiftCard(card), fullCode: entry.fullCode } })));
+  } catch (err) { res.status(err.status || 500).json({ error: err.message }); }
+});
+
+router.post('/orders/gift-vouchers', async (req, res) => {
+  try {
+    const result = await issueOrderGiftVoucher(shopifyGQL, getStore(), req.body, GC_FIELDS);
+    res.json({ ...mapGiftCard(result.card), fullCode: result.fullCode });
+  } catch (err) {
+    res.status(err.status || 500).json({ error: err.message, code: err.code });
+  }
+});
 
 // List
 router.get('/vouchers', async (req, res) => {

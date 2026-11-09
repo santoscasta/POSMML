@@ -126,7 +126,12 @@ router.post('/orders/cancel', async (req, res) => {
       assertOrderIdle(req.body.orderId);
       const { orderId, reason, refund, restock } = req.body;
       if (refund !== false) {
-        const current = await shopifyGQL(`query($id: ID!) { order(id: $id) { totalReceivedSet { shopMoney { amount } } totalRefundedSet { shopMoney { amount } } }`, { id: orderId });
+        const current = await shopifyGQL(`query OrderCancellationBalance($id: ID!) {
+          order(id: $id) {
+            totalReceivedSet { shopMoney { amount } }
+            totalRefundedSet { shopMoney { amount } }
+          }
+        }`, { id: orderId });
         if (!current.order) throw new PosError('Pedido no encontrado', 404);
         if (Number(current.order.totalReceivedSet.shopMoney.amount) > Number(current.order.totalRefundedSet.shopMoney.amount)) {
           throw new PosError('Reembolsa primero el pedido desde «Reembolso» para registrar el método y la caja; después podrás cancelarlo.', 409);

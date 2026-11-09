@@ -186,7 +186,7 @@ export const ORDER_DETAIL = `
         pageInfo { hasNextPage endCursor }
         edges {
           node {
-            id title quantity
+            id title quantity isGiftCard
             variant { id title }
             originalTotalSet { shopMoney { amount currencyCode } }
             originalUnitPriceSet { shopMoney { amount currencyCode } }
