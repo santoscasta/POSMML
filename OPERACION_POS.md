@@ -36,6 +36,8 @@ En el detalle de un pedido que contiene el producto normal **TARJETA REGALO**, a
 
 En «Cambiar artículos», el apartado «Artículos que se lleva» muestra el catálogo con fotos. Pulsa una prenda y elige su talla o variante; los artículos con una sola variante se añaden directamente. Puedes filtrar por categoría (incluidas sus subcategorías) o buscar por nombre de forma opcional. Se muestran todos los productos cargados, sin el límite anterior de 30, y las tallas agotadas no se pueden seleccionar. Los artículos elegidos conservan su foto junto a la cantidad y el botón «Quitar».
 
+Los cambios admiten pedidos con un pago confirmado, independientemente del método de pago original. El valor de las prendas devueltas se aplica al nuevo pedido; solo se cobra la diferencia y, si sobra importe, se emite un vale asociado a un cliente. El cambio no reembolsa el pago original. Los pedidos sin un cobro confirmado siguen bloqueados.
+
 Cada intento tiene un identificador persistente. El navegador lo guarda antes de enviar la petición; el servidor guarda los pasos antes de llamar a Shopify. Un reintento conserva carrito, importe y método originales.
 
 - Si el cobro falla, utiliza **Reanudar cobro pendiente**. El pedido se completa inicialmente como pendiente de pago y solo se marca pagado después del canje de los vales.

@@ -22,7 +22,7 @@ export async function quoteExchange(gql, input, store) {
   }
   const data = await gql(`query ExchangeQuote($id: ID!, $lines: [RefundLineItemInput!]!, $variants: [ID!]!) {
     order(id: $id) { id name cancelledAt customer { id firstName lastName email phone }
-      transactions(first: 100) { kind status gateway }
+      transactions(first: 100) { kind status }
       suggestedRefund(refundLineItems: $lines, refundShipping: false) { amountSet { shopMoney { amount currencyCode } }
         refundLineItems { quantity subtotalSet { shopMoney { amount currencyCode } } totalTaxSet { shopMoney { amount currencyCode } } lineItem { id title refundableQuantity variant { title inventoryItem { id tracked } } } } }
     }
@@ -30,7 +30,9 @@ export async function quoteExchange(gql, input, store) {
   }`, { id: input.orderId, lines: returns.map(r => ({ ...r, restockType: 'NO_RESTOCK' })), variants: items.map(i => i.variantId) });
   const order = data.order;
   if (!order || order.cancelledAt) throw new PosError('Pedido no disponible para cambios');
-  if (order.transactions.find(t => ['SALE', 'CAPTURE'].includes(t.kind) && t.status === 'SUCCESS')?.gateway !== 'manual') throw new PosError('Este pedido requiere gestionar el cambio desde Shopify: no tiene un pago manual compatible');
+  // Current exchanges apply credit to the replacement order without refunding
+  // the original payment, so they do not depend on its gateway.
+  if (!order.transactions?.some(t => ['SALE', 'CAPTURE'].includes(t.kind) && t.status === 'SUCCESS')) throw new PosError('Este pedido no tiene un pago confirmado para realizar el cambio');
   const suggestion = order.suggestedRefund;
   if (!suggestion || suggestion.amountSet.shopMoney.currencyCode !== 'EUR') throw new PosError('No se ha podido calcular la devolución en euros');
   for (const r of returns) {
