@@ -15,7 +15,8 @@ import { Home, ShoppingCart, ClipboardList, Wallet, Ticket, CircleDot, Settings,
 import { AuthGate } from './components/AuthGate';
 import { PendingOperations } from './components/PendingOperations';
 import { useAuth } from './context/AuthContext';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { recordNavigation } from './utils/diagnostics';
 import { AttendanceProvider, useAttendance } from './context/AttendanceContext';
 import { attendanceLabels } from './utils/attendance';
 import { AttendancePage } from './pages/AttendancePage';
@@ -139,6 +140,7 @@ function BottomNav() {
 function AppContent() {
   const navigate = useNavigate();
   const location = useLocation();
+  useEffect(() => { recordNavigation(location.pathname); }, [location.pathname]);
   const { isOpen, error, refresh } = useSession();
   const { overview } = useAttendance();
   const { user, logout } = useAuth();

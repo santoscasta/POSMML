@@ -1,5 +1,6 @@
 import dotenv from 'dotenv';
 dotenv.config();
+import { logEvent } from './diagnostics.js';
 
 const SHOPIFY_STORE = process.env.SHOPIFY_STORE;
 const SHOPIFY_CLIENT_ID = process.env.SHOPIFY_CLIENT_ID;
@@ -22,10 +23,10 @@ export async function getAccessToken() {
   if (data.access_token) {
     cachedToken = data.access_token;
     tokenExpiresAt = Date.now() + (data.expires_in || 86400) * 1000;
-    console.log('Access token obtained (expires in', data.expires_in, 'seconds)');
+    logEvent('shopify.auth_ready');
     return cachedToken;
   }
-  console.error('Token request failed:', data);
+  logEvent('shopify.auth_failed', { status: response.status }, 'error');
   return null;
 }
 

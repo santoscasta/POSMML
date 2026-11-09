@@ -79,7 +79,8 @@ test('forced opening stops if Shopify rejects closing the previous session', asy
   globalThis.fetch = async (url, options) => {
     if (!String(url).includes('/admin/api/')) return originalFetch(url, options);
     const { query } = JSON.parse(options.body); let data;
-    if (query.includes('metaobjectUpdate')) data = { metaobjectUpdate: { metaobject: null, userErrors: [{ message: 'Close rejected' }] } };
+    if (query.includes('PosSessionDefinition')) data = { metaobjectDefinitionByType: { id: 'definition-1' } };
+    else if (query.includes('metaobjectUpdate')) data = { metaobjectUpdate: { metaobject: null, userErrors: [{ message: 'Close rejected' }] } };
     else if (query.includes('metaobjectCreate')) { creates++; throw new Error('Must not create'); }
     else data = { metaobjects: { edges: [{ node: session }] } };
     return new Response(JSON.stringify({ data }), { status: 200 });

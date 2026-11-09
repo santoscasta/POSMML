@@ -16,6 +16,7 @@ import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
 import { Printer, CheckCircle2 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { printDocument } from '../../utils/print';
 
 interface CloseSessionModalProps {
   open: boolean;
@@ -70,7 +71,7 @@ export function CloseSessionModal({ open, onClose }: CloseSessionModalProps) {
     onClose();
   };
 
-  const handlePrintReport = () => {
+  const handlePrintReport = async () => {
     const data = closeResult;
     if (!data) return;
 
@@ -84,9 +85,7 @@ export function CloseSessionModal({ open, onClose }: CloseSessionModalProps) {
     const rExpected = data.expectedAmount ?? rKpis?.expectedCash ?? data.openingAmount ?? 0;
     const rDifference = (data.closingAmount || 0) - rExpected;
 
-    const w = window.open('', '_blank', 'width=420,height=800');
-    if (!w) return;
-    w.document.write(`<!DOCTYPE html><html><head><title>Informe Cierre de Caja</title>
+    const printed = await printDocument(`<!DOCTYPE html><html><head><title>Informe Cierre de Caja</title>
       <style>
         body { font-family: 'Courier New', monospace; width: 320px; margin: 0 auto; padding: 20px 0; font-size: 11px; color: #333; }
         .center { text-align: center; }
@@ -148,8 +147,7 @@ export function CloseSessionModal({ open, onClose }: CloseSessionModalProps) {
 
       <div class="footer">Informe generado: ${dateStr}<br/>myminileo.com</div>
     </body></html>`);
-    w.document.close();
-    w.print();
+    if (!printed) window.alert('Permite las ventanas emergentes para imprimir el informe.');
   };
 
   return (

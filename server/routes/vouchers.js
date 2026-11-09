@@ -7,6 +7,7 @@ import { sendVoucherEmail } from '../lib/voucherEmail.js';
 import { parseVoucherMetadata } from '../lib/voucherMetadata.js';
 import { lookupVoucher } from '../lib/voucherLookup.js';
 import { assignVoucherCustomer } from '../lib/voucherCustomer.js';
+import { logError } from '../lib/diagnostics.js';
 import { issueOrderGiftVoucher, orderGiftVouchers } from '../lib/orderGiftVoucher.js';
 
 const router = Router();
@@ -105,7 +106,7 @@ router.get('/vouchers', async (req, res) => {
     if (status) cards = cards.filter(c => c.status === status);
     res.json(cards);
   } catch (err) {
-    console.error('Vouchers list error:', err);
+    logError('voucher.list_failed', err);
     res.status(500).json({ error: err.message });
   }
 });
@@ -124,7 +125,7 @@ router.get('/vouchers/stats', async (req, res) => {
       activeBalance: active.reduce((s, v) => s + v.currentBalance, 0),
     });
   } catch (err) {
-    console.error('Vouchers stats error:', err);
+    logError('voucher.stats_failed', err);
     res.status(500).json({ error: err.message });
   }
 });

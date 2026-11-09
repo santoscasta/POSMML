@@ -5,6 +5,7 @@ import { getStore } from '../lib/operationStore.js';
 import { getPayments, computeKPIs, collectedSaleAmount } from '../lib/accounting.js';
 import { currentSession } from '../lib/posService.js';
 import { isBusinessToday } from '../lib/businessTime.js';
+import { logError } from '../lib/diagnostics.js';
 
 const router = Router();
 
@@ -63,7 +64,7 @@ router.get('/dashboard', async (req, res) => {
       },
     });
   } catch (error) {
-    console.error('Dashboard error:', error);
+    logError('dashboard.failed', error);
     res.status(500).json({ error: 'Error loading dashboard' });
   }
 });

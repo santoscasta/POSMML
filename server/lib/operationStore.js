@@ -1,6 +1,8 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { randomUUID } from 'node:crypto';
+import { logEvent, logError } from './diagnostics.js';
+import { uuid } from '../../shared/diagnostics.js';
 
 export class PosError extends Error {
   constructor(message, status = 400, code = 'INVALID_REQUEST') {
@@ -74,6 +76,7 @@ export function createOperationStore(directory) {
       // Persist intent BEFORE each external mutation. Unknown outcomes are never
       // replayed automatically (including after process restart or a timeout).
       async function step(name, action, reconcile) {
+        const details = { operationId: uuid(key), kind, step: name };
         const prior = op.steps[name];
         if (prior?.status === 'done') return prior.value;
         if (prior?.status === 'running') {
@@ -81,15 +84,20 @@ export function createOperationStore(directory) {
           if (recovered) {
             op.steps[name] = { status: 'done', value: recovered };
             save();
+            logEvent('operation.step_recovered', details);
             return recovered;
           }
+          logEvent('operation.step_uncertain', details, 'warn');
           throw new PosError(`Operación ${key}: resultado de ${name} sin confirmar. Requiere comprobar Shopify antes de continuar.`, 409, 'RECONCILIATION_REQUIRED');
         }
         op.steps[name] = { status: 'running' };
         save();
+        logEvent('operation.step_started', details);
         let value;
         try { value = await action(); }
         catch (error) {
+          logEvent(error.definiteRejection ? 'operation.step_rejected' : 'operation.step_uncertain', details, 'warn');
+          logError('operation.step_failed', error);
           if (error.definiteRejection) {
             op.steps[name] = { status: 'rejected', error: error.message };
             save();
@@ -99,6 +107,7 @@ export function createOperationStore(directory) {
         }
         op.steps[name] = { status: 'done', value };
         save();
+        logEvent('operation.step_completed', details);
         return value;
       }
       let result;

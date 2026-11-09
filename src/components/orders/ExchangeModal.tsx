@@ -80,9 +80,9 @@ export function ExchangeModal({ order, exchangedQuantities, onClose, onDone }: {
           <p role="status">Cambio completado. Nuevo pedido {result.name}.</p>
           <p>{result.due > 0 ? `Diferencia cobrada: ${formatCurrency(result.due)}` : 'Sin cobro adicional.'}</p>
           {result.change > 0 && <p>Cambio en efectivo: {formatCurrency(result.change)}</p>}
-          <Button className="w-full" onClick={() => { if (!printDocument(exchangeReceipt(result.receipt))) setError('Permite las ventanas emergentes para imprimir el ticket del cambio'); }}>Imprimir ticket del cambio</Button>
+          <Button className="w-full" onClick={async () => { if (!await printDocument(exchangeReceipt(result.receipt))) setError('Permite las ventanas emergentes para imprimir el ticket del cambio'); }}>Imprimir ticket del cambio</Button>
           {result.voucher && <div className="space-y-2 rounded border p-3"><p>Vale asociado a {result.receipt.customer ? `${result.receipt.customer.firstName || ''} ${result.receipt.customer.lastName || ''}`.trim() : 'cliente'}</p><p>Importe: {formatCurrency(result.voucher.amount)}</p><p className="break-all font-mono font-bold">{result.voucher.code}</p>
-            <Button variant="outline" onClick={() => { if (!printDocument(exchangeVoucherReceipt(result.receipt))) setError('Permite las ventanas emergentes para imprimir el vale'); }}>Imprimir vale completo</Button>
+            <Button variant="outline" onClick={async () => { if (!await printDocument(exchangeVoucherReceipt(result.receipt))) setError('Permite las ventanas emergentes para imprimir el vale'); }}>Imprimir vale completo</Button>
           </div>}
           <Button onClick={onDone}>Cerrar</Button>
         </div> : pending ? <div className="space-y-3"><p role="status">Hay un cambio pendiente. Reanudar conserva los artículos y el pago originales. No vuelvas a cobrar la diferencia.</p><Button disabled={busy} onClick={confirm}>{busy ? 'Procesando…' : 'Reanudar cambio'}</Button></div> : <>

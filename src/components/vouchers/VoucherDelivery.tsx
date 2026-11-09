@@ -31,8 +31,8 @@ export function VoucherDelivery({ voucher, autoSend = false }: { voucher: Vouche
   }, []);
 
   return <div className="w-full space-y-3">
-    {voucher.fullCode && <Button className="w-full" variant="outline" onClick={() => {
-      const ok = printDocument(voucherReceipt({
+    {voucher.fullCode && <Button className="w-full" variant="outline" onClick={async () => {
+      const ok = await printDocument(voucherReceipt({
         code: voucher.fullCode!, amount: voucher.currentBalance,
         date: new Date(voucher.issuedAt).toLocaleDateString('es-ES'),
         customerName: voucher.customerName,

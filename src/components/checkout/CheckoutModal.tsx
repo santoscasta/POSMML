@@ -307,10 +307,10 @@ export function CheckoutModal({
             <Button
               className="w-full gap-2"
               variant="outline"
-              onClick={() => {
+              onClick={async () => {
                 const now = new Date();
                 const dateStr = now.toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
-                const printed = printDocument(saleReceipt({ order: successOrder, date: dateStr,
+                const printed = await printDocument(saleReceipt({ order: successOrder, date: dateStr,
                   method: confirmedMethodLabel, note: orderNote, items, subtotal, discountAmount, taxAmount, total,
                   cashReceived: method === 'CASH' ? cashReceivedNum : undefined,
                   payments: receiptPayments || undefined }));
@@ -325,10 +325,10 @@ export function CheckoutModal({
             <Button
               className="w-full gap-2"
               variant="outline"
-              onClick={() => {
+              onClick={async () => {
                 const now = new Date();
                 const dateStr = now.toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
-                const printed = printDocument(saleReceipt({ order: successOrder, date: dateStr,
+                const printed = await printDocument(saleReceipt({ order: successOrder, date: dateStr,
                   method: confirmedMethodLabel, note: orderNote,
                   items, subtotal, discountAmount, taxAmount, total }, true));
                 if (!printed) window.alert('Permite las ventanas emergentes para imprimir el ticket.');

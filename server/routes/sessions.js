@@ -5,10 +5,10 @@ import { mutationResult, currentSession } from '../lib/posService.js';
 import { getPayments, computeKPIs, collectedSaleAmount, newCollectedAmount, cashCollectedAmount, cents } from '../lib/accounting.js';
 import { isBusinessToday } from '../lib/businessTime.js';
 import { reconcileSale } from '../lib/reconcileSale.js';
+import { ensureSessionDefinition, SESSION_TYPE } from '../lib/sessionDefinition.js';
+import { logError } from '../lib/diagnostics.js';
 
 const router = Router();
-
-const SESSION_TYPE = '$app:pos_session';
 
 // ---------- helpers ----------
 
@@ -75,7 +75,7 @@ router.get('/sessions/current', async (req, res) => {
       refreshedAt: new Date().toISOString(),
     });
   } catch (err) {
-    console.error('GET /sessions/current error:', err);
+    logError('session.current_failed', err);
     res.status(err.status || 500).json({ error: err.message, code: err.code });
   }
 });
@@ -92,6 +92,7 @@ router.post('/sessions/open', async (req, res) => {
       const { openingAmount, cashierName, notes, force } = req.body;
       if (typeof openingAmount !== 'number') throw new PosError('Indica el fondo de caja inicial');
       cents(openingAmount);
+      await ensureSessionDefinition(shopifyGQL);
 
       // Check no open session exists (filter in code — Shopify query filter unreliable)
       const check = await shopifyGQL(
@@ -171,7 +172,7 @@ router.post('/sessions/open', async (req, res) => {
       res.json(session);
     });
   } catch (err) {
-    console.error('POST /sessions/open error:', err);
+    logError('session.open_failed', err);
     res.status(err.status || 500).json({ error: err.message, code: err.code });
   }
 });
@@ -240,7 +241,7 @@ router.post('/sessions/close', async (req, res) => {
       res.json({ ...updated, kpis, orderDetails });
     });
   } catch (err) {
-    console.error('POST /sessions/:id/close error:', err);
+    logError('session.close_failed', err);
     res.status(err.status || 500).json({ error: err.message, code: err.code });
   }
 });
@@ -264,7 +265,7 @@ router.get('/sessions', async (req, res) => {
     }
     res.json(sessions);
   } catch (err) {
-    console.error('GET /sessions error:', err);
+    logError('session.history_failed', err);
     res.status(err.status || 500).json({ error: err.message, code: err.code });
   }
 });
@@ -290,7 +291,7 @@ router.get('/sessions/:id', async (req, res) => {
 
     res.json({ ...session, payments, ...summarize(orders, session.openingAmount) });
   } catch (err) {
-    console.error('GET /sessions/:id error:', err);
+    logError('session.detail_failed', err);
     res.status(err.status || 500).json({ error: err.message, code: err.code });
   }
 });

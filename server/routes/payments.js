@@ -6,6 +6,7 @@ import { getPayments } from '../lib/accounting.js';
 
 import { sendReceipt } from '../lib/receipt.js';
 import { recordDocumentFailure } from '../lib/mail/failures.js';
+import { logError } from '../lib/diagnostics.js';
 
 const router = Router();
 router.post('/send-receipt', async (req, res) => {
@@ -13,6 +14,7 @@ router.post('/send-receipt', async (req, res) => {
   catch (error) { await recordDocumentFailure('Documento de pedido', req.body?.order); sendOperationError(res, error); }
 });
 export function sendOperationError(res, error) {
+  logError('operation.failed', error);
   res.status(error.status || 500).json({ error: error.message, code: error.code, safeToRestart: error.safeToRestart === true });
 }
 

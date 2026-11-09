@@ -1,14 +1,18 @@
 import { authHeaders, clearCredentials } from './auth';
+import { tracedFetch, recordDiagnostic } from './diagnostics';
+import { errorDetails } from '../../shared/diagnostics.js';
 
 const API_BASE = import.meta.env.VITE_API_URL || '/api';
 
 export class ApiError extends Error {
   code?: string;
   safeToRestart: boolean;
-  constructor(message: string, code?: string, safeToRestart = false) {
+  requestId?: string;
+  constructor(message: string, code?: string, safeToRestart = false, requestId?: string) {
     super(message);
     this.code = code;
     this.safeToRestart = safeToRestart;
+    this.requestId = requestId;
   }
 }
 
@@ -16,20 +20,21 @@ async function handleResponse<T>(res: Response, authorization?: string): Promise
   if (!res.ok) {
     if (res.status === 401 && authorization === authHeaders().Authorization) clearCredentials();
     const error = await res.json().catch(() => ({ error: res.statusText }));
-    throw new ApiError(error.error || error.message || 'Request failed', error.code, error.safeToRestart);
+    throw new ApiError(error.error || error.message || 'Request failed', error.code, error.safeToRestart, res.headers.get('X-Request-ID') || undefined);
   }
-  return res.json();
+  try { return await res.json(); }
+  catch (error) { recordDiagnostic('api.failed', { requestId: res.headers.get('X-Request-ID') || undefined, ...errorDetails(error) }); throw error; }
 }
 
 export async function apiGet<T>(path: string): Promise<T> {
   const headers = authHeaders();
-  const res = await fetch(`${API_BASE}${path}`, { headers });
+  const res = await tracedFetch(`${API_BASE}${path}`, { headers });
   return handleResponse<T>(res, headers.Authorization);
 }
 
 export async function apiPost<T>(path: string, body?: unknown): Promise<T> {
   const headers = authHeaders();
-  const res = await fetch(`${API_BASE}${path}`, {
+  const res = await tracedFetch(`${API_BASE}${path}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...headers },
     body: body ? JSON.stringify(body) : undefined,
@@ -39,6 +44,6 @@ export async function apiPost<T>(path: string, body?: unknown): Promise<T> {
 
 export async function apiDelete<T>(path: string): Promise<T> {
   const headers = authHeaders();
-  const res = await fetch(`${API_BASE}${path}`, { method: 'DELETE', headers });
+  const res = await tracedFetch(`${API_BASE}${path}`, { method: 'DELETE', headers });
   return handleResponse<T>(res, headers.Authorization);
 }

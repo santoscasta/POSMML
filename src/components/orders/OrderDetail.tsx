@@ -409,12 +409,12 @@ export function OrderDetailModal({ orderId, open, onClose, onUpdate }: OrderDeta
                         return <div className="space-y-2" key={p.exchangeId}>
                           <p>Pedido original {p.originalOrderName} → Nuevo pedido {p.replacementOrderName}</p>
                           <div className="flex flex-wrap gap-2">
-                            <Button variant="outline" onClick={async () => { const receipt = await loadReceipt(); if (receipt && !printDocument(exchangeReceipt(receipt))) setError('Permite las ventanas emergentes para imprimir el ticket del cambio'); }}>Imprimir ticket del cambio</Button>
+                            <Button variant="outline" onClick={async () => { const receipt = await loadReceipt(); if (receipt && !await printDocument(exchangeReceipt(receipt))) setError('Permite las ventanas emergentes para imprimir el ticket del cambio'); }}>Imprimir ticket del cambio</Button>
                             <Button variant="outline" onClick={async () => {
                               const receipt = await loadReceipt();
                               if (!receipt) return;
                               if (!receipt.voucher) { setError('Este cambio no generó ningún vale'); return; }
-                              if (!printDocument(exchangeVoucherReceipt(receipt))) setError('Permite las ventanas emergentes para imprimir el vale');
+                              if (!await printDocument(exchangeVoucherReceipt(receipt))) setError('Permite las ventanas emergentes para imprimir el vale');
                             }}>Imprimir vale del cambio</Button>
                           </div>
                         </div>;
@@ -543,12 +543,12 @@ export function OrderDetailModal({ orderId, open, onClose, onUpdate }: OrderDeta
               {/* Actions */}
               <DialogFooter className="shrink-0">
                 <div className="grid w-full grid-cols-2 gap-2 lg:flex lg:flex-wrap lg:justify-end [&>button]:min-w-0 [&>button]:h-auto [&>button]:min-h-9 [&>button]:whitespace-normal">
-                  {salePayment && <Button variant="outline" onClick={() => {
+                  {salePayment && <Button variant="outline" onClick={async () => {
                     if (salePayment.method === 'MIXED' && !salePayment.mixedPayments?.length) {
                       setError('Falta el desglose del pago mixto. No se puede reimprimir un ticket correcto.');
                       return;
                     }
-                    const printed = printDocument(saleReceipt({
+                    const printed = await printDocument(saleReceipt({
                       order: order.name,
                       date: new Date(order.createdAt).toLocaleString('es-ES'),
                       method: paymentSummary(salePayment),
@@ -560,9 +560,9 @@ export function OrderDetailModal({ orderId, open, onClose, onUpdate }: OrderDeta
                     }));
                     if (!printed) setError('Permite las ventanas emergentes para reimprimir el ticket.');
                   }}><Printer className="size-4" />Reimprimir ticket</Button>}
-                  <Button variant="outline" onClick={() => {
+                  <Button variant="outline" onClick={async () => {
                     const methods: Record<string, string> = { CASH: 'Efectivo', CARD: 'Tarjeta', BIZUM: 'Bizum', VOUCHER: 'Vale', MIXED: 'Mixto', EXCHANGE: 'Cambio de artículos' };
-                    const printed = printDocument(saleReceipt({
+                    const printed = await printDocument(saleReceipt({
                       order: order.name,
                       date: new Date(order.createdAt).toLocaleString('es-ES'),
                       method: methods[posPaymentMethod] || 'No indicado',

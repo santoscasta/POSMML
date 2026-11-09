@@ -270,8 +270,8 @@ export function RefundModal({ order, open, onClose, onRefunded }: RefundModalPro
             <Button
               variant="outline"
               className="w-full gap-2"
-              onClick={() => {
-                const printed = printDocument(voucherReceipt({
+              onClick={async () => {
+                const printed = await printDocument(voucherReceipt({
                   title: 'VALE', code: voucherCode,
                   amount: refundAmount, currencyCode,
                   orderName: order.name,

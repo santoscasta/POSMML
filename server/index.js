@@ -22,6 +22,8 @@ import { getAttendanceService } from './lib/attendance.js';
 import { createAccessService, createAccessMiddleware, authorizeProfile, accessDirectory } from './lib/access.js';
 import { createAccessRouter } from './routes/access.js';
 import { createOperationStore } from './lib/operationStore.js';
+import { requestDiagnostics, logEvent, logError } from './lib/diagnostics.js';
+import { createDiagnosticsRouter } from './routes/diagnostics.js';
 
 dotenv.config();
 
@@ -29,13 +31,14 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
 const PORT = process.env.PORT || 3001;
 const isProduction = process.env.NODE_ENV === 'production';
+app.use(requestDiagnostics());
 
 // CORS: in production the frontend is served from the same origin
 const allowedOrigins = process.env.ALLOWED_ORIGINS
   ? process.env.ALLOWED_ORIGINS.split(',')
   : ['http://localhost:3000', 'http://localhost:5173'];
 app.use(checkOrigin);
-app.use(cors({ origin: allowedOrigins.map(origin => origin.trim()) }));
+app.use(cors({ origin: allowedOrigins.map(origin => origin.trim()), exposedHeaders: ['X-Request-ID'] }));
 app.use(express.json());
 app.use('/auth', requireAuth);
 getStore(); // Fail at startup if durable storage is not configured.
@@ -44,6 +47,7 @@ const access = createAccessService(createOperationStore(accessDirectory()), { em
 if (process.env.POS_USERNAME && process.env.POS_PASSWORD) await access.bootstrap({ username: process.env.POS_USERNAME, password: process.env.POS_PASSWORD, name: 'Administración' });
 app.use('/api', createAccessRouter(access));
 app.use('/api', createAccessMiddleware(access), authorizeProfile);
+app.use('/api', createDiagnosticsRouter());
 
 // API Routes
 app.get('/api/access', (req, res) => res.json({ authenticated: true, user: req.user }));
@@ -58,10 +62,10 @@ app.use('/api', mailRoutes);
 app.use('/api', customerRoutes);
 
 const mailMonitor = createMailMonitor({ mail: getMailService(), posStore: getStore(), gql: shopifyGQL });
-const checkMail = () => void mailMonitor.tick().catch(() => console.error('No se pudo ejecutar el servicio de correo; revisa el almacenamiento persistente.'));
+const checkMail = () => void mailMonitor.tick().catch(error => logError('mail.monitor_failed', error));
 setInterval(checkMail, 60000).unref();
 // Delivery has its own clock so a paginated Shopify scan cannot hold up tickets.
-const deliverMail = () => void getMailService().flush().catch(() => console.error('No se pudo procesar la cola de correo.'));
+const deliverMail = () => void getMailService().flush().catch(error => logError('mail.delivery_failed', error));
 setInterval(deliverMail, 15000).unref();
 deliverMail();
 checkMail();
@@ -91,9 +95,24 @@ if (isProduction) {
   });
 }
 
+// Express 5 forwards rejected route promises here. Logging must not prevent the
+// default fatal-exception behavior if the process itself becomes unhealthy.
+app.use((error, req, res, next) => {
+  logError('http.unhandled_error', error);
+  if (res.headersSent) return next(error);
+  res.status(error.status || 500).json({ error: error.status === 400 ? 'Solicitud no válida.' : 'No se pudo completar la solicitud.' });
+});
+process.on('uncaughtExceptionMonitor', error => logError('process.uncaught_exception', error));
+let lastTick = performance.now();
+setInterval(() => {
+  const now = performance.now();
+  if (now - lastTick > 6000) logEvent('process.event_loop_delay', { durationMs: Math.round(now - lastTick - 1000) }, 'warn');
+  lastTick = now;
+}, 1000).unref();
+
 app.listen(PORT, '0.0.0.0', async () => {
-  console.log(`POS API server running on port ${PORT} (${isProduction ? 'production' : 'development'})`);
+  logEvent('process.started', { mode: isProduction ? 'production' : 'development',
+    deployment: /^[a-f0-9]{7,40}$/i.test(process.env.RAILWAY_GIT_COMMIT_SHA || '') ? process.env.RAILWAY_GIT_COMMIT_SHA : undefined });
   const token = await getAccessToken();
-  if (token) console.log('Shopify store connected.');
-  else console.log('Not connected. Visit /auth');
+  logEvent(token ? 'shopify.connected' : 'shopify.disconnected', {}, token ? 'info' : 'warn');
 });

@@ -1,0 +1,33 @@
+export interface ClientEvent {
+  event: string;
+  clientTime?: string;
+  screen?: string;
+  requestId?: string;
+  printId?: string;
+  durationMs?: number;
+  status?: number;
+  count?: number;
+  visibility?: string;
+  online?: boolean;
+  build?: string;
+  method?: string;
+  route?: string;
+  operation?: string;
+  errorType?: string;
+  category?: string;
+  errorCode?: string;
+  source?: string;
+  line?: number;
+  column?: number;
+  frames?: string[];
+}
+export const CLIENT_EVENTS: Set<string>;
+export function uuid(value: unknown): string | undefined;
+export function safeErrorCode(value: unknown): string | undefined;
+export function operationName(query: unknown): string;
+export function screenName(path: unknown): string;
+export function apiRoute(path: unknown): string;
+export function sourceLocation(value: unknown): string | undefined;
+export function errorCategory(error: unknown): string;
+export function errorDetails(error: unknown): Pick<ClientEvent, 'errorType' | 'errorCode' | 'frames' | 'category'>;
+export function sanitizeClientEvent(input: unknown, now?: number): ClientEvent | null;

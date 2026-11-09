@@ -64,11 +64,17 @@ No existe una transacción distribuida entre Shopify y el servidor. Ante un resu
 
 ## Historial anterior
 
+Las sesiones de caja requieren la definición de metaobjeto `$app:pos_session` en cada tienda Shopify. La definición de la tienda de desarrollo no se copia al instalar la aplicación en producción. Al abrir caja, el servidor comprueba si existe y la crea con los campos de caja si falta; conserva las definiciones existentes. La aplicación necesita permisos para leer y crear definiciones de metaobjetos.
+
 La fecha de apertura se conserva antes del cierre; para sesiones cerradas antiguas cuya fecha real no está disponible se muestra «No registrada». Los pedidos se asignan por sesión, sin filtrar por la fecha de creación del pedido.
 
 Los pagos mixtos antiguos sin desglose y las ventas sobrescritas por una devolución no permiten calcular un cierre fiable. El servidor los señala como pendientes de conciliación en lugar de inventar el efectivo. Esta corrección no reconstruye los datos que ya fueron sobrescritos; deben contrastarse con Shopify y los cierres originales. La lectura del historial también depende del alcance de acceso a pedidos concedido a la aplicación en Shopify.
 
 ## Verificación
+
+Los registros JSON del servidor incluyen peticiones, Shopify, pasos de operaciones y diagnósticos del navegador y de impresión. Para investigar un reporte de negocio por hora y pantalla, consulta [Diagnóstico de incidencias de negocio](docs/LOGS-DIAGNOSTICO.md), con los eventos disponibles, correlación, privacidad y límites de cobertura.
+
+La impresión de tickets, vales, cambios e informes abre una pestaña independiente del TPV. Puedes cerrarla al terminar o repetir la impresión con su botón «Imprimir». Si el navegador bloquea la apertura, permite las ventanas emergentes para el dominio del TPV y reintenta la impresión. No repitas el cobro por un problema de impresión. Consulta la validación y sus límites en [Impresión y pausas del TPV](docs/QA-2026-11-07-IMPRESION.md).
 
 - `npm test`: pruebas locales con Shopify simulado (reintentos, concurrencia, fallos parciales, contabilidad y autenticación).
 - `npx tsc -b`: comprobación de tipos.

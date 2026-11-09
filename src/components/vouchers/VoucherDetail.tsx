@@ -102,8 +102,8 @@ export function VoucherDetail({ voucher: originalVoucher, open, onClose, onUpdat
     }
   };
 
-  const handlePrint = () => {
-    const printed = printDocument(voucherReceipt({
+  const handlePrint = async () => {
+    const printed = await printDocument(voucherReceipt({
       code: voucher.code, amount: voucher.originalAmount,
       balance: voucher.currentBalance, partialCode: true,
       date: new Date(voucher.issuedAt).toLocaleDateString('es-ES'),
