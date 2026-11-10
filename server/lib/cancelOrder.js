@@ -1,6 +1,7 @@
 import { setTimeout as delay } from 'node:timers/promises';
 import { PosError } from './operationStore.js';
 import { cents } from './accounting.js';
+import { assertOrderRestockable } from './restock.js';
 
 // Read the remote state on each attempt: a lost response must not cancel the
 // same preparation again or repeat a refund that has already been recorded.
@@ -33,6 +34,7 @@ export async function cancelOrder(gql, input, { wait = delay, attempts = 10 } = 
   if (active.some(fulfillment => !order.tags?.includes('POS MML') || fulfillment.service?.handle !== 'manual' || !Array.isArray(fulfillment.trackingInfo) || fulfillment.trackingInfo.length || fulfillment.inTransitAt || fulfillment.deliveredAt)) {
     throw new PosError('El pedido tiene envíos o preparaciones externas activos. Anúlalos en Shopify antes de cancelar el pedido.', 409);
   }
+  if (restock) await assertOrderRestockable(gql, orderId);
   for (const fulfillment of active) {
     const data = await gql(`mutation CancelPosOrderFulfillment($id: ID!) {
       fulfillmentCancel(id: $id) {

@@ -187,7 +187,7 @@ export const ORDER_DETAIL = `
         edges {
           node {
             id title quantity isGiftCard
-            variant { id title }
+            variant { id title inventoryItem { id tracked } }
             originalTotalSet { shopMoney { amount currencyCode } }
             originalUnitPriceSet { shopMoney { amount currencyCode } }
           }

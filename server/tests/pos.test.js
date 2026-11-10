@@ -30,6 +30,8 @@ function fixture(t, overrides = {}) {
     PosDebit: () => ({ giftCardDebit: { giftCardDebitTransaction: { id: 'debit-1' }, userErrors: [] } }),
     PosRefundOrder: () => ({ order: { id: orderId, name: '#1', totalPriceSet: { shopMoney: { amount: '100', currencyCode: 'EUR' } }, totalRefundedSet: { shopMoney: { amount: '0' } }, transactions: [{ id: 'parent-1', kind: 'SALE', status: 'SUCCESS', gateway: 'manual' }] } }),
     PosRefund: () => ({ refundCreate: { refund: { id: 'refund-1', transactions: { nodes: [{ status: 'SUCCESS' }] } }, userErrors: [] } }),
+    RestockOrderLines: () => ({ order: { lineItems: { nodes: [{ id: 'gid://shopify/LineItem/1', title: 'Prenda', currentQuantity: 1, variant: { inventoryItem: { id: 'gid://shopify/InventoryItem/1', tracked: true } } }], pageInfo: { hasNextPage: false } } } }),
+    PosRefundRestockStatus: () => ({ refund: { refundLineItems: { nodes: [{ lineItem: { id: 'gid://shopify/LineItem/1' }, quantity: 1, restocked: true, restockType: 'RETURN', location: { id: 'gid://shopify/Location/1' } }], pageInfo: { hasNextPage: false } } } }),
     PosRefundVoucher: ({ input }) => ({ giftCardCreate: { giftCard: { id: 'card-new', customer: input.customerId ? { id: input.customerId } : null }, giftCardCode: 'ignored', userErrors: [] } }),
     RefundCustomerByEmail: () => ({ customers: { nodes: [] } }),
     ...overrides,
@@ -853,7 +855,7 @@ test('a missing inventory grant stops a restocked exchange before creating an or
 
 test('residual exchange voucher requires and associates an existing customer before refunding', async t => {
   const f = exchangeFixture(t, 80, {
-    ExchangeQuote: () => ({ order: { id: orderId, name: '#1', customer: null, cancelledAt: null, transactions: [{ kind: 'SALE', status: 'SUCCESS', gateway: 'manual' }], suggestedRefund: { amountSet: { shopMoney: { amount: '100', currencyCode: 'EUR' } }, refundLineItems: [{ quantity: 1, subtotalSet: { shopMoney: { amount: '100' } }, totalTaxSet: { shopMoney: { amount: '0' } }, lineItem: { id: 'gid://shopify/LineItem/1', title: 'Original', refundableQuantity: 1, variant: { title: 'Única' } } }] } }, nodes: [{ id: 'gid://shopify/ProductVariant/2', title: 'Única', price: '80', inventoryPolicy: 'DENY', inventoryQuantity: 3, product: { title: 'Nuevo', status: 'ACTIVE' } }] }),
+    ExchangeQuote: () => ({ order: { id: orderId, name: '#1', customer: null, cancelledAt: null, transactions: [{ kind: 'SALE', status: 'SUCCESS', gateway: 'manual' }], suggestedRefund: { amountSet: { shopMoney: { amount: '100', currencyCode: 'EUR' } }, refundLineItems: [{ quantity: 1, subtotalSet: { shopMoney: { amount: '100' } }, totalTaxSet: { shopMoney: { amount: '0' } }, lineItem: { id: 'gid://shopify/LineItem/1', title: 'Original', refundableQuantity: 1, variant: { title: 'Única', inventoryItem: { id: 'gid://shopify/InventoryItem/1', tracked: true } } } }] } }, nodes: [{ id: 'gid://shopify/ProductVariant/2', title: 'Única', price: '80', inventoryPolicy: 'DENY', inventoryQuantity: 3, product: { title: 'Nuevo', status: 'ACTIVE' } }] }),
     RefundCustomer: () => ({ customer: refundCustomer }),
   });
   const quote = await quoteExchange(f.gql, exchangeInput);
@@ -868,7 +870,7 @@ test('residual exchange voucher requires and associates an existing customer bef
 test('residual exchange voucher can register a complete customer before refunding', async t => {
   const created = { ...refundCustomer, id: 'gid://shopify/Customer/9', firstName: 'Celia' };
   const f = exchangeFixture(t, 80, {
-    ExchangeQuote: () => ({ order: { id: orderId, name: '#1', customer: null, cancelledAt: null, transactions: [{ kind: 'SALE', status: 'SUCCESS', gateway: 'manual' }], suggestedRefund: { amountSet: { shopMoney: { amount: '100', currencyCode: 'EUR' } }, refundLineItems: [{ quantity: 1, subtotalSet: { shopMoney: { amount: '100' } }, totalTaxSet: { shopMoney: { amount: '0' } }, lineItem: { id: 'gid://shopify/LineItem/1', title: 'Original', refundableQuantity: 1, variant: { title: 'Única' } } }] } }, nodes: [{ id: 'gid://shopify/ProductVariant/2', title: 'Única', price: '80', inventoryPolicy: 'DENY', inventoryQuantity: 3, product: { title: 'Nuevo', status: 'ACTIVE' } }] }),
+    ExchangeQuote: () => ({ order: { id: orderId, name: '#1', customer: null, cancelledAt: null, transactions: [{ kind: 'SALE', status: 'SUCCESS', gateway: 'manual' }], suggestedRefund: { amountSet: { shopMoney: { amount: '100', currencyCode: 'EUR' } }, refundLineItems: [{ quantity: 1, subtotalSet: { shopMoney: { amount: '100' } }, totalTaxSet: { shopMoney: { amount: '0' } }, lineItem: { id: 'gid://shopify/LineItem/1', title: 'Original', refundableQuantity: 1, variant: { title: 'Única', inventoryItem: { id: 'gid://shopify/InventoryItem/1', tracked: true } } } }] } }, nodes: [{ id: 'gid://shopify/ProductVariant/2', title: 'Única', price: '80', inventoryPolicy: 'DENY', inventoryQuantity: 3, product: { title: 'Nuevo', status: 'ACTIVE' } }] }),
     RefundCustomerCreate: () => ({ customerCreate: { customer: created, userErrors: [] } }),
   });
   const quote = await quoteExchange(f.gql, exchangeInput);
@@ -959,7 +961,7 @@ test('lost residual voucher response reconciles without repeating the exchange',
 
 test('exchange uses Shopify discounted return value and rejects unavailable returned quantities', async t => {
   let refundable = 1;
-  const f = exchangeFixture(t, 80, { ExchangeNetCalculate: () => ({ draftOrderCalculate: { calculatedDraftOrder: { totalPriceSet: { shopMoney: { amount: '15.05', currencyCode: 'EUR' } } }, userErrors: [] } }), ExchangeQuote: () => ({ order: { id: orderId, name: '#1', customer: null, transactions: [{ kind: 'SALE', status: 'SUCCESS', gateway: 'manual' }], suggestedRefund: { amountSet: { shopMoney: { amount: '64.95', currencyCode: 'EUR' } }, refundLineItems: [{ quantity: 1, subtotalSet: { shopMoney: { amount: '53.68' } }, totalTaxSet: { shopMoney: { amount: '11.27' } }, lineItem: { id: 'gid://shopify/LineItem/1', title: 'Original', variant: { title: 'Única' }, refundableQuantity: refundable } }] } }, nodes: [{ id: 'gid://shopify/ProductVariant/2', title: 'Default Title', price: '80', inventoryPolicy: 'DENY', inventoryQuantity: 1, product: { title: 'Nuevo', status: 'ACTIVE' } }] }) });
+  const f = exchangeFixture(t, 80, { ExchangeNetCalculate: () => ({ draftOrderCalculate: { calculatedDraftOrder: { totalPriceSet: { shopMoney: { amount: '15.05', currencyCode: 'EUR' } } }, userErrors: [] } }), ExchangeQuote: () => ({ order: { id: orderId, name: '#1', customer: null, transactions: [{ kind: 'SALE', status: 'SUCCESS', gateway: 'manual' }], suggestedRefund: { amountSet: { shopMoney: { amount: '64.95', currencyCode: 'EUR' } }, refundLineItems: [{ quantity: 1, subtotalSet: { shopMoney: { amount: '53.68' } }, totalTaxSet: { shopMoney: { amount: '11.27' } }, lineItem: { id: 'gid://shopify/LineItem/1', title: 'Original', variant: { title: 'Única', inventoryItem: { id: 'gid://shopify/InventoryItem/1', tracked: true } }, refundableQuantity: refundable } }] } }, nodes: [{ id: 'gid://shopify/ProductVariant/2', title: 'Default Title', price: '80', inventoryPolicy: 'DENY', inventoryQuantity: 1, product: { title: 'Nuevo', status: 'ACTIVE' } }] }) });
   const quote = await quoteExchange(f.gql, exchangeInput);
   assert.equal(quote.credit, 64.95);
   assert.equal(quote.due, 15.05);
@@ -983,4 +985,82 @@ test('exchange quotation rejects stock shortage without mutations', async t => {
   await assert.rejects(quoteExchange(f.gql, exchangeInput), /Stock insuficiente/);
   assert.equal(count(f, 'PosRefund'), 0);
   assert.equal(count(f, 'PosDraft'), 0);
+});
+
+for (const [description, variant] of [
+  ['missing variant', null],
+  ['untracked variant', { title: '12 meses', inventoryItem: { id: 'gid://shopify/InventoryItem/1', tracked: false } }],
+  ['missing inventory item', { title: '12 meses', inventoryItem: null }],
+]) {
+  test(`exchange blocks ${description} before stock, customer, sale or voucher mutations`, async t => {
+    const f = exchangeFixture(t, 80);
+    const gql = async (query, variables) => {
+      const data = await f.gql(query, variables);
+      if (query.includes('query ExchangeQuote')) data.order.suggestedRefund.refundLineItems[0].lineItem.variant = variant;
+      return data;
+    };
+    await assert.rejects(quoteExchange(gql, exchangeInput, f.store), { code: 'RESTOCK_UNAVAILABLE' });
+    assert.equal(f.calls.filter(call => /mutation/.test(call.query)).length, 0);
+    const input = { ...exchangeInput, restock: false };
+    const quote = await quoteExchange(gql, input, f.store);
+    await exchangeItems(gql, f.store, key, { ...input, quoteToken: quote.token, method: 'CARD' });
+    assert.equal(count(f, 'ExchangeRestock'), 0);
+    assert.equal(count(f, 'PosComplete'), 1);
+  });
+}
+
+test('a mixed exchange with one missing inventory link never partially restocks', async t => {
+  const f = exchangeFixture(t, 100);
+  const gql = async (query, variables) => {
+    const data = await f.gql(query, variables);
+    if (query.includes('query ExchangeQuote')) {
+      const lines = data.order.suggestedRefund.refundLineItems;
+      lines.push({ ...structuredClone(lines[0]), lineItem: { id: 'gid://shopify/LineItem/3', title: 'Prenda importada', refundableQuantity: 1, variant: null } });
+    }
+    return data;
+  };
+  await assert.rejects(quoteExchange(gql, { ...exchangeInput, refundLineItems: [...exchangeInput.refundLineItems, { lineItemId: 'gid://shopify/LineItem/3', quantity: 1 }] }, f.store), { code: 'RESTOCK_UNAVAILABLE' });
+  assert.equal(f.calls.filter(call => /mutation/.test(call.query)).length, 0);
+});
+
+test('saved exchange quotation without inventory is blocked before creating a customer or replacement', async t => {
+  const f = exchangeFixture(t, 80);
+  const input = { ...exchangeInput, quoteToken: 'old', method: 'CARD', newCustomer: { firstName: 'Ana', email: 'ana@example.com' } };
+  const state = f.store.read();
+  state.operations[key] = { key, kind: 'exchange', input, createdAt: new Date().toISOString(), sessionId: 'session-A', quote: { accountingVersion: 2, returnedItems: [{ title: 'Sobrepijama importado', inventoryItemId: null }], voucher: 20 }, steps: {} };
+  f.store.write(state);
+  await assert.rejects(exchangeItems(f.gql, f.store, key, input), error => error.code === 'RESTOCK_UNAVAILABLE' && error.safeToRestart);
+  assert.equal(f.calls.length, 0);
+});
+
+for (const variant of [null, { inventoryItem: { id: 'gid://shopify/InventoryItem/1', tracked: false } }]) {
+  test(`refund blocks ${variant ? 'untracked' : 'unlinked'} inventory before a refund or customer mutation`, async t => {
+    const f = fixture(t, { RestockOrderLines: () => ({ order: { lineItems: { nodes: [{ id: 'gid://shopify/LineItem/1', title: 'Prenda importada', variant }], pageInfo: { hasNextPage: false } } } }) });
+    await assert.rejects(f.service.refund(key, { ...refundInput, restock: true, locationId: 'gid://shopify/Location/1', newCustomer: { firstName: 'Ana', email: 'ana@example.com' } }), error => error.code === 'RESTOCK_UNAVAILABLE' && error.safeToRestart);
+    assert.equal(count(f, 'PosRefund'), 0);
+    assert.equal(count(f, 'RefundCustomerCreate'), 0);
+    assert.equal(f.store.read().movements.length, 0);
+  });
+}
+
+test('restocking refund requires selected items', async t => {
+  const f = fixture(t);
+  await assert.rejects(f.service.refund(key, { ...refundInput, restock: true, refundLineItems: [], locationId: 'gid://shopify/Location/1' }), { code: 'RESTOCK_UNAVAILABLE' });
+  assert.equal(count(f, 'PosRefund'), 0);
+});
+
+test('unconfirmed refund restock stays pending and resumes without repeating refund or issuing a premature voucher', async t => {
+  let confirmed = false;
+  const f = fixture(t, { PosRefundRestockStatus: () => ({ refund: { refundLineItems: { nodes: [{ lineItem: { id: 'gid://shopify/LineItem/1' }, quantity: 1, restocked: confirmed, restockType: 'RETURN', location: { id: 'gid://shopify/Location/1' } }], pageInfo: { hasNextPage: false } } } }) });
+  const input = { ...refundInput, restock: true, locationId: 'gid://shopify/Location/1' };
+  await assert.rejects(f.service.refund(key, input), { code: 'RECONCILIATION_REQUIRED' });
+  assert.equal(count(f, 'PosRefund'), 1);
+  assert.equal(count(f, 'PosRefundVoucher'), 0);
+  assert.equal(f.store.read().movements.length, 1);
+  confirmed = true;
+  await createPosService(f.gql, createOperationStore(f.directory)).refund(key, input);
+  assert.equal(count(f, 'PosRefund'), 1);
+  assert.equal(count(f, 'PosRefundVoucher'), 1);
+  assert.equal(f.store.read().movements.length, 1);
+  assert.equal(f.store.read().operations[key].restockVerified, true);
 });

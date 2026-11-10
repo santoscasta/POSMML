@@ -128,7 +128,7 @@ router.post('/orders/cancel', async (req, res) => {
       res.json(await cancelOrder(shopifyGQL, req.body));
     });
   } catch (err) {
-    res.status(err.status || 500).json({ error: err.message });
+    sendOperationError(res, err);
   }
 });
 

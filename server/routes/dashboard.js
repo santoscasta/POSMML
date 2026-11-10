@@ -6,6 +6,7 @@ import { getPayments, computeKPIs, collectedSaleAmount } from '../lib/accounting
 import { currentSession } from '../lib/posService.js';
 import { isBusinessToday } from '../lib/businessTime.js';
 import { logError } from '../lib/diagnostics.js';
+import { getRestockAlerts } from '../lib/restock.js';
 
 const router = Router();
 
@@ -53,6 +54,7 @@ router.get('/dashboard', async (req, res) => {
       sessionId,
       todaySales,
       todayOrders: todayOrders.length,
+      restockAlerts: getRestockAlerts(getStore().read()),
       unregisteredOrders: diagnostics.filter(p => p.reason === 'missing_payment' && isBusinessToday(p.createdAt, now) && ['PAID', 'PARTIALLY_REFUNDED', 'REFUNDED'].includes(p.financialStatus)),
       activeVouchers,
       voucherBalance,

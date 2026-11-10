@@ -4,6 +4,7 @@ import { randomBytes } from 'node:crypto';
 import { resolveRefundCustomer } from './refundCustomer.js';
 import { fulfillSale } from './fulfillSale.js';
 import { assertGiftVouchersCancelled } from './orderGiftVoucher.js';
+import { assertOrderRestockable, verifyRefundRestock } from './restock.js';
 
 export function mutationResult(data, key, field) {
   const payload = data?.[key];
@@ -227,6 +228,11 @@ export function createPosService(gql, store, { exchange = false } = {}) {
         };
         ctx.save();
       }
+      if (input.restock && !ctx.op.steps['refund-create']) {
+        const lines = ctx.op.refundInput.refundLineItems;
+        if (!lines?.length) throw new PosError('Selecciona los artículos que deben reponerse antes de confirmar la devolución.', 409, 'RESTOCK_UNAVAILABLE');
+        await assertOrderRestockable(gql, input.orderId, lines);
+      }
       // An omitted selection inherits the order customer; explicit null keeps
       // the cashier's choice to issue an anonymous voucher.
       if (input.method === 'VOUCHER' && input.customerId === undefined && !input.newCustomer && ctx.op.voucherCustomer === undefined) {
@@ -261,6 +267,11 @@ export function createPosService(gql, store, { exchange = false } = {}) {
       // another attempt. Closing is blocked until the entire operation finishes.
       const entry = movement(ctx, { shopifyOrderId: input.orderId, shopifyOrderName: ctx.op.orderName,
         sessionId, type: 'refund', method: input.method, amount: cents(input.amount) / 100, refundId: result.id });
+      if (input.restock && !ctx.op.restockVerified) {
+        await verifyRefundRestock(gql, result.id, ctx.op.refundInput.refundLineItems);
+        ctx.op.restockVerified = true;
+        ctx.save();
+      }
       let voucherCode;
       let voucherId;
       if (input.method === 'VOUCHER') {

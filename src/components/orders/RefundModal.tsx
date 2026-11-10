@@ -21,6 +21,8 @@ import { useSession } from '../../context/SessionContext';
 import { CustomerSearch } from '../customers/CustomerSearch';
 import type { Customer } from '../../types/customer';
 import { VoucherCustomerAssignment } from '../vouchers/VoucherCustomerAssignment';
+import { RestockWarning } from './RestockWarning';
+import { blockedRestockTitles } from '../../utils/restock';
 
 type RefundMethod = 'CASH' | 'CARD' | 'VOUCHER';
 interface PendingRefund {
@@ -107,7 +109,7 @@ export function RefundModal({ order, open, onClose, onRefunded }: RefundModalPro
         setLocations(locs);
         if (locs.length > 0) setLocationId(locs[0].id);
       })
-      .catch(() => {});
+      .catch(() => setError('No se han podido cargar las ubicaciones de reposición. Reintenta antes de confirmar.'));
   }, []);
 
   const [lineSelections, setLineSelections] = useState<LineItemSelection[]>(() =>
@@ -128,6 +130,7 @@ export function RefundModal({ order, open, onClose, onRefunded }: RefundModalPro
   );
 
   const totalOrderAmount = parseFloat(order.totalPriceSet.shopMoney.amount);
+  const blockedTitles = restock ? blockedRestockTitles(lineItems.filter(line => lineSelections.some(selection => selection.lineItemId === line.id && (isTotal || selection.selected) && selection.quantity > 0))) : [];
   const refundedAmount = parseFloat(order.totalRefundedSet.shopMoney.amount);
   const maxRefundable = totalOrderAmount - refundedAmount;
   const currencyCode = order.totalPriceSet.shopMoney.currencyCode;
@@ -163,6 +166,7 @@ export function RefundModal({ order, open, onClose, onRefunded }: RefundModalPro
 
   const handleSubmit = async () => {
     if (inFlight.current) return;
+    if (!pending && restock && (blockedTitles.length || !locationId)) return;
     if (!pending && refundAmount <= 0) {
       setError('Selecciona al menos un articulo para reembolsar');
       return;
@@ -241,7 +245,7 @@ export function RefundModal({ order, open, onClose, onRefunded }: RefundModalPro
         </DialogHeader>
 
         {error && (
-          <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-3 text-sm text-destructive">
+          <div role="alert" className="rounded-lg border border-destructive/50 bg-destructive/10 p-3 text-sm text-destructive">
             {error}
           </div>
         )}
@@ -446,6 +450,9 @@ export function RefundModal({ order, open, onClose, onRefunded }: RefundModalPro
         </div>
 
         {/* Location selector (when restock enabled) */}
+        <RestockWarning titles={blockedTitles} />
+        {restock && !locationId && <p role="alert" className="text-sm text-destructive">Selecciona una ubicación de reposición válida antes de confirmar.</p>}
+        {!restock && <p role="status" className="text-sm text-muted-foreground">La devolución no aumentará el stock de los artículos devueltos.</p>}
         {restock && locations.length > 0 && (
           <div>
             <div className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
@@ -544,7 +551,7 @@ export function RefundModal({ order, open, onClose, onRefunded }: RefundModalPro
           <Button
             variant="destructive"
             onClick={handleSubmit}
-            disabled={submitting || refundAmount <= 0}
+            disabled={submitting || refundAmount <= 0 || (!pending && restock && (blockedTitles.length > 0 || !locationId))}
           >
             {submitting ? 'Procesando...' : pending ? 'Reanudar devolución' : 'Confirmar reembolso'}
           </Button>

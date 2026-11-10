@@ -50,6 +50,7 @@ test('order cancellation checks refunds using valid GraphQL before cancelling', 
         if (query.includes('CancelPosOrderFulfillment')) preparationCancelled = true;
         if (query.includes('mutation CancelPosOrder(')) assert.ok(!scenario.prepared || preparationCancelled, 'Cannot cancel an order that has outstanding fulfillments');
         const data = query.includes('CancelPosOrderFulfillment') ? { fulfillmentCancel: { fulfillment: { id: 'fulfillment-1', status: 'CANCELLED' }, userErrors: [] } }
+          : query.includes('RestockOrderLines') ? { order: { lineItems: { nodes: [], pageInfo: { hasNextPage: false } } } }
           : query.includes('OrderCancellationStatus') ? { order: { cancelledAt: '2026-11-09T16:00:00Z' } } : operation === 'query'
           ? { order: scenario.missing ? null : {
             cancelledAt: null, tags: ['POS MML'], fulfillments: scenario.prepared ? [{ id: 'fulfillment-1', status: 'SUCCESS', service: { handle: 'manual' }, trackingInfo: [] }] : [],
@@ -69,6 +70,7 @@ test('order cancellation checks refunds using valid GraphQL before cancelling', 
       else assert.deepEqual(body, { success: true });
       assert.deepEqual(calls, [
         { operation: 'query', variables: { id: orderId } },
+        ...(scenario.cancels ? [{ operation: 'query', variables: { id: orderId, after: null } }] : []),
         ...(scenario.prepared ? [{ operation: 'mutation', variables: { id: 'fulfillment-1' } }] : []),
         ...(scenario.cancels ? [{ operation: 'mutation', variables: { orderId, reason: 'OTHER', restock: true } }] : []),
         ...(scenario.status === 200 ? [{ operation: 'query', variables: { id: orderId } }] : []),

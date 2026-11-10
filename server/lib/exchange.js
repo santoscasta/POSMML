@@ -5,6 +5,7 @@ import { createPosService, currentSession } from './posService.js';
 import { issueVoucher } from './voucherIssue.js';
 import { resolveRefundCustomer } from './refundCustomer.js';
 import { assertGiftVouchersCancelled } from './orderGiftVoucher.js';
+import { assertRestockableItems } from './restock.js';
 
 export async function quoteExchange(gql, input, store) {
   if (!/^gid:\/\/shopify\/Order\/\d+$/.test(input.orderId)) throw new PosError('Pedido inválido');
@@ -56,6 +57,7 @@ export async function quoteExchange(gql, input, store) {
     variantTitle: item.lineItem.variant?.title || '', quantity: item.quantity,
     amount: (cents(item.subtotalSet.shopMoney.amount) + cents(item.totalTaxSet?.shopMoney?.amount || 0)) / 100,
   }));
+  if (input.restock) assertRestockableItems(returnedItems);
   const calculated = await gql(`mutation ExchangeCalculate($input: DraftOrderInput!) {
     draftOrderCalculate(input: $input) { calculatedDraftOrder { totalPriceSet { shopMoney { amount currencyCode } } } userErrors { message } }
   }`, { input: { ...(order.customer ? { customerId: order.customer.id } : {}), lineItems: cartItems.map(i => ({ variantId: i.variantId, quantity: i.quantity, priceOverride: { amount: i.price.toFixed(2), currencyCode: 'EUR' } })) } });
@@ -111,6 +113,8 @@ export async function exchangeItems(gql, store, operationId, input) {
       ctx.save();
     }
     const q = ctx.op.quote;
+    // Also protect saved quotations from clients predating this validation.
+    if (input.restock && q.accountingVersion === 2 && !ctx.op.steps['exchange-restock']) assertRestockableItems(q.returnedItems);
     if (q.voucher > 0 && !ctx.op.exchangeCustomer) {
       const selected = input.customerId || input.newCustomer
         ? await resolveRefundCustomer(gql, ctx, input)

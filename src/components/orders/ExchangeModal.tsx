@@ -12,6 +12,8 @@ import { useSession } from '../../context/SessionContext';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../ui/dialog';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
+import { RestockWarning } from './RestockWarning';
+import { blockedRestockTitles } from '../../utils/restock';
 
 interface Item { variantId: string; quantity: number; title: string; imageUrl: string | null }
 interface Quote { token: string; credit: number; total: number; due: number; voucher: number }
@@ -41,18 +43,19 @@ export function ExchangeModal({ order, exchangedQuantities, onClose, onDone }: {
   const { refresh } = useSession();
   useEffect(() => { let alive = true; void apiGet<{ id: string; name: string }[]>('/locations').then(rows => { if (alive) { setLocations(rows); setLocationId(rows[0]?.id || ''); } }).catch(() => { if (alive) setError('No se han podido cargar las ubicaciones de reposición'); }); return () => { alive = false; }; }, []);
   const selectedReturns = Object.entries(returns).filter(([, quantity]) => quantity > 0).map(([lineItemId, quantity]) => ({ lineItemId, quantity }));
+  const blockedTitles = restock ? blockedRestockTitles(order.lineItems.edges.filter(({ node }) => (returns[node.id] || 0) > 0).map(({ node }) => node)) : [];
   const selection = { orderId: order.id, refundLineItems: selectedReturns, items: items.map(({ variantId, quantity }) => ({ variantId, quantity })), restock, locationId: restock ? locationId : undefined };
   const invalidate = () => { setQuote(null); setError(''); };
   const add = (product: Product, variant: ProductVariant) => { invalidate(); setItems(previous => { const found = previous.find(i => i.variantId === variant.id); return found ? previous.map(i => i.variantId === variant.id ? { ...i, quantity: i.quantity + 1 } : i) : [...previous, { variantId: variant.id, quantity: 1, title: `${product.title}${variant.title === 'Default Title' ? '' : ` · ${variant.title}`}`, imageUrl: variant.image?.url || product.featuredImage?.url || null }]; }); };
   async function calculate() {
-    if (active.current) return;
+    if (active.current || blockedTitles.length) return;
     active.current = true; setBusy(true); setError(''); setQuote(null);
     try { setQuote(await apiPost<Quote>('/exchanges/quote', selection)); }
     catch (err) { setError(err instanceof Error ? err.message : 'No se pudo calcular el cambio'); }
     finally { active.current = false; setBusy(false); }
   }
   async function confirm() {
-    if (active.current || (!pending && !quote)) return;
+    if (active.current || (!pending && (!quote || blockedTitles.length))) return;
     active.current = true; setBusy(true); setError('');
     try {
       if (!pending && quote!.voucher > 0 && !customer && !registerCustomer) throw new Error('Selecciona o registra el cliente al que se asociará el vale');
@@ -91,12 +94,14 @@ export function ExchangeModal({ order, exchangedQuantities, onClose, onDone }: {
               {order.lineItems.edges.map(({ node }) => { const refunded = order.refunds.reduce((sum, refund) => sum + refund.refundLineItems.edges.filter(e => e.node.lineItem.id === node.id).reduce((n, e) => n + e.node.quantity, 0), 0); const max = Math.max(0, node.quantity - refunded - (exchangedQuantities[node.id] || 0)); return max > 0 && <label key={node.id} className="flex items-center justify-between gap-3 text-sm"><span>{node.title} {node.variant?.title !== 'Default Title' ? node.variant?.title : ''}</span><Input aria-label={`Devolver ${node.title}`} className="w-20 shrink-0" type="number" min={0} max={max} step={1} value={returns[node.id] || 0} onChange={e => { invalidate(); setReturns({ ...returns, [node.id]: Number(e.target.value) }); }} /></label>; })}
               <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={restock} onChange={e => { invalidate(); setRestock(e.target.checked); }} />Reponer artículos devueltos</label>
               {restock && <label className="block text-sm">Ubicación de reposición<select className="mt-1 w-full rounded border p-2" value={locationId} onChange={e => { invalidate(); setLocationId(e.target.value); }}><option value="">Selecciona una ubicación</option>{locations.map(l => <option key={l.id} value={l.id}>{l.name}</option>)}</select></label>}
+              <RestockWarning titles={blockedTitles} />
+              {!restock && selectedReturns.length > 0 && <p role="status" className="text-sm text-muted-foreground">El cambio no aumentará el stock de los artículos devueltos.</p>}
             </section>
             <section className="min-w-0 space-y-2 lg:col-start-2 lg:row-span-3 lg:row-start-1"><h3 className="font-semibold">2. Artículos que se lleva</h3>
               <ExchangeProductPicker onAdd={add} />
               {items.map(i => <div key={i.variantId} className="flex flex-wrap items-center gap-2 rounded border p-2 text-sm">{i.imageUrl && <img src={i.imageUrl} alt={i.title} className="size-10 shrink-0 rounded object-cover" />}<span className="min-w-0 flex-1 basis-24">{i.title}</span><Input aria-label={`Cantidad de ${i.title}`} className="w-20" type="number" min={1} step={1} value={i.quantity} onChange={e => { invalidate(); setItems(items.map(row => row.variantId === i.variantId ? { ...row, quantity: Number(e.target.value) } : row)); }} /><Button variant="outline" onClick={() => { invalidate(); setItems(items.filter(row => row.variantId !== i.variantId)); }}>Quitar</Button></div>)}
             </section>
-            <Button className="lg:col-start-1" variant="outline" disabled={!selectedReturns.length || !items.length || (restock && !locationId)} onClick={calculate}>Calcular diferencia</Button>
+            <Button className="lg:col-start-1" variant="outline" disabled={!selectedReturns.length || !items.length || blockedTitles.length > 0 || (restock && !locationId)} onClick={calculate}>Calcular diferencia</Button>
             {quote && <section className="min-w-0 space-y-3 rounded border bg-muted/30 p-3 lg:col-start-1"><h3 className="font-semibold">3. Confirmar el cambio</h3><p>Valor de la devolución: {formatCurrency(quote.credit)}</p><p>Nuevos artículos: {formatCurrency(quote.total)}</p><p className="font-semibold">{quote.due > 0 ? `A cobrar: ${formatCurrency(quote.due)}` : quote.voucher > 0 ? `Vale a emitir: ${formatCurrency(quote.voucher)}` : 'Mismo importe: sin cobro y sin vale'}</p>
               {quote.voucher > 0 && <div className="space-y-3 rounded border bg-white p-3">
                 <h4 className="font-semibold">Cliente del vale</h4>
@@ -106,7 +111,7 @@ export function ExchangeModal({ order, exchangedQuantities, onClose, onDone }: {
                 </>}
               </div>}
               {quote.due > 0 && <><label className="block text-sm">Método de pago<select className="mt-1 w-full rounded border p-2" value={method} onChange={e => setMethod(e.target.value)}><option value="CARD">Tarjeta</option><option value="CASH">Efectivo</option><option value="BIZUM">Bizum</option></select></label>{method === 'CASH' ? <label className="block text-sm">Efectivo recibido<Input type="number" min={quote.due} step="0.01" value={cashReceived} onChange={e => setCashReceived(e.target.value)} /></label> : <p className="text-sm">Confirma después de cobrar la diferencia por {method === 'CARD' ? 'tarjeta' : 'Bizum'}.</p>}</>}
-              <Button disabled={(quote.due > 0 && method === 'CASH' && Number(cashReceived) < quote.due) || (quote.voucher > 0 && !customer && !registerCustomer)} onClick={confirm}>Confirmar cambio</Button>
+              <Button disabled={blockedTitles.length > 0 || (quote.due > 0 && method === 'CASH' && Number(cashReceived) < quote.due) || (quote.voucher > 0 && !customer && !registerCustomer)} onClick={confirm}>Confirmar cambio</Button>
             </section>}
           </fieldset>
         </>}

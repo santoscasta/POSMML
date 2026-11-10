@@ -38,6 +38,10 @@ En «Cambiar artículos», el apartado «Artículos que se lleva» muestra el ca
 
 Los cambios admiten pedidos con un pago confirmado, independientemente del método de pago original. El valor de las prendas devueltas se aplica al nuevo pedido; solo se cobra la diferencia y, si sobra importe, se emite un vale asociado a un cliente. El cambio no reembolsa el pago original. Los pedidos sin un cobro confirmado siguen bloqueados.
 
+Si se marca **Reponer**, los artículos deben estar vinculados a una variante con control de inventario. Los pedidos importados pueden contener líneas sin esa vinculación: el TPV muestra los artículos afectados y bloquea el cambio o la devolución antes de modificar dinero o existencias. Revisa su correspondencia en Shopify; si corresponde gestionarlos por separado, desmarca **Reponer**. La cancelación con reposición también comprueba los artículos antes de anular preparaciones. Si un reembolso ya se ha registrado pero Shopify no confirma la reposición, la operación queda pendiente: revisa el inventario y reanuda el mismo intento, sin repetir el reembolso.
+
+El panel de Inicio muestra las reposiciones omitidas en cambios anteriores, con acceso a cada pedido. Es un aviso del incidente histórico: antes de sumar unidades, comprueba las correcciones y ventas posteriores. La alerta por sí sola no demuestra que falte stock en ese momento.
+
 Cada intento tiene un identificador persistente. El navegador lo guarda antes de enviar la petición; el servidor guarda los pasos antes de llamar a Shopify. Un reintento conserva carrito, importe y método originales.
 
 - Si el cobro falla, utiliza **Reanudar cobro pendiente**. El pedido se completa inicialmente como pendiente de pago y solo se marca pagado después del canje de los vales.

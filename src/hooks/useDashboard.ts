@@ -9,6 +9,7 @@ export interface DashboardData {
   todaySales: number;
   todayOrders: number;
   unregisteredOrders?: { id: string; name: string; reason: string }[];
+  restockAlerts?: { operationId: string; orderId: string; orderName: string; createdAt: string; items: { title: string; quantity: number }[] }[];
   activeVouchers: number;
   voucherBalance: number;
   paymentBreakdown: {

@@ -244,7 +244,7 @@ export function OrderDetailModal({ orderId, open, onClose, onUpdate }: OrderDeta
           )}
 
           {error && (
-            <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-3 text-sm text-destructive">
+            <div role="alert" className="rounded-lg border border-destructive/50 bg-destructive/10 p-3 text-sm text-destructive">
               {error}
             </div>
           )}

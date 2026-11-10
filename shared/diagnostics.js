@@ -12,7 +12,7 @@ export const CLIENT_EVENTS = new Set([
 export const uuid = value => typeof value === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value) ? value : undefined;
 const token = value => typeof value === 'string' && /^[A-Za-z][A-Za-z0-9_]{0,63}$/.test(value) ? value : undefined;
 const errorTypes = new Set(['Error', 'TypeError', 'RangeError', 'ReferenceError', 'SyntaxError', 'TimeoutError', 'AbortError', 'PosError', 'ApiError', 'ShopifyGraphQLError']);
-const errorCodes = new Set(['BUSY', 'PENDING', 'CONFLICT', 'RECONCILIATION_REQUIRED', 'LEGACY_RECONCILIATION_REQUIRED', 'INVALID_REQUEST', 'SESSION_EXPIRED', 'PASSWORD_CHANGE_REQUIRED', 'THROTTLED', 'ACCESS_DENIED', 'INTERNAL_SERVER_ERROR', 'GRAPHQL_VALIDATION_FAILED', 'NETWORK_ERROR', 'TIMEOUT', 'UNKNOWN']);
+const errorCodes = new Set(['BUSY', 'PENDING', 'CONFLICT', 'RECONCILIATION_REQUIRED', 'RESTOCK_UNAVAILABLE', 'LEGACY_RECONCILIATION_REQUIRED', 'INVALID_REQUEST', 'SESSION_EXPIRED', 'PASSWORD_CHANGE_REQUIRED', 'THROTTLED', 'ACCESS_DENIED', 'INTERNAL_SERVER_ERROR', 'GRAPHQL_VALIDATION_FAILED', 'NETWORK_ERROR', 'TIMEOUT', 'UNKNOWN']);
 const categories = new Set(['metaobject_definition_missing', 'throttled', 'access_denied', 'timeout', 'network', 'storage', 'validation', 'unknown']);
 export const safeErrorCode = value => errorCodes.has(value) ? value : undefined;
 export const operationName = query => typeof query === 'string' ? token(query.match(/\b(?:query|mutation)\s+([A-Za-z][A-Za-z0-9_]*)/)?.[1]) || 'anonymous' : 'anonymous';

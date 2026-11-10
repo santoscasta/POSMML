@@ -34,7 +34,7 @@ export interface OrderLineItem {
   title: string;
   quantity: number;
   isGiftCard?: boolean;
-  variant?: { id: string; title: string };
+  variant?: { id: string; title: string; inventoryItem?: { id: string; tracked: boolean } | null } | null;
   originalTotalSet: { shopMoney: { amount: string; currencyCode: string } };
   originalUnitPriceSet: { shopMoney: { amount: string; currencyCode: string } };
 }

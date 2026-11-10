@@ -1,4 +1,6 @@
 import { useDashboard } from '../hooks/useDashboard';
+import { useState } from 'react';
+import { OrderDetailModal } from '../components/orders/OrderDetail';
 import { formatCurrency } from '../utils/currency';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -24,6 +26,7 @@ const quickActions = [
 
 export function DashboardPage({ onNavigate }: { onNavigate?: (path: string) => void }) {
   const { data, loading, error, refresh } = useDashboard();
+  const [reviewOrderId, setReviewOrderId] = useState<string | null>(null);
 
   return (
     <div className="p-6">
@@ -47,6 +50,14 @@ export function DashboardPage({ onNavigate }: { onNavigate?: (path: string) => v
         </div>
       ) : data ? (
         <>
+          {!!data.restockAlerts?.length && <div role="alert" className="mb-6 space-y-2 rounded-lg border border-amber-400 bg-amber-50 p-4 text-sm">
+            <p className="font-semibold">Reposición omitida en {data.restockAlerts.length} {data.restockAlerts.length === 1 ? 'cambio anterior' : 'cambios anteriores'}</p>
+            <p>El cambio terminó con «Reponer» marcado, pero no quedó confirmada la reposición de todos los artículos. Comprueba las correcciones y ventas posteriores antes de ajustar el stock.</p>
+            <ul className="space-y-2">{data.restockAlerts.map(alert => <li key={alert.operationId} className="flex flex-wrap items-center justify-between gap-2">
+              <span>{alert.orderName} · {new Date(alert.createdAt).toLocaleString('es-ES', { timeZone: 'Europe/Madrid' })} · {alert.items.map(item => `${item.title} × ${item.quantity}`).join(', ')}</span>
+              <Button variant="outline" size="sm" onClick={() => setReviewOrderId(alert.orderId)}>Revisar {alert.orderName}</Button>
+            </li>)}</ul>
+          </div>}
           <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {/* Shopify connection */}
             <Card>
@@ -172,6 +183,7 @@ export function DashboardPage({ onNavigate }: { onNavigate?: (path: string) => v
           </div>
         </>
       ) : null}
+      <OrderDetailModal orderId={reviewOrderId} open={!!reviewOrderId} onClose={() => setReviewOrderId(null)} onUpdate={() => { setReviewOrderId(null); void refresh(); }} />
     </div>
   );
 }

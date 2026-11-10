@@ -17,6 +17,7 @@ function fixture(options = {}) {
     const name = operation.name.value;
     calls.push({ name, variables });
     if (name === 'OrderCancellationState') return { order: options.missing ? null : structuredClone(order) };
+    if (name === 'RestockOrderLines') return { order: { lineItems: { nodes: options.lines || [], pageInfo: { hasNextPage: false, endCursor: null } } } };
     if (name === 'CancelPosOrderFulfillment') {
       const fulfillment = order.fulfillments.find(item => item.id === variables.id);
       if (options.fulfillmentRejected) return { fulfillmentCancel: { fulfillment: null, userErrors: [{ message: 'Rejected' }] } };
@@ -46,7 +47,7 @@ const names = f => f.calls.map(call => call.name);
 test('a refunded POS order cancels its completed preparation before cancelling the order', async () => {
   const f = fixture();
   assert.deepEqual(await f.run(), { success: true });
-  assert.deepEqual(names(f), ['OrderCancellationState', 'CancelPosOrderFulfillment', 'CancelPosOrder', 'OrderCancellationStatus']);
+  assert.deepEqual(names(f), ['OrderCancellationState', 'RestockOrderLines', 'CancelPosOrderFulfillment', 'CancelPosOrder', 'OrderCancellationStatus']);
   assert.deepEqual(f.calls.find(call => call.name === 'CancelPosOrder').variables, { orderId, reason: 'OTHER', restock: true });
 });
 
@@ -60,7 +61,7 @@ test('all active POS preparations are cancelled; failed and already cancelled on
 test('unfulfilled orders and already cancelled orders do not change any preparations', async () => {
   const f = fixture({ order: { fulfillments: [] } });
   await f.run();
-  assert.deepEqual(names(f), ['OrderCancellationState', 'CancelPosOrder', 'OrderCancellationStatus']);
+  assert.deepEqual(names(f), ['OrderCancellationState', 'RestockOrderLines', 'CancelPosOrder', 'OrderCancellationStatus']);
   const cancelled = fixture({ order: { cancelledAt: '2026-11-09T16:00:00Z' } });
   await cancelled.run();
   assert.deepEqual(names(cancelled), ['OrderCancellationState']);
@@ -103,7 +104,7 @@ test('a rejected or unconfirmed preparation cancellation stops before orderCance
   for (const options of [{ fulfillmentRejected: true }, { fulfillmentUnconfirmed: true }]) {
     const f = fixture(options);
     await assert.rejects(f.run(), { status: 409 });
-    assert.deepEqual(names(f), ['OrderCancellationState', 'CancelPosOrderFulfillment']);
+    assert.deepEqual(names(f), ['OrderCancellationState', 'RestockOrderLines', 'CancelPosOrderFulfillment']);
   }
 });
 
@@ -131,4 +132,15 @@ test('invalid IDs, missing orders, Shopify rejection and absent cancellation job
   await assert.rejects(fixture({ missing: true }).run(), { status: 404 });
   await assert.rejects(fixture({ orderRejected: true }).run(), /Cancellation rejected/);
   await assert.rejects(fixture({ noJob: true }).run(), /no ha confirmado/);
+});
+
+test('cancellation blocks missing inventory links before cancelling any preparation', async () => {
+  const f = fixture({ lines: [{ id: 'line-1', title: 'Prenda importada', currentQuantity: 1, variant: null }] });
+  await assert.rejects(f.run(), { code: 'RESTOCK_UNAVAILABLE' });
+  assert.deepEqual(names(f), ['OrderCancellationState', 'RestockOrderLines']);
+});
+
+test('already refunded lines without inventory do not prevent cancellation', async () => {
+  const f = fixture({ lines: [{ id: 'line-1', title: 'Prenda devuelta', currentQuantity: 0, variant: null }] });
+  assert.deepEqual(await f.run(), { success: true });
 });
