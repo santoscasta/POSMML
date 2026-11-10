@@ -81,6 +81,7 @@ export const es = {
     remove: 'Quitar descuento',
   },
   nav: {
+    products: 'Productos',
     pos: 'POS',
     orders: 'Pedidos',
     cashRegister: 'Caja',

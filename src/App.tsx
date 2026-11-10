@@ -11,7 +11,7 @@ import { es } from './i18n/es';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
-import { Home, ShoppingCart, ClipboardList, Wallet, Ticket, CircleDot, Settings, Clock3 } from 'lucide-react';
+import { Home, ShoppingCart, ClipboardList, Wallet, Ticket, CircleDot, Settings, Clock3, Package } from 'lucide-react';
 import { AuthGate } from './components/AuthGate';
 import { PendingOperations } from './components/PendingOperations';
 import { useAuth } from './context/AuthContext';
@@ -21,10 +21,12 @@ import { AttendanceProvider, useAttendance } from './context/AttendanceContext';
 import { attendanceLabels } from './utils/attendance';
 import { AttendancePage } from './pages/AttendancePage';
 import { AccountPage } from './pages/AccountPage';
+import { ProductsPage } from './pages/ProductsPage';
 
 const navItems = [
   { path: '/dashboard', label: es.nav.dashboard || 'Inicio', icon: Home },
   { path: '/', label: es.nav.pos, icon: ShoppingCart },
+  { path: '/productos', label: es.nav.products, icon: Package },
   { path: '/orders', label: es.nav.orders, icon: ClipboardList },
   { path: '/caja', label: es.nav.cashRegister, icon: Wallet },
   { path: '/vales', label: es.nav.vouchers, icon: Ticket },
@@ -37,7 +39,7 @@ function Sidebar() {
   const navigate = useNavigate();
   const { isOpen } = useSession();
   const { user } = useAuth();
-  const visibleItems = navItems.filter(item => user.role === 'admin' || !['/dashboard', '/ajustes'].includes(item.path));
+  const visibleItems = navItems.filter(item => user.role === 'admin' || !['/dashboard', '/ajustes', '/productos'].includes(item.path));
 
   return (
     <aside className="hidden xl:flex xl:w-60 flex-col border-r bg-white">
@@ -102,10 +104,10 @@ function BottomNav() {
   const navigate = useNavigate();
   const { isOpen } = useSession();
   const { user } = useAuth();
-  const visibleItems = navItems.filter(item => user.role === 'admin' || !['/dashboard', '/ajustes'].includes(item.path));
+  const visibleItems = navItems.filter(item => user.role === 'admin' || !['/dashboard', '/ajustes', '/productos'].includes(item.path));
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 flex border-t bg-white xl:hidden">
+    <nav aria-label="Menú principal" className="fixed bottom-0 left-0 right-0 z-50 flex overflow-x-auto border-t bg-white xl:hidden">
       {visibleItems.map((item) => {
         const active = item.path === '/'
           ? location.pathname === '/'
@@ -116,7 +118,7 @@ function BottomNav() {
             key={item.path}
             onClick={() => navigate(item.path)}
             className={cn(
-              'flex flex-1 flex-col items-center gap-0.5 py-2 text-[10px] font-medium transition-colors',
+              'flex min-w-14 flex-1 shrink-0 flex-col items-center gap-0.5 py-2 text-[10px] font-medium transition-colors',
               active ? 'text-primary' : 'text-muted-foreground'
             )}
           >
@@ -168,6 +170,7 @@ function AppContent() {
         <Routes>
           <Route path="/dashboard" element={admin ? <DashboardPage onNavigate={(path) => navigate(path)} /> : <Navigate to="/horario" replace />} />
           <Route path="/" element={<PosPage />} />
+          <Route path="/productos" element={admin ? <ProductsPage /> : <Navigate to="/horario" replace />} />
           <Route path="/orders" element={<OrdersPage />} />
           <Route path="/caja" element={<SessionsPage />} />
           <Route path="/vales" element={<VouchersPage />} />

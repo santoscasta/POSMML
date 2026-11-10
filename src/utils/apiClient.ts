@@ -47,3 +47,11 @@ export async function apiDelete<T>(path: string): Promise<T> {
   const res = await tracedFetch(`${API_BASE}${path}`, { method: 'DELETE', headers });
   return handleResponse<T>(res, headers.Authorization);
 }
+
+export async function apiUploadImage<T>(path: string, file: File): Promise<T> {
+  const headers = authHeaders();
+  const res = await tracedFetch(`${API_BASE}${path}`, {
+    method: 'POST', headers: { ...headers, 'Content-Type': file.type, 'X-File-Name': encodeURIComponent(file.name) }, body: file,
+  });
+  return handleResponse<T>(res, headers.Authorization);
+}

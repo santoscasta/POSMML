@@ -14,7 +14,7 @@ interface ProductsResponse {
   products: Connection<ProductNode>;
 }
 
-export function useProducts(showOutOfStock: boolean) {
+export function useProducts(showOutOfStock: boolean, includeInactive = false) {
   const [catalog, setCatalog] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -36,11 +36,11 @@ export function useProducts(showOutOfStock: boolean) {
       do {
         const data: ProductsResponse = await queryPage<ProductsResponse>(PRODUCTS_QUERY, {
           first: 30, after,
-          query: showOutOfStock ? 'status:active' : 'status:active inventory_total:>0',
+          query: includeInactive ? undefined : showOutOfStock ? 'status:active' : 'status:active inventory_total:>0',
         }, isCurrent);
         if (!isCurrent()) return;
         for (const { node } of data.products.edges) {
-          if (node.status !== 'ACTIVE') continue;
+          if (!includeInactive && node.status !== 'ACTIVE') continue;
           const categoryIds: unknown = JSON.parse(node.categoryMembership?.value || '[]');
           if (!Array.isArray(categoryIds) || categoryIds.some(id => typeof id !== 'string')) throw new Error(`Categorías inválidas en ${node.title}`);
           const variants = await completeConnection(node.variants, async after => {
@@ -60,7 +60,7 @@ export function useProducts(showOutOfStock: boolean) {
     } finally {
       if (isCurrent()) setLoading(false);
     }
-  }, [showOutOfStock]);
+  }, [showOutOfStock, includeInactive]);
 
   useEffect(() => {
     const requests = requestId;
@@ -69,5 +69,8 @@ export function useProducts(showOutOfStock: boolean) {
   }, [fetchProducts]);
 
   const products = useMemo(() => catalog.filter(product => matchesSearch(product, searchQuery)), [catalog, searchQuery]);
-  return { products, loading, error, retry: fetchProducts, searchQuery, setSearchQuery };
+  const updateProduct = useCallback((product: Product) => {
+    setCatalog(current => current.some(item => item.id === product.id) ? current.map(item => item.id === product.id ? product : item) : [...current, product]);
+  }, []);
+  return { products, loading, error, retry: fetchProducts, searchQuery, setSearchQuery, updateProduct };
 }

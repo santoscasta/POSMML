@@ -14,6 +14,9 @@ export interface Product {
   id: string;
   title: string;
   productType?: string;
+  description?: string;
+  vendor?: string;
+  tags?: string[];
   featuredImage: { url: string; altText: string | null } | null;
   status: string;
   totalInventory: number;
