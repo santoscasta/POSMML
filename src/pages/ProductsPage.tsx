@@ -1,10 +1,11 @@
 import { useMemo, useState } from 'react';
-import { Package, Pencil, RefreshCw, Search, Plus } from 'lucide-react';
+import { Package, Pencil, RefreshCw, Search, Plus, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { SortableTableHead } from '../components/SortableTableHead';
 import { ProductEditor } from '../components/products/ProductEditor';
+import { ProductViewer } from '../components/products/ProductViewer';
 import { CreateProductModal } from '../components/products/CreateProductModal';
 import { productSelectClass, productStatusLabels } from '../utils/productManagement';
 import { useProducts } from '../hooks/useProducts';
@@ -37,6 +38,7 @@ export function ProductsPage() {
   const [page, setPage] = useState(1);
   const [sort, setSort] = useState<SortConfig<SortKey>>({ key: 'title', direction: 'asc' });
   const [selected, setSelected] = useState<Product | null>(null);
+  const [viewing, setViewing] = useState<Product | null>(null);
   const [creating, setCreating] = useState(false);
   const types = [...new Set(products.map(product => product.productType).filter((value): value is string => Boolean(value)))].sort((a, b) => a.localeCompare(b, 'es'));
   const filtered = useMemo(() => products.filter(product =>
@@ -75,17 +77,18 @@ export function ProductsPage() {
         <TableBody>{visible.map(product => <TableRow key={product.id}>
           <TableCell><div className="flex items-center gap-3"><ProductImage product={product} /><div className="min-w-0"><p className="max-w-72 whitespace-normal font-medium">{product.title}</p><p className="text-xs text-muted-foreground">{product.variants.length} {product.variants.length === 1 ? 'variante' : 'variantes'}</p></div></div></TableCell>
           <TableCell><Status value={product.status} /></TableCell><TableCell><p className="max-w-40 whitespace-normal">{product.vendor || '—'}</p><p className="max-w-40 whitespace-normal text-xs text-muted-foreground">{product.productType || 'Sin tipo'}</p></TableCell><TableCell>{priceLabel(product)}</TableCell><TableCell className={product.totalInventory <= 0 ? 'text-destructive' : ''}>{product.totalInventory}</TableCell>
-          <TableCell><Button size="sm" variant="outline" disabled={loading || Boolean(error)} aria-label={`Editar ${product.title}`} onClick={() => setSelected(product)}><Pencil className="size-3.5" />Editar</Button></TableCell>
+          <TableCell><div className="flex items-center gap-2"><Button size="icon-sm" variant="outline" title="Ver producto e historial" aria-label={`Ver ${product.title}`} onClick={() => setViewing(product)}><Eye className="size-4" /></Button><Button size="sm" variant="outline" disabled={loading || Boolean(error)} aria-label={`Editar ${product.title}`} onClick={() => setSelected(product)}><Pencil className="size-3.5" />Editar</Button></div></TableCell>
         </TableRow>)}</TableBody>
       </Table></div>
       <div className="divide-y md:hidden">{visible.map(product => <article key={product.id} className="space-y-3 p-4">
         <div className="flex items-start gap-3"><ProductImage product={product} /><div className="min-w-0 flex-1"><h2 className="break-words text-sm font-semibold">{product.title}</h2><p className="text-xs text-muted-foreground">{[product.vendor, product.productType].filter(Boolean).join(' · ')}</p><div className="mt-1"><Status value={product.status} /></div></div></div>
-        <div className="flex flex-wrap items-center justify-between gap-2 text-sm"><div><p className="font-medium">{priceLabel(product)}</p><p className={`text-xs ${product.totalInventory <= 0 ? 'text-destructive' : 'text-muted-foreground'}`}>Stock: {product.totalInventory} · {product.variants.length} {product.variants.length === 1 ? 'variante' : 'variantes'}</p></div><Button size="sm" variant="outline" disabled={loading || Boolean(error)} aria-label={`Editar ${product.title}`} onClick={() => setSelected(product)}><Pencil className="size-3.5" />Editar</Button></div>
+        <div className="flex flex-wrap items-center justify-between gap-2 text-sm"><div><p className="font-medium">{priceLabel(product)}</p><p className={`text-xs ${product.totalInventory <= 0 ? 'text-destructive' : 'text-muted-foreground'}`}>Stock: {product.totalInventory} · {product.variants.length} {product.variants.length === 1 ? 'variante' : 'variantes'}</p></div><div className="flex items-center gap-2"><Button size="icon-sm" variant="outline" title="Ver producto e historial" aria-label={`Ver ${product.title}`} onClick={() => setViewing(product)}><Eye className="size-4" /></Button><Button size="sm" variant="outline" disabled={loading || Boolean(error)} aria-label={`Editar ${product.title}`} onClick={() => setSelected(product)}><Pencil className="size-3.5" />Editar</Button></div></div>
       </article>)}</div>
       {!visible.length && <div className="space-y-2 p-10 text-center text-sm text-muted-foreground"><Package className="mx-auto size-8" /><p>{loading ? 'Cargando productos…' : error ? 'El catálogo no está disponible.' : hasFilters ? 'No hay productos que coincidan con los filtros.' : 'Todavía no hay productos en el catálogo.'}</p></div>}
       {filtered.length > 0 && <div className="flex flex-wrap items-center justify-between gap-3 border-t p-4 text-sm"><span className="text-muted-foreground">{(currentPage - 1) * pageSize + 1}–{Math.min(currentPage * pageSize, filtered.length)} de {filtered.length}</span><div className="flex items-center gap-3"><Button size="sm" variant="outline" disabled={currentPage <= 1} onClick={() => setPage(currentPage - 1)}>Anterior</Button><span>{currentPage} / {pageCount}</span><Button size="sm" variant="outline" disabled={currentPage >= pageCount} onClick={() => setPage(currentPage + 1)}>Siguiente</Button></div></div>}
     </section>
     {selected && <ProductEditor key={selected.id} product={selected} onClose={() => setSelected(null)} onUpdate={product => { updateProduct(product); setSelected(product); }} />}
+    {viewing && <ProductViewer key={viewing.id} product={viewing} onClose={() => setViewing(null)} />}
     {creating && <CreateProductModal onClose={() => setCreating(false)} onCreated={product => { updateProduct(product); setCreating(false); setSearchQuery(''); setStatus('all'); setStock('all'); setType('all'); setPage(1); setSelected(product); }} />}
   </div>;
 }

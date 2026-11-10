@@ -1,6 +1,7 @@
 import { Router, raw } from 'express';
 import shopifyGQL from '../lib/shopifyGQL.js';
 import { requireAdmin } from '../lib/access.js';
+import { readProduct, readProductHistory } from '../lib/productRead.js';
 import { updateProduct, updateVariant, createProduct, addProductImage, uploadProductImage, getVariantInventory, setVariantInventory, addVariant, deleteVariant, enableInventoryTracking } from '../lib/products.js';
 
 export function createProductsRouter(gql = shopifyGQL) {
@@ -9,6 +10,8 @@ export function createProductsRouter(gql = shopifyGQL) {
     try { res.json(await work(req)); }
     catch (error) { res.status(error.status || 500).json({ error: error.message, code: error.code, safeToRestart: error.safeToRestart }); }
   };
+  router.get('/products/:id', requireAdmin, route(req => readProduct(gql, req.params.id)));
+  router.get('/products/:id/history', requireAdmin, route(req => readProductHistory(gql, req.params.id, req.query.after ?? null)));
   router.post('/products/:id', requireAdmin, route(req => updateProduct(gql, req.params.id, req.body)));
   router.post('/products', requireAdmin, route(req => createProduct(gql, req.body)));
   router.post('/products/:id/images', requireAdmin, route(req => addProductImage(gql, req.params.id, req.body)));

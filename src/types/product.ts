@@ -22,3 +22,18 @@ export interface Product {
   totalInventory: number;
   variants: ProductVariant[];
 }
+
+export interface ProductSnapshot extends Product {
+  createdAt: string;
+  updatedAt: string;
+  onlineStoreUrl: string | null;
+  adminUrl: string | null;
+  categories: { id: string; displayName: string }[];
+  images: { id: string; url: string; altText: string | null }[];
+  variants: (ProductVariant & { inventoryItem: { inventoryHistoryUrl: string | null } })[];
+}
+
+export interface ProductHistoryPage {
+  events: { id: string; createdAt: string; message: string; action: string; author: string | null; appTitle: string | null }[];
+  nextCursor: string | null;
+}
