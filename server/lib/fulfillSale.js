@@ -8,7 +8,8 @@ export async function fulfillSale(gql, ctx, orderId) {
     }`, { id: orderId });
     return data.order?.displayFulfillmentStatus;
   };
-  if (await status() === 'FULFILLED') return;
+  const complete = (value) => ['FULFILLED', 'FULFILLMENT_NOT_REQUIRED'].includes(value);
+  if (complete(await status())) return;
 
   if (!ctx.op.fulfillmentOrderIds) {
     const orders = [];
@@ -58,7 +59,7 @@ export async function fulfillSale(gql, ctx, orderId) {
       return result.fulfillment;
     }, recovered);
   }
-  if (await status() !== 'FULFILLED') {
+  if (!complete(await status())) {
     throw new PosError('Shopify todavía no confirma todos los artículos como preparados. Reanuda la operación para comprobarlo.', 409);
   }
 }

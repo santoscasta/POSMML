@@ -11,4 +11,4 @@ use_legacy_install_flow = false
 redirect_urls = ["https://posmml-production.up.railway.app/auth/callback"]
 
 [webhooks]
-api_version = "2025-04"
+api_version = "2026-10"

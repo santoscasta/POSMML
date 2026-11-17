@@ -3,6 +3,7 @@ const labels: Record<string, string> = {
   PAID: 'Pagado', PENDING: 'Pendiente', REFUNDED: 'Reembolsado',
   PARTIALLY_REFUNDED: 'Parcialmente reembolsado', PARTIALLY_PAID: 'Parcialmente pagado',
   FULFILLED: 'Completado', UNFULFILLED: 'Sin completar',
+  FULFILLMENT_NOT_REQUIRED: 'No requiere preparación',
   CREDIT: 'Abono', DEBIT: 'Cargo', DRAFT: 'Borrador', ARCHIVED: 'Archivado',
 };
 

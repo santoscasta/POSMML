@@ -84,6 +84,7 @@ function financialLabel(status: string): string {
 function fulfillmentLabel(status: string): string {
   switch (status) {
     case 'FULFILLED': return 'Completado';
+    case 'FULFILLMENT_NOT_REQUIRED': return 'No requiere preparación';
     case 'UNFULFILLED': return 'Sin completar';
     case 'PARTIALLY_FULFILLED': return 'Parcialmente completado';
     default: return status;

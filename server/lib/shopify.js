@@ -5,7 +5,7 @@ import { logEvent } from './diagnostics.js';
 const SHOPIFY_STORE = process.env.SHOPIFY_STORE;
 const SHOPIFY_CLIENT_ID = process.env.SHOPIFY_CLIENT_ID;
 const SHOPIFY_CLIENT_SECRET = process.env.SHOPIFY_CLIENT_SECRET;
-const API_VERSION = '2025-04';
+const API_VERSION = '2026-10';
 
 let cachedToken = null;
 let tokenExpiresAt = 0;

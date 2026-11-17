@@ -61,6 +61,7 @@ function financialLabel(status: string): string {
 function fulfillmentLabel(status: string): string {
   switch (status) {
     case 'FULFILLED': return es.orders.fulfilled;
+    case 'FULFILLMENT_NOT_REQUIRED': return 'No requiere preparación';
     case 'UNFULFILLED': return es.orders.unfulfilled;
     case 'PARTIALLY_FULFILLED': return 'Parcialmente completado';
     case 'IN_PROGRESS': return 'En preparación';
